@@ -10,4 +10,9 @@
 **/*.rs.bk
 
 # VIM swapfiles
-.swp
+*.swp
+
+
+# Added by cargo
+
+/target
