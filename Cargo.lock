@@ -693,6 +693,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hermit-abi"
+version = "0.1.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "http"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1005,6 +1014,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_cpus"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19e64526ebdee182341572e50e9ad03965aa510cd94427a4549448f285e957a1"
+dependencies = [
+ "hermit-abi",
+ "libc",
+]
+
+[[package]]
 name = "num_enum"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1265,6 +1284,7 @@ dependencies = [
  "eframe",
  "egui",
  "sqlite",
+ "tokio",
  "tokio-tungstenite",
  "ureq",
 ]
@@ -1431,6 +1451,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signal-hook-registry"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e51e73328dc4ac0c7ccbda3a494dfa03df1de2f46018127f60c693f2648455b0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1589,8 +1618,24 @@ dependencies = [
  "libc",
  "memchr",
  "mio 0.7.14",
+ "num_cpus",
+ "once_cell",
+ "parking_lot",
  "pin-project-lite",
+ "signal-hook-registry",
+ "tokio-macros",
  "winapi",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
