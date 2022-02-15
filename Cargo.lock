@@ -1283,6 +1283,7 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "egui",
+ "num_enum",
  "sqlite",
  "tokio",
  "tokio-tungstenite",
