@@ -1,8 +1,8 @@
+#![allow(unused_variables)]
 use eframe::{egui, epi};
 use egui::*;
 use tokio::sync::{mpsc};
 use crate::common::*;
-
 
 pub struct TrackerApp {
     pub from_main: mpsc::Receiver<Action>,
@@ -17,8 +17,48 @@ impl View for CharacterList {
                         ui.label("Track Character: ");
                         ui.text_edit_singleline(&mut self.new_char_name);
                         if ui.button("Track").clicked() {
-                        self.characters.push(Character::new(self.new_char_name.to_owned()));
-                        self.new_char_name = "".to_owned();
+                            if self.new_char_name != "".to_owned() {
+
+                                match lookup_character_id(&self.new_char_name) {
+                                    Ok(None) => println!("no results"),
+                                    Err(whut) => println!("{}", whut),
+                                    Ok(Some(char_id)) => {
+                                        println!("character_id: {}", char_id);
+                                        match  lookup_new_char_details(&char_id) {
+                                            Err(whut) => println!("{}", whut),
+                                            Ok(details) => {
+                                                let new_char = &details["character_list"][0];
+                                                println!("deets: {:?}", new_char);
+                                                let faction_num = new_char["faction_id"].to_string().unquote().parse::<u8>().unwrap();
+                                                let world_num = new_char["world_id"].to_string().unquote().parse::<u8>().unwrap();
+
+                                                let mut bob = Character {
+                                                    full_name: new_char["name"]["first"].to_string().unquote(),
+                                                    lower_name: new_char["name"]["first_lower"].to_string().unquote(),
+                                                    server: World::from(world_num),
+                                                    outfit: None,
+                                                    outfit_full: None,
+                                                    character_id: new_char["character_id"].to_string().unquote(),
+                                                    auto_track: true,
+                                                    faction: Faction::from(faction_num),
+                                                };
+
+                                                if new_char["outfit"].is_object() {
+                                                    bob.outfit = Some(new_char["outfit"]["alias"].to_string().unquote());
+                                                    bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
+                                                }
+                                                self.characters.push(bob);
+
+
+                                            },
+                                        }
+                                    }
+                                }
+
+
+                                //self.characters.push(Character::new(self.new_char_name.to_owned()));
+                                self.new_char_name = "".to_owned();
+                            }
                         }
                 });
 
@@ -44,8 +84,12 @@ impl View for Character {
     fn draw(&mut self, ui: &mut egui::Ui){
         ui.horizontal(|ui| {
             ui.label(&self.full_name);
-            ui.label(&self.outfit);
-            ui.label(&self.server);
+            if let Some(outfit_name) = &self.outfit {
+                ui.label(outfit_name);
+            } else {
+                ui.label("<no outfit>");
+            }
+            ui.label(name_from_world(self.server));
         });
         ui.horizontal(|ui| {
             ui.label(&self.character_id);

@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+#![allow(unused_imports)]
 mod common;
 mod ui;
 

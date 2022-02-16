@@ -1284,6 +1284,7 @@ dependencies = [
  "eframe",
  "egui",
  "num_enum",
+ "serde_json",
  "sqlite",
  "tokio",
  "tokio-tungstenite",
