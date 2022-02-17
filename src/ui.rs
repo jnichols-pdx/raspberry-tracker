@@ -102,7 +102,7 @@ impl View for Character {
 
 impl epi::App for TrackerApp {
     fn name(&self) -> &str {
-        "Raspberry Trackers"
+        "Raspberry Tracker"
     }
    
    /*
