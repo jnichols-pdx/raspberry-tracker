@@ -8,6 +8,7 @@ pub struct TrackerApp {
     pub from_main: mpsc::Receiver<Action>,
     pub in_character_ui: bool,
     pub char_list: CharacterList,
+    pub db: sqlite::Connection,
 }
 
 impl View for CharacterList {
@@ -115,15 +116,16 @@ impl epi::App for TrackerApp {
     ) {
             //load previous apps tate as held by egui.. won't be using this?
     }*/
+
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
-        let Self { in_character_ui, from_main, char_list} = self;
+        let Self { in_character_ui, from_main, char_list, db} = self;
 
-        // Examples of how to create different panels and windows.
-        // Pick whichever suits you.
-        // Tip: a good default choice is to just keep the `CentralPanel`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        //can access "window size" via ctx.available_rect();
+
+    //    println!("{:?}",ctx.available_rect());
+
 
         egui::TopBottomPanel::top("menubar").show(ctx, |ui| {
             // thin topmost panel for menubar

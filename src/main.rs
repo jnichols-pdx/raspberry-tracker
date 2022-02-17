@@ -7,6 +7,7 @@ mod ui;
 use crate::common::*;
 use std::io::{self, stderr, Write, Error};
 use tokio::sync::{mpsc};
+use sqlite::State;
 //use tokio::time::{self, Duration};
 
 
@@ -19,18 +20,81 @@ async fn main() {//-> Result<(),io::Error> {
     let (tx_to_ui, rx_from_main) = mpsc::channel::<Action>(32);
     //let (tx_to_main, rx_from_websocket) = mpsc::channel(32);   
 
+    let mut dbo: Option<sqlite::Connection> = None ;
+    if let Some(dir_gen) = directories_next::ProjectDirs::from("com","JTNBrickWorks","Raspberry Tracker") {
+        let data_dir = dir_gen.data_dir().to_path_buf();
+        if let Ok(()) = std::fs::create_dir_all(&data_dir) {
+            let db_path = data_dir.join("tracker_data.sqlite");
+            let connection = sqlite::open(db_path).unwrap();
+            dbo = Some(connection);
+        } else {
+            println!("couldn't save to disk, use ram instead.");
+            let connection = sqlite::open(":memory:").unwrap();
+            dbo = Some(connection);
+        }
+    }
+
+    let db = dbo.unwrap();
+
+    match db.execute("SELECT version FROM raspberrytracker LIMIT 1;") {
+        Err(err) => { 
+            if err.message == Some("no such table: raspberrytracker".to_string()) {
+                println!("Setting up local database.");
+                db.execute("CREATE TABLE raspberrytracker (version NUMBER);
+                        INSERT INTO raspberrytracker VALUES (0.1); 
+                        CREATE TABLE windows (name TEXT, width NUMBER, height NUMBER);
+                        INSERT INTO windows VALUES ('main', 800.0, 480.0);
+                        CREATE TABLE characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT, auto_track INTEGER, server INTEGER, faction INTEGER);
+                        CREATE TABLE weapons (name TEXT, id TEXT);
+                        ",).unwrap() ;
+            } else {
+                println!("sqlhuh? {:?}", err.message);
+            }},
+        Ok(_) => {},
+    };
+ /*pub full_name: String, 
+    pub lower_name: String,
+    pub server: World,
+    pub outfit: Option<String>,
+    pub outfit_full: Option<String>,
+    pub character_id: String,
+    pub auto_track: bool,
+    pub faction: Faction,*/
+
+       
+{
+    let mut statement = db.prepare("SELECT version FROM raspberrytracker LIMIT 1;").unwrap();
+    if let State::Row = statement.next().unwrap() {
+        println!("db ver = {}", statement.read::<f64>(0).unwrap());
+    }
+}
+
     let character_list = CharacterList::new();
+
+{
+    let mut statement = db.prepare("SELECT * FROM characters;").unwrap();
+}
 
     tokio::spawn(async move { //to host websocket connection
     });
 
+
+    let mut native_options = eframe::NativeOptions::default();
+
+{
+    let mut statement = db.prepare("SELECT * FROM windows WHERE name LIKE 'main' LIMIT 1;").unwrap();
+    if let State::Row = statement.next().unwrap() {
+        let x_size =  statement.read::<f64>(1).unwrap();
+        let y_size =  statement.read::<f64>(2).unwrap();
+        println!("setting window as {} x {} ", x_size, y_size);
+        native_options.initial_window_size = Some(egui::Vec2{ x: x_size as f32, y: y_size as f32});
+    }
+}
     let app = ui::TrackerApp{
         from_main: rx_from_main,
         in_character_ui: true,
         char_list: character_list,
+        db: db,
     };
-
-    let mut native_options = eframe::NativeOptions::default();
-    native_options.initial_window_size = Some(egui::Vec2{ x: 800.0, y: 480.0});
     eframe::run_native(Box::new(app), native_options);
 }
