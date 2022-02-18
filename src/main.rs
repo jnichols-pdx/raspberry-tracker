@@ -37,14 +37,14 @@ async fn main() {//-> Result<(),io::Error> {
     let db = dbo.unwrap();
 
     match db.execute("SELECT version FROM raspberrytracker LIMIT 1;") {
-        Err(err) => { 
+        Err(err) => {
             if err.message == Some("no such table: raspberrytracker".to_string()) {
                 println!("Setting up local database.");
                 db.execute("CREATE TABLE raspberrytracker (version NUMBER);
                         INSERT INTO raspberrytracker VALUES (0.1); 
                         CREATE TABLE windows (name TEXT, width NUMBER, height NUMBER);
                         INSERT INTO windows VALUES ('main', 800.0, 480.0);
-                        CREATE TABLE characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT, auto_track INTEGER, server INTEGER, faction INTEGER);
+                        CREATE TABLE characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER, PRIMARY KEY (id));
                         CREATE TABLE weapons (name TEXT, id TEXT);
                         ",).unwrap() ;
             } else {
@@ -69,10 +69,33 @@ async fn main() {//-> Result<(),io::Error> {
     }
 }
 
-    let character_list = CharacterList::new();
+    let mut character_list = CharacterList::new();
 
 {
-    let mut statement = db.prepare("SELECT * FROM characters;").unwrap();
+    let mut cursor = db.prepare("SELECT * FROM characters;").unwrap().into_cursor();
+    while let Some(row) = cursor.next().unwrap() {
+        println!("{:?}", row);
+        let mut achar = Character {
+            full_name: row[0].as_string().unwrap().to_string(),
+            lower_name: row[1].as_string().unwrap().to_string(),
+            outfit: None,
+            outfit_full: None,
+            character_id: row[4].as_string().unwrap().to_string(),
+            auto_track: row[5].as_integer().unwrap() > 0,
+            server: row[6].as_integer().unwrap().into(),
+            faction: row[7].as_integer().unwrap().into(),
+            to_remove: false,
+        };
+        match row[2].as_string() {
+            Some(outfit_alias) => achar.outfit = Some(outfit_alias.to_string()),
+            None => {},
+        }
+        match row[3].as_string() {
+            Some(outfit_name) => achar.outfit_full = Some(outfit_name.to_string()),
+            None => {},
+        }
+        character_list.push(achar);
+    }
 }
 
     tokio::spawn(async move { //to host websocket connection

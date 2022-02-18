@@ -4,14 +4,15 @@
 //use eframe::{egui, epi};
 
 use num_enum::FromPrimitive;
+use sqlite::State;
 
 pub struct Action {
     pub val: u32,
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq)]
-#[repr(u8)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
 pub enum Faction {
     VS = 0x01,
     #[num_enum(default)]
@@ -20,6 +21,7 @@ pub enum Faction {
     NSO = 0x04,
 }
 
+#[derive(Debug)]
 pub struct Character {
     pub full_name: String,
     pub lower_name: String,
@@ -29,6 +31,7 @@ pub struct Character {
     pub character_id: String,
     pub auto_track: bool,
     pub faction: Faction,
+    pub to_remove: bool,
 }
 
 pub fn name_from_faction(faction: Faction) -> String
@@ -42,8 +45,8 @@ pub fn name_from_faction(faction: Faction) -> String
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq)]
-#[repr(u8)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
 pub enum World {
     CN = 1,
     #[num_enum(default)]
@@ -94,6 +97,39 @@ pub fn lookup_new_char_details(new_id: &String) -> Result<serde_json::Value, ure
     Ok(resp)
 }
 
+//characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER)
+pub fn db_save_new_char(char: &Character, db: &sqlite::Connection) -> bool {
+            //println!("In save");
+            let mut statement = db
+                .prepare("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?);").unwrap();
+            statement.bind(1,char.full_name.as_str()).unwrap();
+            statement.bind(2,&*char.lower_name).unwrap();
+            match &char.outfit {
+                Some(outfit_alias) => statement.bind(3,outfit_alias.as_str()).unwrap(),
+                None => statement.bind(3,()).unwrap(),
+            };
+            match &char.outfit_full {
+                Some(outfit_name) => statement.bind(4,outfit_name.as_str()).unwrap(),
+                None => statement.bind(4,()).unwrap(),
+            }
+            statement.bind(5,&*char.character_id).unwrap();
+            statement.bind(6,char.auto_track as i64).unwrap();
+            statement.bind(7,char.server as i64).unwrap();
+            statement.bind(8,char.faction as i64).unwrap();
+
+            //println!("{:?}", statement);
+            // while let State::Row= statement.next().unwrap() {};
+            match statement.next() {
+                Ok(_) => true,
+                Err(_) => false,
+            }
+}
+
+pub fn db_remove_char(char: &Character, db: &sqlite::Connection) {
+    let mut statement = db.prepare("DELETE FROM characters WHERE id LIKE ?;").unwrap();
+    statement.bind(1,char.character_id.as_str()).unwrap();
+    let _ = statement.next();
+}
 
 impl Character {
     pub fn new(new_lower: String) -> Self
@@ -107,6 +143,7 @@ impl Character {
             character_id: "123454987954698".to_owned(),
             auto_track: true,
             faction: Faction::VS,
+            to_remove: false,
         }
     }
 }
@@ -124,12 +161,22 @@ impl CharacterList {
             new_char_name: "".to_owned(),
         }
     }
+
+    pub fn push(&mut self, new_char: Character) {
+        self.characters.push(new_char);
+    }
+}
+
+pub trait ViewWithDB {
+    fn ui(&mut self, ctx: &egui::CtxRef, db: &sqlite::Connection);// &egui::Context);//,  ui: &mut egui::Ui);
+    fn draw(&mut self, ui: &mut egui::Ui);
 }
 
 pub trait View {
     fn ui(&mut self, ctx: &egui::CtxRef);// &egui::Context);//,  ui: &mut egui::Ui);
     fn draw(&mut self, ui: &mut egui::Ui);
 }
+
 
 pub trait StripQuote {
     fn unquote(&self) -> String;

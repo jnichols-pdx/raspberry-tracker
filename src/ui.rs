@@ -15,8 +15,8 @@ pub struct TrackerApp {
     pub size_changed: bool,
 }
 
-impl View for CharacterList {
-    fn ui(&mut self, ctx: &egui::CtxRef) {
+impl ViewWithDB for CharacterList {
+    fn ui(&mut self, ctx: &egui::CtxRef, db: &sqlite::Connection) {
         egui::CentralPanel::default().show(ctx, |ui| {
                 ui.horizontal(|ui| {
                         ui.label("Track Character: ");
@@ -34,8 +34,8 @@ impl View for CharacterList {
                                             Ok(details) => {
                                                 let new_char = &details["character_list"][0];
                                                 println!("deets: {:?}", new_char);
-                                                let faction_num = new_char["faction_id"].to_string().unquote().parse::<u8>().unwrap();
-                                                let world_num = new_char["world_id"].to_string().unquote().parse::<u8>().unwrap();
+                                                let faction_num = new_char["faction_id"].to_string().unquote().parse::<i64>().unwrap();
+                                                let world_num = new_char["world_id"].to_string().unquote().parse::<i64>().unwrap();
 
                                                 let mut bob = Character {
                                                     full_name: new_char["name"]["first"].to_string().unquote(),
@@ -46,15 +46,17 @@ impl View for CharacterList {
                                                     character_id: new_char["character_id"].to_string().unquote(),
                                                     auto_track: true,
                                                     faction: Faction::from(faction_num),
+                                                    to_remove: false,
                                                 };
 
                                                 if new_char["outfit"].is_object() {
                                                     bob.outfit = Some(new_char["outfit"]["alias"].to_string().unquote());
                                                     bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
                                                 }
-                                                self.characters.push(bob);
 
-
+                                                if db_save_new_char(&bob, db) {
+                                                    self.characters.push(bob);
+                                                }
                                             },
                                         }
                                     }
@@ -73,8 +75,15 @@ impl View for CharacterList {
 
                 scroll_chars.show(ui, |ui| {
                         for char in &mut self.characters {
-                            char.draw(ui);
-                            ui.separator();
+                            if char.to_remove {
+                                db_remove_char(&char, db);
+                            }
+                        }
+
+                        self.characters.retain(|char| !char.to_remove);
+                        for char in &mut self.characters {
+                                char.draw(ui);
+                                ui.separator();
                         }
                 });
         });
@@ -100,6 +109,9 @@ impl View for Character {
             ui.label(&self.character_id);
             ui.label(name_from_faction(self.faction));
             ui.checkbox(&mut self.auto_track, "Auto Track");
+            if ui.button("remove").clicked() {
+                self.to_remove = true;
+            }
         });
     }
 }
@@ -187,7 +199,7 @@ impl epi::App for TrackerApp {
         });
 
         if self.in_character_ui {
-            self.char_list.ui(&ctx);
+            self.char_list.ui(&ctx, &self.db);
 
         }
         else
