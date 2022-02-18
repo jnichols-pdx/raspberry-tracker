@@ -3,12 +3,16 @@ use eframe::{egui, epi};
 use egui::*;
 use tokio::sync::{mpsc};
 use crate::common::*;
+use sqlite::State;
 
 pub struct TrackerApp {
     pub from_main: mpsc::Receiver<Action>,
     pub in_character_ui: bool,
     pub char_list: CharacterList,
     pub db: sqlite::Connection,
+    pub lastx: f32,
+    pub lasty: f32,
+    pub size_changed: bool,
 }
 
 impl View for CharacterList {
@@ -120,11 +124,33 @@ impl epi::App for TrackerApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
-        let Self { in_character_ui, from_main, char_list, db} = self;
+        //let Self { in_character_ui, from_main, char_list, db, lastx, lasty, size_changed} = self;
 
         //can access "window size" via ctx.available_rect();
+        let mut newchange = false;
+        //println!("{:?}",ctx.available_rect());
+        let thisrect = ctx.available_rect();
+        if self.lastx != thisrect.max.x {
+            self.size_changed = true;
+            newchange = true;
+            self.lastx = thisrect.max.x
+        }
+        if self.lasty != thisrect.max.y {
+            self.size_changed = true;
+            newchange = true;
+            self.lasty = thisrect.max.y
+        }
+        if self.size_changed && !newchange  {
+            self.size_changed = false;
+            //println!("bing!");
 
-    //    println!("{:?}",ctx.available_rect());
+            let mut statement = self.db
+                .prepare("UPDATE windows SET width = ?, height = ? WHERE name LIKE 'main';").unwrap();
+            statement.bind(1,self.lastx as f64).unwrap();
+            statement.bind(2,self.lasty as f64).unwrap();
+            while let State::Row = statement.next().unwrap() {};
+
+        }
 
 
         egui::TopBottomPanel::top("menubar").show(ctx, |ui| {

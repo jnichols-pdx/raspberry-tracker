@@ -81,11 +81,13 @@ async fn main() {//-> Result<(),io::Error> {
 
     let mut native_options = eframe::NativeOptions::default();
 
+    let mut x_size:f64 = 800.0;
+    let mut y_size:f64 = 480.0;
 {
     let mut statement = db.prepare("SELECT * FROM windows WHERE name LIKE 'main' LIMIT 1;").unwrap();
     if let State::Row = statement.next().unwrap() {
-        let x_size =  statement.read::<f64>(1).unwrap();
-        let y_size =  statement.read::<f64>(2).unwrap();
+        x_size =  statement.read::<f64>(1).unwrap();
+        y_size =  statement.read::<f64>(2).unwrap();
         println!("setting window as {} x {} ", x_size, y_size);
         native_options.initial_window_size = Some(egui::Vec2{ x: x_size as f32, y: y_size as f32});
     }
@@ -95,6 +97,9 @@ async fn main() {//-> Result<(),io::Error> {
         in_character_ui: true,
         char_list: character_list,
         db: db,
+        lastx: x_size as f32,
+        lasty: y_size as f32,
+        size_changed: false,
     };
     eframe::run_native(Box::new(app), native_options);
 }
