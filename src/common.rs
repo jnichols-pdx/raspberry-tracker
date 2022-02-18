@@ -73,17 +73,19 @@ pub fn lookup_character_id(new_char: &String) -> Result<Option<String>, ureq::Er
     let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:example/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))
                 .call()?
                 .into_json()?;
-    println!("results: {}", resp["returned"]);
-println!("found: {}", resp["character_list"][0]["character_id"]);
-if resp["character_list"][0]["character_id"].is_string() {
-    println!("yup");
-}
-    if resp["returned"] == 0 {
-        Ok(None)
-    } else {
-        let quoted = resp["character_list"][0]["character_id"].to_string();
 
-        Ok(Some(quoted.unquote()))
+    if resp["error"].is_null() {
+        println!("found: {}", resp["character_list"][0]["character_id"]);
+        if resp["returned"] == 0 {
+            Ok(None)
+        } else {
+            let quoted = resp["character_list"][0]["character_id"].to_string();
+
+            Ok(Some(quoted.unquote()))
+        }
+    } else {
+        println!("ERROR: {:?}", resp["error"]);
+        Ok(None)
     }
 }
 
@@ -151,6 +153,7 @@ impl Character {
 pub struct CharacterList {
     pub characters: Vec<Character>,
     pub new_char_name: String,
+    pub message: Option<String>,
 }
 
 impl CharacterList {
@@ -159,6 +162,7 @@ impl CharacterList {
         CharacterList {
             characters: Vec::new(),
             new_char_name: "".to_owned(),
+            message: None,
         }
     }
 

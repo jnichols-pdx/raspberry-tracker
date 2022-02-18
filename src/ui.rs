@@ -25,13 +25,18 @@ impl ViewWithDB for CharacterList {
                             if self.new_char_name != "".to_owned() {
 
                                 match lookup_character_id(&self.new_char_name) {
-                                    Ok(None) => println!("no results"),
-                                    Err(whut) => println!("{}", whut),
+                                    Ok(None) => {println!("no results");
+                                            self.message = Some(format!("Character \"{}\" Not Found", self.new_char_name));
+                                    },
+                                    Err(whut) => {println!("{}", whut);
+                                            self.message = Some("Census Error".to_string());
+                                    },
                                     Ok(Some(char_id)) => {
                                         println!("character_id: {}", char_id);
                                         match  lookup_new_char_details(&char_id) {
                                             Err(whut) => println!("{}", whut),
                                             Ok(details) => {
+                                                println!("RAW: {:?}", details);
                                                 let new_char = &details["character_list"][0];
                                                 println!("deets: {:?}", new_char);
                                                 let faction_num = new_char["faction_id"].to_string().unquote().parse::<i64>().unwrap();
@@ -59,17 +64,22 @@ impl ViewWithDB for CharacterList {
                                                 }
                                             },
                                         }
+                                        self.message = None;
                                     }
                                 }
 
-
-                                //self.characters.push(Character::new(self.new_char_name.to_owned()));
                                 self.new_char_name = "".to_owned();
                             }
                         }
                 });
 
-                ui.add(egui::Separator::default().spacing(20.0));
+                match &self.message {
+                    Some(msg) => {
+                        ui.label(egui::RichText::new(msg).color(Color32::from_rgb(200,0,0)));
+                        ui.separator();
+                    },
+                    None => {ui.add(egui::Separator::default().spacing(20.0));},
+                }
 
                 let scroll_chars = ScrollArea::vertical().auto_shrink([false; 2]);
 
@@ -191,6 +201,7 @@ impl epi::App for TrackerApp {
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
 
             if ui.button("characters").clicked() {
+                self.char_list.message = None;
                 self.in_character_ui = ! self.in_character_ui;
             }
             });
