@@ -32,6 +32,7 @@ pub struct Character {
     pub auto_track: bool,
     pub faction: Faction,
     pub to_remove: bool,
+    pub confirm_visible: bool,
 }
 
 pub fn name_from_faction(faction: Faction) -> String
@@ -146,6 +147,7 @@ impl Character {
             auto_track: true,
             faction: Faction::VS,
             to_remove: false,
+            confirm_visible: false,
         }
     }
 }

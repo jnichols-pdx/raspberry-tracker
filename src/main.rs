@@ -85,6 +85,7 @@ async fn main() {//-> Result<(),io::Error> {
             server: row[6].as_integer().unwrap().into(),
             faction: row[7].as_integer().unwrap().into(),
             to_remove: false,
+            confirm_visible: false,
         };
         match row[2].as_string() {
             Some(outfit_alias) => achar.outfit = Some(outfit_alias.to_string()),

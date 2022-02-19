@@ -52,6 +52,7 @@ impl ViewWithDB for CharacterList {
                                                     auto_track: true,
                                                     faction: Faction::from(faction_num),
                                                     to_remove: false,
+                                                    confirm_visible: false,
                                                 };
 
                                                 if new_char["outfit"].is_object() {
@@ -114,13 +115,26 @@ impl View for Character {
                 ui.label("<no outfit>");
             }
             ui.label(name_from_world(self.server));
+            if self.confirm_visible {
+                ui.label(egui::RichText::new("Actually remove this character?".to_owned()).color(Color32::from_rgb(200,0,0)));
+            }
         });
         ui.horizontal(|ui| {
             ui.label(&self.character_id);
             ui.label(name_from_faction(self.faction));
             ui.checkbox(&mut self.auto_track, "Auto Track");
-            if ui.button("remove").clicked() {
-                self.to_remove = true;
+            if !self.confirm_visible {
+                if ui.button("remove").clicked() {
+                    self.confirm_visible= true;
+                }
+            } else {
+                if ui.button(" cancel ").clicked() {
+                    self.confirm_visible = false;
+                }
+                if ui.button("confirm").clicked() {
+                    self.to_remove = true;
+                }
+
             }
         });
     }
