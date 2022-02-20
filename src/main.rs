@@ -9,7 +9,7 @@ use std::io::{self, stderr, Write, Error};
 use tokio::sync::{mpsc};
 use sqlite::State;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocketStream};
-use futures_util::{future, pin_mut, StreamExt, SinkExt, stream::SplitSink};
+use futures_util::{future, pin_mut, StreamExt, SinkExt, stream::SplitSink, stream::SplitStream, TryStreamExt};
 use std::thread;
 use tokio::runtime::Runtime;
 //use tokio::time::{self, Duration};
@@ -17,14 +17,10 @@ use tokio::runtime::Runtime;
 
 //EGUI offers both native and web assembly compilation targets, I don't intend to use WASM.
 #[cfg(not(target_arch = "wasm32"))] 
-//#[tokio::main]
-//async
-fn main() {//-> Result<(),io::Error> {
+fn main() {
 
     let (tx_to_ui, rx_from_main) = mpsc::channel::<Action>(32);
-    let (send_back, get_channel) = std::sync::mpsc::channel();
-    let _ws_threads = thread::spawn(move || {websocket_threads( send_back)});
-    let tx_to_websocket = get_channel.recv().unwrap();
+    let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
 
     let mut dbo: Option<sqlite::Connection> = None ;
     if let Some(dir_gen) = directories_next::ProjectDirs::from("com","JTNBrickWorks","Raspberry Tracker") {
@@ -58,15 +54,6 @@ fn main() {//-> Result<(),io::Error> {
             }},
         Ok(_) => {},
     };
- /*pub full_name: String, 
-    pub lower_name: String,
-    pub server: World,
-    pub outfit: Option<String>,
-    pub outfit_full: Option<String>,
-    pub character_id: String,
-    pub auto_track: bool,
-    pub faction: Faction,*/
-
        
 {
     let mut statement = db.prepare("SELECT version FROM raspberrytracker LIMIT 1;").unwrap();
@@ -106,27 +93,6 @@ fn main() {//-> Result<(),io::Error> {
     }
 }
 
-
-
-
-/*
-    tokio::spawn(async move {
-        let mut looking = true;
-        while looking {
-            match rx_from_app.recv() {
-                Ok(msg) => {
-                    //ws_write.send(Message::Text(msg.as_str().to_owned())).await;
-                    println!("Want to send {}", msg)
-
-                },
-                Err(e) => {
-                    println!("DOH {:?}", e);
-                    looking = false;
-                },
-            }
-        }
-    });
-*/
     /*tokio::spawn(async move {
         let mut looking = true;
         while looking {
@@ -156,40 +122,36 @@ fn main() {//-> Result<(),io::Error> {
         size_changed: false,
     };
 
+    let _ws_threads = thread::spawn(move || {runtime_thread(rx_from_app)});
 
     eframe::run_native(Box::new(app), native_options);
 }
 
-fn websocket_threads(passback: std::sync::mpsc::Sender<tokio::sync::mpsc::Sender<Message>>){
+fn runtime_thread(rx_from_app: tokio::sync::mpsc::Receiver<Message>){
     let rt = Runtime::new().unwrap();
     let _x = rt.enter();
-    rt.block_on(main_func(passback));
-    println!("bailing out");
+    rt.block_on(websocket_threads(rx_from_app));
 }
 
-async fn main_func(passback: std::sync::mpsc::Sender<tokio::sync::mpsc::Sender<Message>>){
-    let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
-    passback.send(tx_to_websocket.clone());
-    println!("after passback");
-        println!("in async core");
+async fn websocket_threads(rx_from_app: tokio::sync::mpsc::Receiver<Message>){
         let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
         let (ws_str, _) = connect_async(ws_url).await.unwrap();//.expect("failed to connect to streaming api");
         //println!("{:?}", ws_str);
         let (ws_write, ws_read) = ws_str.split();
-        println!("mywrite: {:?}", ws_write);
-       let out_task = tokio::spawn(outgoing(rx_from_app, ws_write));
+        println!("{:?}", ws_read);
+       let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
+       let in_task = tokio::spawn(ws_incoming(ws_read));
 
        tokio::select!{
            _ = out_task => {},
+           _ = in_task => {},
         }
-        println!("uh oh we went bye bye");
 
 }
 
-async fn outgoing(mut rx_from_app: mpsc::Receiver<Message>, mut ws_out: futures_util::stream::SplitSink<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>, Message>){
+async fn ws_outgoing(mut rx_from_app: mpsc::Receiver<Message>, mut ws_out: futures_util::stream::SplitSink<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>, Message>){
  let mut looking = true;
         while looking {
-            println!("now lookin");
             match rx_from_app.recv().await {
                 Some(msg) => {
                     println!("Want to send {}", msg);
@@ -202,4 +164,22 @@ async fn outgoing(mut rx_from_app: mpsc::Receiver<Message>, mut ws_out: futures_
                 },
             }
         }
+}
+
+async fn ws_incoming(mut ws_in: futures_util::stream::SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>){
+ let mut looking = true;
+        //while looking {
+         let print_task =    ws_in.for_each(|message| async {
+                match message.unwrap().into_text() {
+                    Ok(msg) => println!("{}", msg),
+                    Err(e) => {
+                        println!("DIH {:?}", e);
+                    },
+                }
+            });
+         tokio::select! {
+             _ = print_task => {},
+         }
+
+        //}
 }
