@@ -18,7 +18,7 @@ use sqlite::State;
 async fn main() {//-> Result<(),io::Error> {
 
     let (tx_to_ui, rx_from_main) = mpsc::channel::<Action>(32);
-    //let (tx_to_main, rx_from_websocket) = mpsc::channel(32);   
+    let (tx_to_websocket, rx_from_app) = std::sync::mpsc::channel();
 
     let mut dbo: Option<sqlite::Connection> = None ;
     if let Some(dir_gen) = directories_next::ProjectDirs::from("com","JTNBrickWorks","Raspberry Tracker") {
@@ -69,7 +69,7 @@ async fn main() {//-> Result<(),io::Error> {
     }
 }
 
-    let mut character_list = CharacterList::new();
+    let mut character_list = CharacterList::new(tx_to_websocket.clone());
 
 {
     let mut cursor = db.prepare("SELECT * FROM characters;").unwrap().into_cursor();
@@ -86,6 +86,7 @@ async fn main() {//-> Result<(),io::Error> {
             faction: row[7].as_integer().unwrap().into(),
             to_remove: false,
             confirm_visible: false,
+            to_track: false,
         };
         match row[2].as_string() {
             Some(outfit_alias) => achar.outfit = Some(outfit_alias.to_string()),
@@ -99,7 +100,21 @@ async fn main() {//-> Result<(),io::Error> {
     }
 }
 
-    tokio::spawn(async move { //to host websocket connection
+
+    let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
+
+
+    tokio::spawn(async move {
+        let mut looking = true;
+        while looking {
+            match rx_from_app.recv() {
+                Ok(msg) => println!("Want to send {}", msg),
+                Err(e) => {
+                    println!("DOH {:?}", e);
+                    looking = false;
+                },
+            }
+        }
     });
 
 

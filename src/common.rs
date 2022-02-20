@@ -4,6 +4,7 @@
 //use eframe::{egui, epi};
 
 use num_enum::FromPrimitive;
+use tokio::sync::{mpsc};
 use sqlite::State;
 
 pub struct Action {
@@ -33,6 +34,7 @@ pub struct Character {
     pub faction: Faction,
     pub to_remove: bool,
     pub confirm_visible: bool,
+    pub to_track: bool,
 }
 
 pub fn name_from_faction(faction: Faction) -> String
@@ -135,7 +137,7 @@ pub fn db_remove_char(char: &Character, db: &sqlite::Connection) {
 }
 
 impl Character {
-    pub fn new(new_lower: String) -> Self
+    /*pub fn new(new_lower: String) -> Self
     {
         Character {
             full_name: new_lower.to_uppercase(),
@@ -148,23 +150,26 @@ impl Character {
             faction: Faction::VS,
             to_remove: false,
             confirm_visible: false,
+            to_track: false,
         }
-    }
+    }*/
 }
 
 pub struct CharacterList {
     pub characters: Vec<Character>,
     pub new_char_name: String,
     pub message: Option<String>,
+    pub websocket_out: std::sync::mpsc::Sender<String>,
 }
 
 impl CharacterList {
-    pub fn new() -> Self
+    pub fn new(ws_out: std::sync::mpsc::Sender<String>) -> Self
     {
         CharacterList {
             characters: Vec::new(),
             new_char_name: "".to_owned(),
             message: None,
+            websocket_out: ws_out,
         }
     }
 

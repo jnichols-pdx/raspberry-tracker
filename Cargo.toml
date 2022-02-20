@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio-tungstenite = { version = "0.16.1", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.17", features = ["native-tls"] }
 egui = "0.16.1"
 eframe = "0.16.0"
 ureq = { version = "2.4.0", features = ["json"] }
