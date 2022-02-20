@@ -1310,12 +1310,14 @@ dependencies = [
  "directories-next",
  "eframe",
  "egui",
+ "futures-util",
  "num_enum",
  "serde_json",
  "sqlite",
  "tokio",
  "tokio-tungstenite",
  "ureq",
+ "url",
 ]
 
 [[package]]

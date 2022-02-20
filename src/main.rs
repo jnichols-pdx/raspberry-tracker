@@ -8,6 +8,8 @@ use crate::common::*;
 use std::io::{self, stderr, Write, Error};
 use tokio::sync::{mpsc};
 use sqlite::State;
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use futures_util::{future, pin_mut, StreamExt, SinkExt};
 //use tokio::time::{self, Duration};
 
 
@@ -102,13 +104,20 @@ async fn main() {//-> Result<(),io::Error> {
 
 
     let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
+    let (ws_str, _) = connect_async(ws_url).await.expect("failed to connect to streaming api");
+    //println!("{:?}", ws_str);
+    let (ws_write, ws_read) = ws_str.split();
 
 
     tokio::spawn(async move {
         let mut looking = true;
         while looking {
             match rx_from_app.recv() {
-                Ok(msg) => println!("Want to send {}", msg),
+                Ok(msg) => {
+                    ws_write.send(Message::Text(msg.as_str().to_owned())).await;
+                    println!("Want to send {}", msg)
+
+                },
                 Err(e) => {
                     println!("DOH {:?}", e);
                     looking = false;
@@ -116,6 +125,11 @@ async fn main() {//-> Result<(),io::Error> {
             }
         }
     });
+
+    /*tokio::spawn(async move {
+        let mut looking = true;
+        while looking {
+           ws_read. */
 
 
     let mut native_options = eframe::NativeOptions::default();
