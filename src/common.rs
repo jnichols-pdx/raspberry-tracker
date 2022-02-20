@@ -3,6 +3,7 @@
 
 //use eframe::{egui, epi};
 
+use tokio_tungstenite::tungstenite::protocol::Message;
 use num_enum::FromPrimitive;
 use tokio::sync::{mpsc};
 use sqlite::State;
@@ -159,11 +160,11 @@ pub struct CharacterList {
     pub characters: Vec<Character>,
     pub new_char_name: String,
     pub message: Option<String>,
-    pub websocket_out: std::sync::mpsc::Sender<String>,
+    pub websocket_out: mpsc::Sender<Message>,
 }
 
 impl CharacterList {
-    pub fn new(ws_out: std::sync::mpsc::Sender<String>) -> Self
+    pub fn new(ws_out: mpsc::Sender<Message>) -> Self
     {
         CharacterList {
             characters: Vec::new(),

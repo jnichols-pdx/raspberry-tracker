@@ -4,6 +4,7 @@ use egui::*;
 use tokio::sync::{mpsc};
 use crate::common::*;
 use sqlite::State;
+use tokio_tungstenite::tungstenite::protocol::Message;
 
 pub struct TrackerApp {
     pub from_main: mpsc::Receiver<Action>,
@@ -88,9 +89,9 @@ impl ViewWithDB for CharacterList {
                 for char in &mut self.characters {
                     if char.to_track {
                         match self.websocket_out
-                            .send(
-                                format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\"]}}",
-                                char.character_id)) {
+                            .blocking_send(
+                                Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\"]}}",
+                                char.character_id).to_owned())) {
                             Err(e) => println!("dah {:?}",e),
                             Ok(_) => {},
                             }
