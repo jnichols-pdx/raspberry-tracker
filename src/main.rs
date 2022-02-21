@@ -21,6 +21,7 @@ fn main() {
 
     let (tx_to_ui, rx_from_main) = mpsc::channel::<Action>(32);
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
+    let (report_to_main, report_from_ws) = mpsc::channel::<serde_json::Value>(64);
 
     let mut dbo: Option<sqlite::Connection> = None ;
     if let Some(dir_gen) = directories_next::ProjectDirs::from("com","JTNBrickWorks","Raspberry Tracker") {
@@ -89,14 +90,16 @@ fn main() {
             Some(outfit_name) => achar.outfit_full = Some(outfit_name.to_string()),
             None => {},
         }
+
+
+        let _res = tx_to_websocket.blocking_send(
+            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+            achar.character_id).to_owned()));
+
         character_list.push(achar);
+
     }
 }
-
-    /*tokio::spawn(async move {
-        let mut looking = true;
-        while looking {
-           ws_read. */
 
 
     let mut native_options = eframe::NativeOptions::default();
@@ -120,27 +123,29 @@ fn main() {
         lastx: x_size as f32,
         lasty: y_size as f32,
         size_changed: false,
+        ws_messages: report_from_ws,
+        ws_out: tx_to_websocket.clone(),
     };
 
-    let _ws_threads = thread::spawn(move || {runtime_thread(rx_from_app)});
+    let _ws_threads = thread::spawn(move || {runtime_thread(rx_from_app, tx_to_websocket.clone(), report_to_main)});
 
     eframe::run_native(Box::new(app), native_options);
 }
 
-fn runtime_thread(rx_from_app: tokio::sync::mpsc::Receiver<Message>){
+fn runtime_thread(rx_from_app: mpsc::Receiver<Message>, ws_out: mpsc::Sender<Message>, report_to_main: mpsc::Sender<serde_json::Value>){
     let rt = Runtime::new().unwrap();
     let _x = rt.enter();
-    rt.block_on(websocket_threads(rx_from_app));
+    rt.block_on(websocket_threads(rx_from_app, ws_out, report_to_main));
 }
 
-async fn websocket_threads(rx_from_app: tokio::sync::mpsc::Receiver<Message>){
+async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>, ws_out: mpsc::Sender<Message>, report_to_main: mpsc::Sender<serde_json::Value>){
         let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
         let (ws_str, _) = connect_async(ws_url).await.unwrap();//.expect("failed to connect to streaming api");
         //println!("{:?}", ws_str);
         let (ws_write, ws_read) = ws_str.split();
         println!("{:?}", ws_read);
        let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
-       let in_task = tokio::spawn(ws_incoming(ws_read));
+       let in_task = tokio::spawn(ws_incoming(ws_read, ws_out, report_to_main));
 
        tokio::select!{
            _ = out_task => {},
@@ -149,7 +154,8 @@ async fn websocket_threads(rx_from_app: tokio::sync::mpsc::Receiver<Message>){
 
 }
 
-async fn ws_outgoing(mut rx_from_app: mpsc::Receiver<Message>, mut ws_out: futures_util::stream::SplitSink<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>, Message>){
+async fn ws_outgoing(mut rx_from_app: mpsc::Receiver<Message>, 
+                mut ws_out: futures_util::stream::SplitSink<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>, Message>){
  let mut looking = true;
         while looking {
             match rx_from_app.recv().await {
@@ -166,12 +172,25 @@ async fn ws_outgoing(mut rx_from_app: mpsc::Receiver<Message>, mut ws_out: futur
         }
 }
 
-async fn ws_incoming(mut ws_in: futures_util::stream::SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>){
- let mut looking = true;
-        //while looking {
+async fn ws_incoming(ws_in: futures_util::stream::SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>,
+                ws_out: mpsc::Sender<Message>,
+                report_to_main: mpsc::Sender<serde_json::Value>){
          let print_task =    ws_in.for_each(|message| async {
                 match message.unwrap().into_text() {
-                    Ok(msg) => println!("{}", msg),
+                    Ok(msg) => {
+                        println!("{}", msg);
+                        let json: serde_json::Value = serde_json::from_str(&msg).expect("parse JSON fail");
+                        println!("as J {:?}", json);
+                        if json["payload"]["event_name"].eq("PlayerLogin") {
+                            println!("online!");
+                            let _ignore = report_to_main.send(json).await;
+                        }else if json["payload"]["event_name"].eq("PlayerLogout") {
+                            println!("offline!");
+        let _res = ws_out.send(
+            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}".to_string())).await;
+                            
+                        }
+                    },
                     Err(e) => {
                         println!("DIH {:?}", e);
                     },
@@ -181,5 +200,4 @@ async fn ws_incoming(mut ws_in: futures_util::stream::SplitStream<WebSocketStrea
              _ = print_task => {},
          }
 
-        //}
 }
