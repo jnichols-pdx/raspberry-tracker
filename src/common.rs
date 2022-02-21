@@ -177,6 +177,14 @@ impl CharacterList {
     pub fn push(&mut self, new_char: Character) {
         self.characters.push(new_char);
     }
+
+    pub fn has_auto_tracked(&self, target_id: String) -> bool {
+        if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
+            target.auto_track
+        } else{
+            false
+        }
+    }
 }
 
 pub trait ViewWithDB {
