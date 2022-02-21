@@ -3,13 +3,16 @@ use eframe::{egui, epi};
 use egui::*;
 use tokio::sync::{mpsc};
 use crate::common::*;
+use crate::session::*;
 use sqlite::State;
+use std::sync::{Arc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 pub struct TrackerApp {
-    pub from_main: mpsc::Receiver<Action>,
+    //pub from_main: mpsc::Receiver<Action>,
     pub in_character_ui: bool,
-    pub char_list: CharacterList,
+    pub char_list: Arc<RwLock<CharacterList>>,
+    pub session_list: Arc<RwLock<Vec<Session>>>,
     pub db: sqlite::Connection,
     pub lastx: f32,
     pub lasty: f32,
@@ -192,26 +195,12 @@ impl epi::App for TrackerApp {
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
         //let Self { in_character_ui, from_main, char_list, db, lastx, lasty, size_changed} = self;
 
-        println!(".");
         match self.ws_messages.try_recv() {
-            Err(mpsc::error::TryRecvError::Empty) => {println!("-");},
+            Err(mpsc::error::TryRecvError::Empty) => {},
             Err(_) => {println!("x");},
             Ok(json) => {
                 println!("j");
-                if json["payload"]["event_name"].eq("PlayerLogin") {
-                    println!("^");
-                    match self.ws_out
-                        .blocking_send(
-                            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
-                            json["payload"]["character_id"].to_owned()))) {
-                        Err(e) => println!("dah {:?}",e),
-                        Ok(_) => {},
-                        }
-
                 }
-
-
-            }
         }
 
         //can access "window size" via ctx.available_rect();
@@ -267,7 +256,8 @@ impl epi::App for TrackerApp {
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
 
             if ui.button("characters").clicked() {
-                self.char_list.message = None;
+                let mut char_list_rw = self.char_list.write().unwrap();
+                char_list_rw.message = None;
                 self.in_character_ui = ! self.in_character_ui;
             }
             });
@@ -276,7 +266,9 @@ impl epi::App for TrackerApp {
         });
 
         if self.in_character_ui {
-            self.char_list.ui(&ctx, &self.db);
+            //Mutable write access required because UI code handles adding / removing characters to the list.
+            let mut char_list_rw = self.char_list.write().unwrap();
+            char_list_rw.ui(&ctx, &self.db);
 
         }
         else

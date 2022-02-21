@@ -179,6 +179,7 @@ impl CharacterList {
     }
 
     pub fn has_auto_tracked(&self, target_id: String) -> bool {
+        println!("track check for >{}<", target_id);
         if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
             target.auto_track
         } else{
@@ -206,5 +207,51 @@ impl StripQuote for String {
     fn unquote(&self) -> String {
         self[1..self.len() -1].to_owned()
     }
+}
+
+
+pub enum EventType {
+    Death,
+    Kill,
+    TeamKill,
+    Suicide,
+    DestroyVehicle,
+    LoseVehicle,
+}
+
+pub enum Vehicle {
+    Flash,
+    Javelin,
+    Harasser,
+    Sunderer,
+    Lightning,
+    Prowler,
+    Vanguard,
+    Magrider,
+    Chimera,
+    Colossus,
+    Ant,
+    Deliverer,
+
+    DropPod,
+    Mosquito,
+    Scythe,
+    Reaver,
+    Dervish,
+    Valkyrie,
+    Wasp,
+    Liberator,
+    Galaxy,
+    Lodestar,
+    BastionFleetCarrier,
+}
+
+pub enum Class {
+    LightAssault,
+    Medic,
+    Engineer,
+    HeavyAssault,
+    Infiltrator,
+    Max,
 }
 
