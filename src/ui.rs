@@ -60,6 +60,7 @@ impl ViewWithDB for CharacterList {
                                                     to_remove: false,
                                                     confirm_visible: false,
                                                     to_track: false,
+                                                    changed_auto_track: false,
                                                 };
 
                                                 if new_char["outfit"].is_object() {
@@ -107,6 +108,11 @@ impl ViewWithDB for CharacterList {
                             }
                         char.to_track = false;
                     }
+                    if char.changed_auto_track {
+
+                        db_set_char_auto_track(&char, db);
+                        char.changed_auto_track = false;
+                    }
                 }
 
                 scroll_chars.show(ui, |ui| {
@@ -150,7 +156,9 @@ impl View for Character {
         ui.horizontal(|ui| {
             ui.label(&self.character_id);
             ui.label(name_from_faction(self.faction));
-            ui.checkbox(&mut self.auto_track, "Auto Track");
+            if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
+                self.changed_auto_track = true;
+            }
             if !self.auto_track {
                 if ui.button("Start Session").clicked() {
                     self.to_track = true;

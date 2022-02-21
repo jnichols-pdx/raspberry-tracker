@@ -88,6 +88,7 @@ fn main() {
                 to_remove: false,
                 confirm_visible: false,
                 to_track: false,
+                changed_auto_track: false,
             };
             match row[2].as_string() {
                 Some(outfit_alias) => achar.outfit = Some(outfit_alias.to_string()),

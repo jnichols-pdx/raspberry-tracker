@@ -36,6 +36,7 @@ pub struct Character {
     pub to_remove: bool,
     pub confirm_visible: bool,
     pub to_track: bool,
+    pub changed_auto_track: bool,
 }
 
 pub fn name_from_faction(faction: Faction) -> String
@@ -129,6 +130,17 @@ pub fn db_save_new_char(char: &Character, db: &sqlite::Connection) -> bool {
                 Ok(_) => true,
                 Err(_) => false,
             }
+}
+
+pub fn db_update_char(char: &Character, db: &sqlite::Connection) {}
+
+pub fn db_set_char_auto_track(char: &Character, db: &sqlite::Connection) {
+            let mut statement = db
+                .prepare("UPDATE characters SET auto_track = ? WHERE id IS ?;").unwrap();
+            statement.bind(1,char.auto_track as i64).unwrap();
+            statement.bind(2,&*char.character_id).unwrap();
+
+            while let State::Row= statement.next().unwrap() {};
 }
 
 pub fn db_remove_char(char: &Character, db: &sqlite::Connection) {
