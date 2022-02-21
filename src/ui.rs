@@ -14,6 +14,8 @@ pub struct TrackerApp {
     pub lastx: f32,
     pub lasty: f32,
     pub size_changed: bool,
+    pub ws_messages: mpsc::Receiver<serde_json::Value>,
+    pub ws_out: mpsc::Sender<Message>,
 }
 
 impl ViewWithDB for CharacterList {
@@ -62,6 +64,11 @@ impl ViewWithDB for CharacterList {
                                                     bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
                                                 }
 
+
+        let _res = self.websocket_out.blocking_send(
+            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+            bob.character_id).to_owned()));
+
                                                 if db_save_new_char(&bob, db) {
                                                     self.characters.push(bob);
                                                 }
@@ -103,6 +110,9 @@ impl ViewWithDB for CharacterList {
                         for char in &mut self.characters {
                             if char.to_remove {
                                 db_remove_char(&char, db);
+        let _res = self.websocket_out.blocking_send(
+            Message::Text(format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+            char.character_id).to_owned()));
                             }
                         }
 
@@ -181,6 +191,28 @@ impl epi::App for TrackerApp {
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
         //let Self { in_character_ui, from_main, char_list, db, lastx, lasty, size_changed} = self;
+
+        println!(".");
+        match self.ws_messages.try_recv() {
+            Err(mpsc::error::TryRecvError::Empty) => {println!("-");},
+            Err(_) => {println!("x");},
+            Ok(json) => {
+                println!("j");
+                if json["payload"]["event_name"].eq("PlayerLogin") {
+                    println!("^");
+                    match self.ws_out
+                        .blocking_send(
+                            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
+                            json["payload"]["character_id"].to_owned()))) {
+                        Err(e) => println!("dah {:?}",e),
+                        Ok(_) => {},
+                        }
+
+                }
+
+
+            }
+        }
 
         //can access "window size" via ctx.available_rect();
         let mut newchange = false;
