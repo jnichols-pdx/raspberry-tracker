@@ -326,6 +326,8 @@ pub enum Vehicle {
     Galaxy,
     Lodestar,
     BastionFleetCarrier,
+
+    Unknown,
 }
 
 pub enum Class {
@@ -335,5 +337,7 @@ pub enum Class {
     HeavyAssault,
     Infiltrator,
     Max,
+
+    Unknown,
 }
 

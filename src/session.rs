@@ -11,6 +11,8 @@ pub struct Session {
    character: FullCharacter,
    events: EventList,
    weapons: WeaponStatsList,
+   start_time: u64,
+   end_time: Option<u64>,
 }
 
 impl Session {
@@ -18,21 +20,54 @@ impl Session {
         to_match.eq(&self.character.character_id)
     }
 
-    pub fn new(character: Character, br: u8, asp: u8) -> Self {
+    pub fn new(character: Character, br: u8, asp: u8, start: u64) -> Self {
         let character = FullCharacter::new(&character, br, asp);
         Session {
             character: character,
             events: EventList::new(),
             weapons: WeaponStatsList::new(),
+            start_time: start,
+            end_time: None,
         }
     }
 
-    pub fn new_from_full(character: FullCharacter) -> Self {
+    pub fn new_from_full(character: FullCharacter, start: u64) -> Self {
         Session {
             character: character,
             events: EventList::new(),
             weapons: WeaponStatsList::new(),
+            start_time: start,
+            end_time: None,
         }
+    }
+
+    pub fn get_list_name(&self) -> String {
+        if let Some(end_time) = self.end_time {
+            format!("{} {}-{}", self.character.full_name, self.start_time, end_time )
+        } else {
+            format!("{} {}-Active", self.character.full_name, self.start_time)
+        }
+    }
+
+    pub fn log_event(&mut self, event: Event) {
+        self.events.push(event);
+    }
+
+    pub fn ui(&self, ctx: &egui::CtxRef) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // The central panel the region left after adding TopPanel's and SidePanel's
+            //ui.heading(format!("{} Stats", new_char_name));
+            ui.heading("<char> Stats");
+                ui.label(self.get_list_name());
+        });
+
+            self.events.ui(&ctx);
+         
+    }
+    
+    pub fn end(&mut self, time: u64)
+    {
+        self.end_time = Some(time);
     }
 
 }
@@ -74,17 +109,17 @@ impl FullCharacter {
     }
 }
 pub struct Event {
-    kind: EventType,
-    faction: Faction,
-    br: u8,
-    asp: u8,
-    class: Class,
-    name: String,
-    weapon_id: String,
-    headshot: bool,
-    kdr: f32,
-    timestamp: u64,
-    vehicle: Option<Vehicle>,
+    pub kind: EventType,
+    pub faction: Faction,
+    pub br : u8,
+    pub asp: u8,
+    pub class: Class,
+    pub name: String,
+    pub weapon_id: String,
+    pub headshot: bool,
+    pub kdr: f32,
+    pub timestamp: u64,
+    pub vehicle: Option<Vehicle>,
 
 }
 pub struct EventList {
@@ -96,6 +131,17 @@ impl EventList {
         EventList {
             events: Vec::new(),
         }
+    }
+
+    pub fn push(&mut self, event: Event) {
+        self.events.push(event);
+    }
+
+    pub fn ui(&self, ctx: &egui::CtxRef) {
+        egui::SidePanel::right("events_panel").show(ctx, |ui| {
+            ui.heading("Event feed");
+            ui.label("YUP YUP");
+        });
     }
 }
 

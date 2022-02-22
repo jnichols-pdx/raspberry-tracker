@@ -20,6 +20,7 @@ pub struct TrackerApp {
     pub ws_messages: mpsc::Receiver<serde_json::Value>,
     pub ws_out: mpsc::Sender<Message>,
     pub frame_cb: Option<oneshot::Sender<epi::Frame>>,
+    pub session_count: usize,
 }
 
 impl ViewWithDB for CharacterList {
@@ -191,6 +192,13 @@ impl epi::App for TrackerApp {
                 }
         }
 
+        {
+            let session_list_ro = self.session_list.read().unwrap();
+            if self.session_count < session_list_ro.len() {
+                self.in_character_ui = false;
+                self.session_count = session_list_ro.len();
+            }
+        }
         //can access "window size" via ctx.available_rect();
         let mut newchange = false;
         //println!("{:?}",ctx.available_rect());
@@ -261,16 +269,12 @@ impl epi::App for TrackerApp {
         }
         else
         {
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            //ui.heading(format!("{} Stats", new_char_name));
-            ui.heading("<char> Stats");
-        });
-
-        egui::SidePanel::right("events_panel").show(ctx, |ui| {
-            ui.heading("Event feed");
-        });
+        
+            let session_list_ro = self.session_list.read().unwrap();
+            if let Some(session) = session_list_ro.last() {
+                session.ui(&ctx);
+            }
+            
         }
 
     }

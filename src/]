@@ -138,7 +138,6 @@ fn main() {
         ws_messages: report_from_ws,
         ws_out: tx_to_websocket.clone(),
         frame_cb: Some(tx_frame_to_ws),
-        session_count: 0,
     };
 
     let _ws_threads = thread::spawn(move || {runtime_thread(rx_from_app,
@@ -179,10 +178,10 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
     //println!("{:?}", ws_str);
     let (ws_write, ws_read) = ws_str.split();
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
-    let ui_frame =  rx_ui_frame.await.unwrap();
+    let ui_frame rx_ui_frame.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame));
+    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list));
 
     tokio::select!{
         _ = out_task => {},
@@ -247,7 +246,6 @@ async fn parse_messages(
                 char_list: Arc<RwLock<CharacterList>>,
                 ws_out: mpsc::Sender<Message>,
                 session_list:  Arc<RwLock<Vec<Session>>>,
-                ui_frame: epi::Frame,
         ) 
 {
     let mut parsing = true;
@@ -278,9 +276,10 @@ async fn parse_messages(
                             Err(whut) => println!("{}", whut),
                             Ok(details) => {
 
-                                let bob = full_character_from_json(&details).unwrap();
+                                let mut bob = full_character_from_json(&details).unwrap();
                                 {
                                     let mut char_list_rw = char_list.write().unwrap();
+                                    bob.full_name = "ONLINE".to_owned();
                                     char_list_rw.update_entry_from_full(&bob);
                                     //println!("did update");
                                 }
@@ -292,8 +291,7 @@ async fn parse_messages(
                                 {
                                     //HERE
                                     let mut session_list_rw = session_list.write().unwrap();
-                                    session_list_rw.push(Session::new_from_full(bob, json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap()));
-                                    ui_frame.request_repaint();
+                                    session_list_rw.push(Session::new_from_full(bob));
                                 }
                             },
                         }
@@ -303,99 +301,20 @@ async fn parse_messages(
                     }
                 } else if json["payload"]["event_name"].eq("Death") {
                     println!("Found a death");
-                    println!("{:?}", json);
-                    let mut attacker = false;
-                    {
-                        let session_list_ro = session_list.read().unwrap();
-                        if let Some(current_session) = session_list_ro.last() {
-                            if current_session.match_player_id(&json["payload"]["attacker_character_id"].to_string().unquote()) {
-                                println!("You killed someone!");
-                                attacker = true;
-                            } else {
-                                println!("You died!!!!");
-                                attacker = false;
-                            }
+                    let session_list_rw = session_list.write().unwrap();
+                    if let Some(current_session) = session_list_rw.last() {
+                        if current_session.match_player_id(&json["payload"]["attacker_character_id"].to_string().unquote()) {
+                            println!("You killed someone!");
                         }
-                    }
-                    let mut final_event: Option<Event> = None;
-                    if attacker {
-                        //TODO: handle suicides, and teamkills
-                        match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
-                            Err(whut) => println!("{}", whut),
-                            Ok(details) => {
-                                println!("YOUR VICTIM:");
-                                println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap();
-                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap();
-                                let ratio: f32 = kill_count as f32 / death_count as f32;
-                                let event = Event {
-                                    kind: EventType::Kill,
-                                    faction: Faction::from(faction_num),
-                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(),
-                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap(),
-                                    class: Class::Unknown,
-                                    name: details["character_list"][0]["name"]["first"].to_string().unquote(),
-                                    weapon_id: json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap() > 0,
-                                    kdr: ratio,
-                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap(),
-                                    vehicle: None, //TODO - handle vehicle events
-                                };
-                                final_event = Some(event);
-                            }
-                        }
-                        
-                    } else {
-                        match  lookup_new_char_details(&json["payload"]["attacker_character_id"].to_string().unquote()) {
-                            Err(whut) => println!("{}", whut),
-                            Ok(details) => {
-                                println!("YOUR KILLER:");
-                                println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap();
-                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap();
-                                let ratio = kill_count as f32/ death_count as f32;
-                                let event = Event {
-                                    kind: EventType::Death,
-                                    faction: Faction::from(faction_num),
-                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(),
-                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap(),
-                                    class: Class::Unknown,
-                                    name: details["character_list"][0]["name"]["first"].to_string().unquote(),
-                                    weapon_id: json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap() > 0,
-                                    kdr: ratio,
-                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap(),
-                                    vehicle: None, //TODO - handle vehicle events
-                                };
-                                final_event = Some(event);
-                            }
-                        }
+
 
                     }
-
-                    if let Some(event) = final_event {
-                        let mut session_list_rw = session_list.write().unwrap();
-                        if let Some(mut current_session) = session_list_rw.last_mut() {
-                            current_session.log_event(event);
-                        }
-
-                    }
-
-
 
                 } else if json["payload"]["event_name"].eq("PlayerLogout") {
                     println!("offline!");
-                    let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap();
                     let _res = ws_out.send(
                             Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}"
                                 .to_string())).await;
-                    let mut session_list_rw = session_list.write().unwrap();
-                    if let Some(mut current_session) = session_list_rw.last_mut() {
-                        current_session.end(timestamp);
-                    }
-                    ui_frame.request_repaint();
                 }else {
                     println!("+{}", json);
                 }
