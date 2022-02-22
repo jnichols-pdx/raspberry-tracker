@@ -43,31 +43,7 @@ impl ViewWithDB for CharacterList {
                                             Err(whut) => println!("{}", whut),
                                             Ok(details) => {
                                                 println!("RAW: {:?}", details);
-                                                let new_char = &details["character_list"][0];
-                                                println!("deets: {:?}", new_char);
-                                                let faction_num = new_char["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-                                                let world_num = new_char["world_id"].to_string().unquote().parse::<i64>().unwrap();
-
-                                                let mut bob = Character {
-                                                    full_name: new_char["name"]["first"].to_string().unquote(),
-                                                    lower_name: new_char["name"]["first_lower"].to_string().unquote(),
-                                                    server: World::from(world_num),
-                                                    outfit: None,
-                                                    outfit_full: None,
-                                                    character_id: new_char["character_id"].to_string().unquote(),
-                                                    auto_track: true,
-                                                    faction: Faction::from(faction_num),
-                                                    to_remove: false,
-                                                    confirm_visible: false,
-                                                    to_track: false,
-                                                    changed_auto_track: false,
-                                                };
-
-                                                if new_char["outfit"].is_object() {
-                                                    bob.outfit = Some(new_char["outfit"]["alias"].to_string().unquote());
-                                                    bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
-                                                }
-
+                                                let bob = character_from_json(&details).unwrap();
 
         let _res = self.websocket_out.blocking_send(
             Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",

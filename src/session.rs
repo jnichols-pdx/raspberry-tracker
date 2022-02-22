@@ -13,18 +13,66 @@ pub struct Session {
    weapons: WeaponStatsList,
 }
 
-pub struct FullCharacter {
-    full_name: String,
-    pub lower_name: String,
-    server: World,
-    outfit: Option<String>,
-    outfit_full: Option<String>,
-    character_id: String,
-    faction: Faction,
-    br: u8,
-    asp: u8,
+impl Session {
+    pub fn match_player_id(&self, to_match: &String) -> bool {
+        to_match.eq(&self.character.character_id)
+    }
+
+    pub fn new(character: Character, br: u8, asp: u8) -> Self {
+        let character = FullCharacter::new(&character, br, asp);
+        Session {
+            character: character,
+            events: EventList::new(),
+            weapons: WeaponStatsList::new(),
+        }
+    }
+
+    pub fn new_from_full(character: FullCharacter) -> Self {
+        Session {
+            character: character,
+            events: EventList::new(),
+            weapons: WeaponStatsList::new(),
+        }
+    }
+
 }
 
+pub struct FullCharacter {
+    pub full_name: String,
+    pub lower_name: String,
+    pub server: World,
+    pub outfit: Option<String>,
+    pub outfit_full: Option<String>,
+    pub character_id: String,
+    pub faction: Faction,
+    pub br: u8,
+    pub asp: u8,
+}
+
+impl FullCharacter {
+    pub fn new(source: &Character, br: u8, asp: u8) -> Self {
+        let mut new_char = FullCharacter {
+            full_name: source.full_name.to_owned(),
+            lower_name: source.lower_name.to_owned(),
+            server: source.server,
+            outfit: None,
+            outfit_full: None,
+            character_id: source.character_id.to_owned(),
+            faction: source.faction,
+            br: br,
+            asp: asp,
+        };
+
+        if let Some(outfit) = &source.outfit {
+            new_char.outfit = Some(outfit.to_owned());
+        }
+        if let Some(outfit_full) = &source.outfit_full {
+            new_char.outfit_full = Some(outfit_full.to_owned());
+        }
+
+        new_char
+    }
+}
 pub struct Event {
     kind: EventType,
     faction: Faction,
@@ -41,6 +89,14 @@ pub struct Event {
 }
 pub struct EventList {
     events: Vec<Event>,
+}
+
+impl EventList {
+    pub fn new() -> Self {
+        EventList {
+            events: Vec::new(),
+        }
+    }
 }
 
 pub struct WeaponStats {
@@ -60,3 +116,10 @@ pub struct WeaponStatsList {
     weapons: Vec<WeaponStats>,
 }
 
+impl WeaponStatsList {
+    pub fn new() -> Self {
+        WeaponStatsList{
+            weapons: Vec::new(),
+        }
+    }
+}

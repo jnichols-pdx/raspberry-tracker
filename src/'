@@ -143,10 +143,11 @@ fn main() {
                                                             report_to_main,
                                                             character_list.clone(),
                                                             session_list.clone(),
+                                                            db,
                                                             )
                                              });
 
-    //let bill: Session;
+    let bill: Session;
 
     eframe::run_native(Box::new(app), native_options);
 }
@@ -156,10 +157,11 @@ fn runtime_thread(rx_from_app: mpsc::Receiver<Message>,
                   report_to_main: mpsc::Sender<serde_json::Value>,
                   char_list: Arc<RwLock<CharacterList>>,
                   session_list:  Arc<RwLock<Vec<Session>>>,
+                  db: &sqlite::Connection,
                   ){
     let rt = Runtime::new().unwrap();
     let _x = rt.enter();
-    rt.block_on(websocket_threads(rx_from_app, ws_out, report_to_main, char_list, session_list));
+    rt.block_on(websocket_threads(rx_from_app, ws_out, report_to_main, char_list, session_list, db));
 }
 
 async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
@@ -167,6 +169,7 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
                            report_to_main: mpsc::Sender<serde_json::Value>,
                            char_list: Arc<RwLock<CharacterList>>,
                            session_list:  Arc<RwLock<Vec<Session>>>,
+                           db: &sqlite::Connection,
                            ){
     let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
     let (ws_str, _) = connect_async(ws_url).await.unwrap();//.expect("failed to connect to streaming api");
@@ -175,7 +178,7 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list));
+    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, db));
 
     tokio::select!{
         _ = out_task => {},
@@ -240,8 +243,8 @@ async fn parse_messages(
                 char_list: Arc<RwLock<CharacterList>>,
                 ws_out: mpsc::Sender<Message>,
                 session_list:  Arc<RwLock<Vec<Session>>>,
-        ) 
-{
+                db: &sqlite::Connection,
+                ) {
     let mut parsing = true;
     while parsing {
         match ws_messages.recv().await {
@@ -252,42 +255,76 @@ async fn parse_messages(
                     println!("online!");
                     let is_tracked;
                     {
-                      let char_list_ro = char_list.read().unwrap();
-                      is_tracked =char_list_ro.has_auto_tracked(json["payload"]["character_id"].to_string().unquote());
+                        let char_list_ro = char_list.read().unwrap();
+                        is_tracked =char_list_ro.has_auto_tracked(json["payload"]["character_id"].to_string().unquote());
                     }
                     if is_tracked { 
                         match ws_out
                             .send(
-                                    Message::Text(
-                                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
+                             Message::Text(
+                                format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
                                     json["payload"]["character_id"].to_owned()))).await 
                             {
                                 Err(e) => println!("dah {:?}",e),
                                 Ok(_) => {},
                             }
+                        /*let found_char: Option<Character>;
+                        //scope the read access to character list and character to just long enough
+                        //to retrieve the relevent information
+                        {
+                            let char_list_ro = char_list.read().unwrap();
+                            if let Some(character) = char_list_ro.find_character_by_id(json["payload"]["character_id"].to_string().unquote()) {
+                                let mut copied_char = Character{
+                                    full_name: character.full_name.to_owned(),
+                                    lower_name: character.full_name.to_owned(),
+                                    server: character.server,
+                                    outfit: None,
+                                    outfit_full: None,
+                                    character_id: character.full_name.to_owned(),
+                                    auto_track: false,
+                                    faction: character.faction,
+                                    to_remove: false,
+                                    confirm_visible:false,
+                                    to_track: false,
+                                    changed_auto_track: false,
+                                };
 
-                        match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
+                                if let Some(outfit_alias) = &character.outfit {
+                                    copied_char.outfit = Some(outfit_alias.to_owned());
+                                }
+                                if let Some(outfit_name) = &character.outfit_full {
+                                    copied_char.outfit_full = Some(outfit_name.to_owned());
+                                }
+                                found_char = Some(copied_char);
+                            }
+                            else {
+                                found_char = None;
+                            }
+                        }*/
+                        match  lookup_new_char_details(&char_id) {
                             Err(whut) => println!("{}", whut),
                             Ok(details) => {
 
-                                let mut bob = full_character_from_json(&details).unwrap();
+                                let bob = full_character_from_json(&details).unwrap();
                                 {
-                                    let mut char_list_rw = char_list.write().unwrap();
-                                    bob.full_name = "ONLINE".to_owned();
+                                    let char_list_rw = char_list.write().unwrap();
                                     char_list_rw.update_entry_from_full(&bob);
-                                    //println!("did update");
                                 }
 
-                                //  db_update_char_with_full(&bob, 
-                                
-                                //ISSUE: can't hold an sqlite db connection here, it isn't sync/send so not for use with tokio.
+                                db_update_char_with_full(&bob, 
 
-                                {
+
+                                if let Some(character) = found_char {
                                     //HERE
-                                    let mut session_list_rw = session_list.write().unwrap();
-                                    session_list_rw.push(Session::new_from_full(bob));
+                                    //TODO: API request for Newest Details. UPDATE character list AND DB
+                                    //Pass ... wait - do we even NEED to pull character deets out of the
+                                    //character list? WE're just going to go request them again from the
+                                    //Census API so could fucking SKIP that shit..., le sigh.
+                                    let session_list_rw = session_list.write().unwrap();
                                 }
-                            },
+                            }
+                        } else {
+                            println!("Recieved Login info for character we DON'T know about??, despite being told it's tracked!");
                         }
 
                     } else {
@@ -303,15 +340,16 @@ async fn parse_messages(
 
 
                     }
-
-                } else if json["payload"]["event_name"].eq("PlayerLogout") {
+                    
+                }else if json["payload"]["event_name"].eq("PlayerLogout") {
                     println!("offline!");
                     let _res = ws_out.send(
-                            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}"
-                                .to_string())).await;
+                        Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}"
+                        .to_string())).await;
                 }else {
                     println!("+{}", json);
                 }
+
 
             },
             None => {

@@ -7,6 +7,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 use num_enum::FromPrimitive;
 use tokio::sync::{mpsc};
 use sqlite::State;
+use crate::session::*;
 
 pub struct Action {
     pub val: u32,
@@ -23,7 +24,7 @@ pub enum Faction {
     NSO = 0x04,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Character {
     pub full_name: String,
     pub lower_name: String,
@@ -104,6 +105,44 @@ pub fn lookup_new_char_details(new_id: &String) -> Result<serde_json::Value, ure
     Ok(resp)
 }
 
+pub fn character_from_json(json: &serde_json::Value) -> Result<Character, String> {
+
+    let new_char = &json["character_list"][0];
+    println!("deets: {:?}", new_char);
+    let faction_num = new_char["faction_id"].to_string().unquote().parse::<i64>().unwrap();
+    let world_num = new_char["world_id"].to_string().unquote().parse::<i64>().unwrap();
+
+    let mut bob = Character {
+        full_name: new_char["name"]["first"].to_string().unquote(),
+        lower_name: new_char["name"]["first_lower"].to_string().unquote(),
+        server: World::from(world_num),
+        outfit: None,
+        outfit_full: None,
+        character_id: new_char["character_id"].to_string().unquote(),
+        auto_track: true,
+        faction: Faction::from(faction_num),
+        to_remove: false,
+        confirm_visible: false,
+        to_track: false,
+        changed_auto_track: false,
+    };
+
+    if new_char["outfit"].is_object() {
+        bob.outfit = Some(new_char["outfit"]["alias"].to_string().unquote());
+        bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
+    }
+    Ok(bob)
+
+}
+
+pub fn full_character_from_json(json: &serde_json::Value) -> Result<FullCharacter, String> {
+    let bob = character_from_json(json).unwrap();
+    let biff = FullCharacter::new(&bob, 
+            json["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(), 
+            json["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap());
+    Ok(biff)
+}
+
 //characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER)
 pub fn db_save_new_char(char: &Character, db: &sqlite::Connection) -> bool {
             //println!("In save");
@@ -133,6 +172,8 @@ pub fn db_save_new_char(char: &Character, db: &sqlite::Connection) -> bool {
 }
 
 pub fn db_update_char(char: &Character, db: &sqlite::Connection) {}
+
+pub fn db_update_char_with_full(char: &FullCharacter, db: &sqlite::Connection) {}
 
 pub fn db_set_char_auto_track(char: &Character, db: &sqlite::Connection) {
             let mut statement = db
@@ -198,6 +239,35 @@ impl CharacterList {
             false
         }
     }
+
+    pub fn find_character_by_id(&self, target_id: String) -> Option<&Character> {
+        if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
+            Some(&target)
+        } else{
+            None
+        }
+    }
+
+    pub fn update_entry_from_full(&mut self, newer_char: &FullCharacter) {
+       if let Some(mut target) = self.characters.iter_mut().find(|chara| (**chara).character_id.eq(&newer_char.character_id))  {
+            target.full_name =  newer_char.full_name.to_owned();
+            target.lower_name =  newer_char.lower_name.to_owned();
+            target.server =  newer_char.server;
+            if let Some(outfit_alias) = &newer_char.outfit {
+                target.outfit = Some(outfit_alias.to_owned());
+            } else {
+                target.outfit = None;
+            }
+            if let Some(outfit_name) = &newer_char.outfit {
+                target.outfit_full = Some(outfit_name.to_owned());
+            } else {
+                target.outfit_full = None;
+            }
+            target.character_id =  newer_char.character_id.to_owned();
+            target.faction =  newer_char.faction;
+       }
+    }
+
 }
 
 pub trait ViewWithDB {
