@@ -1310,6 +1310,7 @@ dependencies = [
  "directories-next",
  "eframe",
  "egui",
+ "epi",
  "futures-util",
  "num_enum",
  "serde_json",

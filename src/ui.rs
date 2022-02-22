@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 use eframe::{egui, epi};
 use egui::*;
-use tokio::sync::{mpsc};
+use tokio::sync::{mpsc, oneshot};
 use crate::common::*;
 use crate::session::*;
 use sqlite::State;
@@ -19,6 +19,7 @@ pub struct TrackerApp {
     pub size_changed: bool,
     pub ws_messages: mpsc::Receiver<serde_json::Value>,
     pub ws_out: mpsc::Sender<Message>,
+    pub frame_cb: Option<oneshot::Sender<epi::Frame>>,
 }
 
 impl ViewWithDB for CharacterList {
@@ -163,16 +164,19 @@ impl epi::App for TrackerApp {
         "Raspberry Tracker"
     }
    
-   /*
+
     /// Called once before UI first renders
     fn setup(
         &mut self,
         _ctx: &egui::CtxRef,
-        _frame: *epi::Frame,
+        frame: &epi::Frame,
         _storage: Option<&dyn epi::Storage>,
     ) {
-            //load previous apps tate as held by egui.. won't be using this?
-    }*/
+        if let Some(callback) = self.frame_cb.take() {
+            let _blah = callback.send(frame.clone());
+        }
+
+    }
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.

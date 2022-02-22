@@ -8,7 +8,7 @@ mod ui;
 use crate::common::*;
 use crate::session::*;
 use std::io::{self, stderr, Write, Error};
-use tokio::sync::{mpsc};
+use tokio::sync::{mpsc, oneshot};
 use sqlite::State;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocketStream};
 use futures_util::{future, pin_mut, StreamExt, SinkExt, stream::SplitSink, stream::SplitStream, TryStreamExt};
@@ -26,6 +26,7 @@ fn main() {
     let session_list = Arc::new(RwLock::new(Vec::<Session>::new()));
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
     let (report_to_main, report_from_ws) = mpsc::channel::<serde_json::Value>(64);
+    let (tx_frame_to_ws, rx_frame_from_ui) = oneshot::channel::<epi::Frame>();
 
     let mut dbo: Option<sqlite::Connection> = None ;
     if let Some(dir_gen) = directories_next::ProjectDirs::from("com","JTNBrickWorks","Raspberry Tracker") {
@@ -136,6 +137,7 @@ fn main() {
         size_changed: false,
         ws_messages: report_from_ws,
         ws_out: tx_to_websocket.clone(),
+        frame_cb: Some(tx_frame_to_ws),
     };
 
     let _ws_threads = thread::spawn(move || {runtime_thread(rx_from_app,
@@ -143,6 +145,7 @@ fn main() {
                                                             report_to_main,
                                                             character_list.clone(),
                                                             session_list.clone(),
+                                                            rx_frame_from_ui,
                                                             )
                                              });
 
@@ -156,10 +159,11 @@ fn runtime_thread(rx_from_app: mpsc::Receiver<Message>,
                   report_to_main: mpsc::Sender<serde_json::Value>,
                   char_list: Arc<RwLock<CharacterList>>,
                   session_list:  Arc<RwLock<Vec<Session>>>,
+                  rx_ui_frame: oneshot::Receiver<epi::Frame>,
                   ){
     let rt = Runtime::new().unwrap();
     let _x = rt.enter();
-    rt.block_on(websocket_threads(rx_from_app, ws_out, report_to_main, char_list, session_list));
+    rt.block_on(websocket_threads(rx_from_app, ws_out, report_to_main, char_list, session_list, rx_ui_frame));
 }
 
 async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
@@ -167,15 +171,17 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
                            report_to_main: mpsc::Sender<serde_json::Value>,
                            char_list: Arc<RwLock<CharacterList>>,
                            session_list:  Arc<RwLock<Vec<Session>>>,
+                           rx_ui_frame: oneshot::Receiver<epi::Frame>,
                            ){
     let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
     let (ws_str, _) = connect_async(ws_url).await.unwrap();//.expect("failed to connect to streaming api");
     //println!("{:?}", ws_str);
     let (ws_write, ws_read) = ws_str.split();
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
+    let ui_frame =  rx_ui_frame.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list));
+    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame));
 
     tokio::select!{
         _ = out_task => {},
@@ -240,6 +246,7 @@ async fn parse_messages(
                 char_list: Arc<RwLock<CharacterList>>,
                 ws_out: mpsc::Sender<Message>,
                 session_list:  Arc<RwLock<Vec<Session>>>,
+                ui_frame: epi::Frame,
         ) 
 {
     let mut parsing = true;
@@ -277,6 +284,7 @@ async fn parse_messages(
                                     char_list_rw.update_entry_from_full(&bob);
                                     //println!("did update");
                                 }
+                                ui_frame.request_repaint();
 
                                 //  db_update_char_with_full(&bob, 
                                 
