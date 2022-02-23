@@ -24,7 +24,7 @@ pub struct TrackerApp {
 }
 
 impl ViewWithDB for CharacterList {
-    fn ui(&mut self, ctx: &egui::CtxRef, db: &sqlite::Connection) {
+    fn ui(&mut self, ctx: &egui::Context, db: &sqlite::Connection) {
         egui::CentralPanel::default().show(ctx, |ui| {
                 ui.horizontal(|ui| {
                         ui.label("Track Character: ");
@@ -116,7 +116,7 @@ impl ViewWithDB for CharacterList {
 }
 
 impl View for Character {
-    fn ui(&mut self, _ctx: &egui::CtxRef) {
+    fn ui(&mut self, _ctx: &egui::Context) {
     }
     fn draw(&mut self, ui: &mut egui::Ui){
         ui.horizontal(|ui| {
@@ -169,19 +169,20 @@ impl epi::App for TrackerApp {
     /// Called once before UI first renders
     fn setup(
         &mut self,
-        _ctx: &egui::CtxRef,
+        ctx: &egui::Context,
         frame: &epi::Frame,
         _storage: Option<&dyn epi::Storage>,
     ) {
         if let Some(callback) = self.frame_cb.take() {
             let _blah = callback.send(frame.clone());
         }
+        ctx.set_visuals(egui::Visuals::dark()); 
 
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
         //let Self { in_character_ui, from_main, char_list, db, lastx, lasty, size_changed} = self;
 
         match self.ws_messages.try_recv() {

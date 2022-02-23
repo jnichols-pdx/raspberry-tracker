@@ -53,7 +53,7 @@ impl Session {
         self.events.push(event);
     }
 
-    pub fn ui(&self, ctx: &egui::CtxRef) {
+    pub fn ui(&self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
             //ui.heading(format!("{} Stats", new_char_name));
@@ -137,7 +137,7 @@ impl EventList {
         self.events.push(event);
     }
 
-    pub fn ui(&self, ctx: &egui::CtxRef) {
+    pub fn ui(&self, ctx: &egui::Context) {
         egui::SidePanel::right("events_panel").show(ctx, |ui| {
             ui.heading("Event feed");
             ui.label("YUP YUP");

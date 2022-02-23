@@ -8,9 +8,9 @@ edition = "2021"
 
 [dependencies]
 tokio-tungstenite = { version = "0.17", features = ["native-tls"] }
-egui = "0.16.1"
-eframe = "0.16.0"
-epi = "0.16.0"
+egui = "0.17"
+eframe = "0.17"
+epi = "0.17"
 ureq = { version = "2.4.0", features = ["json"] }
 sqlite = "0.26.0"
 tokio = { version = "1", features = ["full"] }
