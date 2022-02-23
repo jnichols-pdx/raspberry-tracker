@@ -41,6 +41,10 @@ impl Session {
         }
     }
 
+    pub fn current_character(&self) -> FullCharacter {
+        self.character.clone()
+    }
+
     pub fn get_list_name(&self) -> String {
         if let Some(end_time) = self.end_time {
             format!("{} {}-{}", self.character.full_name, self.start_time, end_time )
@@ -72,6 +76,7 @@ impl Session {
 
 }
 
+#[derive(Clone)]
 pub struct FullCharacter {
     pub full_name: String,
     pub lower_name: String,
@@ -108,6 +113,7 @@ impl FullCharacter {
         new_char
     }
 }
+
 pub struct Event {
     pub kind: EventType,
     pub faction: Faction,
@@ -121,6 +127,16 @@ pub struct Event {
     pub timestamp: u64,
     pub vehicle: Option<Vehicle>,
 
+}
+
+impl Event {
+    pub fn ui(&self, ui: &mut egui::Ui) {
+        match self.kind {
+            EventType::Death => ui.label(format!("{} killed you.", self.name)),
+            EventType::Kill => ui.label(format!("You killed {}.", self.name)),
+            _ => ui.label("other".to_owned()),
+        };
+    }
 }
 pub struct EventList {
     events: Vec<Event>,
@@ -140,7 +156,27 @@ impl EventList {
     pub fn ui(&self, ctx: &egui::Context) {
         egui::SidePanel::right("events_panel").show(ctx, |ui| {
             ui.heading("Event feed");
-            ui.label("YUP YUP");
+            let text_style = TextStyle::Body;
+            let row_height = ui.text_style_height(&text_style);
+            ScrollArea::vertical().show_rows( //is an stick_to_bottom, but no stick_to_top ...
+                ui,
+                row_height,
+                self.events.len(),
+                |ui, row_range| {
+                    let rev = self.events.iter().rev();
+                    let length = row_range.end - row_range.start;
+                    let mut shown = 0;
+                    for event in  rev.skip(row_range.start) {
+                        event.ui(ui);
+                        shown += 1;
+                        if shown > length {
+                            break;
+                        }
+                    }
+
+
+                }
+            );
         });
     }
 }

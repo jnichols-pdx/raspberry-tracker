@@ -325,21 +325,21 @@ async fn parse_messages(
                             Ok(details) => {
                                 println!("YOUR VICTIM:");
                                 println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap();
-                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap();
-                                let ratio: f32 = kill_count as f32 / death_count as f32;
+                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                                let ratio = kill_count as f32/ death_count as f32;
                                 let event = Event {
                                     kind: EventType::Kill,
                                     faction: Faction::from(faction_num),
-                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(),
-                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap(),
+                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
+                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     class: Class::Unknown,
                                     name: details["character_list"][0]["name"]["first"].to_string().unquote(),
                                     weapon_id: json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap() > 0,
+                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                     kdr: ratio,
-                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap(),
+                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
                                     vehicle: None, //TODO - handle vehicle events
                                 };
                                 final_event = Some(event);
@@ -352,21 +352,21 @@ async fn parse_messages(
                             Ok(details) => {
                                 println!("YOUR KILLER:");
                                 println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap();
-                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap();
+                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
                                 let ratio = kill_count as f32/ death_count as f32;
                                 let event = Event {
                                     kind: EventType::Death,
                                     faction: Faction::from(faction_num),
-                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(),
-                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap(),
+                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
+                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     class: Class::Unknown,
                                     name: details["character_list"][0]["name"]["first"].to_string().unquote(),
                                     weapon_id: json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap() > 0,
+                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                     kdr: ratio,
-                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap(),
+                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
                                     vehicle: None, //TODO - handle vehicle events
                                 };
                                 final_event = Some(event);
@@ -377,8 +377,9 @@ async fn parse_messages(
 
                     if let Some(event) = final_event {
                         let mut session_list_rw = session_list.write().unwrap();
-                        if let Some(mut current_session) = session_list_rw.last_mut() {
+                        if let Some(current_session) = session_list_rw.last_mut() {
                             current_session.log_event(event);
+                            ui_frame.request_repaint();
                         }
 
                     }
@@ -392,7 +393,7 @@ async fn parse_messages(
                             Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}"
                                 .to_string())).await;
                     let mut session_list_rw = session_list.write().unwrap();
-                    if let Some(mut current_session) = session_list_rw.last_mut() {
+                    if let Some(current_session) = session_list_rw.last_mut() {
                         current_session.end(timestamp);
                     }
                     ui_frame.request_repaint();
