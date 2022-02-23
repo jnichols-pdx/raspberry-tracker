@@ -22,6 +22,8 @@ pub enum Faction {
     NC = 0x02,
     TR = 0x03,
     NSO = 0x04,
+
+    UNK = 0x00,
 }
 
 #[derive(Debug, Clone)]
@@ -47,6 +49,7 @@ pub fn name_from_faction(faction: Faction) -> String
         Faction::NC => "NC".to_owned(),
         Faction::TR => "TR".to_owned(),
         Faction::NSO => "Robit".to_owned(),
+        Faction::UNK => "???".to_owned(),
     }
 }
 
@@ -271,12 +274,12 @@ impl CharacterList {
 }
 
 pub trait ViewWithDB {
-    fn ui(&mut self, ctx: &egui::CtxRef, db: &sqlite::Connection);// &egui::Context);//,  ui: &mut egui::Ui);
+    fn ui(&mut self, ctx: &egui::Context, db: &sqlite::Connection);// &egui::Context);//,  ui: &mut egui::Ui);
     fn draw(&mut self, ui: &mut egui::Ui);
 }
 
 pub trait View {
-    fn ui(&mut self, ctx: &egui::CtxRef);// &egui::Context);//,  ui: &mut egui::Ui);
+    fn ui(&mut self, ctx: &egui::Context);// &egui::Context);//,  ui: &mut egui::Ui);
     fn draw(&mut self, ui: &mut egui::Ui);
 }
 
