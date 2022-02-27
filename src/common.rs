@@ -79,7 +79,7 @@ pub fn name_from_world(world: World) -> String
 }
 
 pub fn lookup_character_id(new_char: &String) -> Result<Option<String>, ureq::Error> {
-    let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:example/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))
+    let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))
                 .call()?
                 .into_json()?;
 
@@ -100,7 +100,7 @@ pub fn lookup_character_id(new_char: &String) -> Result<Option<String>, ureq::Er
 
 pub fn lookup_new_char_details(new_id: &String) -> Result<serde_json::Value, ureq::Error> {
     let resp = ureq::get(&*format!(
-        "http://census.daybreakgames.com/s.example/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
+        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
         new_id))
         .call()?
         .into_json()?;

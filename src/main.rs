@@ -174,7 +174,7 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
                            session_list:  Arc<RwLock<Vec<Session>>>,
                            rx_ui_frame: oneshot::Receiver<epi::Frame>,
                            ){
-    let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:example").unwrap();
+    let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:raspberrytracker").unwrap();
     let (ws_str, _) = connect_async(ws_url).await.unwrap();//.expect("failed to connect to streaming api");
     //println!("{:?}", ws_str);
     let (ws_write, ws_read) = ws_str.split();
