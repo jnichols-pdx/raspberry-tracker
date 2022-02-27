@@ -108,6 +108,13 @@ pub fn lookup_new_char_details(new_id: &String) -> Result<serde_json::Value, ure
     Ok(resp)
 }
 
+pub fn lookup_weapon_name(new_id: &String) -> Result<serde_json::Value, ureq::Error> {
+    let resp = ureq::get(&*format!(
+        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/item/?item_id={}", new_id)).call()?.into_json()?;
+
+    Ok(resp)
+}
+
 pub fn character_from_json(json: &serde_json::Value) -> Result<Character, String> {
 
     let new_char = &json["character_list"][0];

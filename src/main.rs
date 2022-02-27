@@ -304,6 +304,20 @@ async fn parse_messages(
                 } else if json["payload"]["event_name"].eq("Death") {
                     println!("Found a death");
                     println!("{:?}", json);
+                    //if DB.get(weapon_id) has no results then:
+                    let weapon_name;
+                    match lookup_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()) {
+                        Err(whut) => {
+                            println!("{}", whut);
+                            weapon_name = "Unknown".to_owned();
+                        },
+                        Ok(weapon) => {
+                            println!("with:");
+                            println!("{:?}", weapon);
+                            weapon_name = weapon["item_list"][0]["name"]["en"].to_string().unquote();
+                        }
+                    }
+
                     let mut attacker = false;
                     {
                         let session_list_ro = session_list.read().unwrap();
@@ -336,7 +350,7 @@ async fn parse_messages(
                                     asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     class: Class::Unknown,
                                     name: details["character_list"][0]["name"]["first"].to_string().unquote(),
-                                    weapon_id: json["payload"]["attacker_weapon_id"].to_string().unquote(),
+                                    weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
                                     headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                     kdr: ratio,
                                     timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
@@ -363,7 +377,7 @@ async fn parse_messages(
                                     asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     class: Class::Unknown,
                                     name: details["character_list"][0]["name"]["first"].to_string().unquote(),
-                                    weapon_id: json["payload"]["attacker_weapon_id"].to_string().unquote(),
+                                    weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
                                     headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                     kdr: ratio,
                                     timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),

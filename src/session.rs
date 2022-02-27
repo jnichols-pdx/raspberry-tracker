@@ -121,7 +121,7 @@ pub struct Event {
     pub asp: u8,
     pub class: Class,
     pub name: String,
-    pub weapon_id: String,
+    pub weapon: String,
     pub headshot: bool,
     pub kdr: f32,
     pub timestamp: u64,
@@ -132,8 +132,8 @@ pub struct Event {
 impl Event {
     pub fn ui(&self, ui: &mut egui::Ui) {
         match self.kind {
-            EventType::Death => ui.label(format!("{} killed you.", self.name)),
-            EventType::Kill => ui.label(format!("You killed {}.", self.name)),
+            EventType::Death => ui.label(format!("{} killed you with {}.", self.name, self.weapon)),
+            EventType::Kill => ui.label(format!("You killed {} with {}.", self.name, self.weapon)),
             _ => ui.label("other".to_owned()),
         };
     }
@@ -154,7 +154,7 @@ impl EventList {
     }
 
     pub fn ui(&self, ctx: &egui::Context) {
-        egui::SidePanel::right("events_panel").show(ctx, |ui| {
+        egui::SidePanel::right("events_panel").min_width(250.0).show(ctx, |ui| {
             ui.heading("Event feed");
             let text_style = TextStyle::Body;
             let row_height = ui.text_style_height(&text_style);
