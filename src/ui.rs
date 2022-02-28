@@ -4,7 +4,8 @@ use egui::*;
 use tokio::sync::{mpsc, oneshot};
 use crate::common::*;
 use crate::session::*;
-use sqlite::State;
+use crate::db::*;
+use sqlx::sqlite::SqlitePool;
 use std::sync::{Arc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
@@ -13,7 +14,7 @@ pub struct TrackerApp {
     pub in_character_ui: bool,
     pub char_list: Arc<RwLock<CharacterList>>,
     pub session_list: Arc<RwLock<Vec<Session>>>,
-    pub db: sqlite::Connection,
+    pub db: DatabaseSync,
     pub lastx: f32,
     pub lasty: f32,
     pub size_changed: bool,
@@ -24,7 +25,7 @@ pub struct TrackerApp {
 }
 
 impl ViewWithDB for CharacterList {
-    fn ui(&mut self, ctx: &egui::Context, db: &sqlite::Connection) {
+    fn ui(&mut self, ctx: &egui::Context, db: &DatabaseSync) {
         egui::CentralPanel::default().show(ctx, |ui| {
                 ui.horizontal(|ui| {
                         ui.label("Track Character: ");
@@ -51,7 +52,7 @@ impl ViewWithDB for CharacterList {
             Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
             bob.character_id).to_owned()));
 
-                                                if db_save_new_char(&bob, db) {
+                                                if db.save_new_char_sync(&bob) {
                                                     self.characters.push(bob);
                                                 }
                                             },
@@ -88,7 +89,7 @@ impl ViewWithDB for CharacterList {
                     }
                     if char.changed_auto_track {
 
-                        db_set_char_auto_track(&char, db);
+                        db.set_char_auto_track_sync(&char);
                         char.changed_auto_track = false;
                     }
                 }
@@ -96,9 +97,9 @@ impl ViewWithDB for CharacterList {
                 scroll_chars.show(ui, |ui| {
                         for char in &mut self.characters {
                             if char.to_remove {
-                                db_remove_char(&char, db);
+                                db.remove_char_sync(&char);
         let _res = self.websocket_out.blocking_send(
-            Message::Text(format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+            Message::Text(format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"characters\":[\"{}\"]}}",
             char.character_id).to_owned()));
                             }
                         }
@@ -216,14 +217,7 @@ impl epi::App for TrackerApp {
         }
         if self.size_changed && !newchange  {
             self.size_changed = false;
-            //println!("bing!");
-
-            let mut statement = self.db
-                .prepare("UPDATE windows SET width = ?, height = ? WHERE name LIKE 'main';").unwrap();
-            statement.bind(1,self.lastx as f64).unwrap();
-            statement.bind(2,self.lasty as f64).unwrap();
-            while let State::Row = statement.next().unwrap() {};
-
+            self.db.set_window_specs_sync(self.lastx as f64, self.lasty as f64);
         }
 
 

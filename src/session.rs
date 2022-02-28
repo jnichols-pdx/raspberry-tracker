@@ -20,6 +20,10 @@ impl Session {
         to_match.eq(&self.character.character_id)
     }
 
+    pub fn get_player_name(&self) -> String {
+        self.character.full_name.to_owned()
+    }
+
     pub fn new(character: Character, br: u8, asp: u8, start: u64) -> Self {
         let character = FullCharacter::new(&character, br, asp);
         Session {

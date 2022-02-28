@@ -3,18 +3,21 @@
 mod common;
 mod session;
 mod ui;
+mod db;
 
 //use std::env;
 use crate::common::*;
 use crate::session::*;
+use crate::db::*;
 use std::io::{self, stderr, Write, Error};
 use tokio::sync::{mpsc, oneshot};
-use sqlite::State;
+//use sqlite::State;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocketStream};
 use futures_util::{future, pin_mut, StreamExt, SinkExt, stream::SplitSink, stream::SplitStream, TryStreamExt};
 use std::thread;
 use tokio::runtime::Runtime;
 use std::sync::{Arc, RwLock};
+use sqlx::sqlite::SqlitePool;
 //use tokio::time::{self, Duration};
 
 
@@ -22,116 +25,78 @@ use std::sync::{Arc, RwLock};
 #[cfg(not(target_arch = "wasm32"))] 
 fn main() {
 
-  //  let (tx_to_ui, rx_from_main) = mpsc::channel::<Action>(32);
+    let rt = Runtime::new().unwrap();
+
     let session_list = Arc::new(RwLock::new(Vec::<Session>::new()));
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
     let (report_to_main, report_from_ws) = mpsc::channel::<serde_json::Value>(64);
     let (tx_frame_to_ws, rx_frame_from_ui) = oneshot::channel::<epi::Frame>();
 
-    let mut dbo: Option<sqlite::Connection> = None ;
+   
+    //let mut dbo: Option<sqlite::Connection> = None ;
+    let db_url;
     if let Some(dir_gen) = directories_next::ProjectDirs::from("com","JTNBrickWorks","Raspberry Tracker") {
         let data_dir = dir_gen.data_dir().to_path_buf();
         if let Ok(()) = std::fs::create_dir_all(&data_dir) {
             let db_path = data_dir.join("tracker_data.sqlite");
-            let connection = sqlite::open(db_path).unwrap();
-            dbo = Some(connection);
+            db_url = format!("sqlite:{}?mode=rwc", db_path.to_string_lossy());
         } else {
-            println!("couldn't save to disk, use ram instead.");
-            let connection = sqlite::open(":memory:").unwrap();
-            dbo = Some(connection);
+            println!("couldn't find/make db directory, using ram instead.");
+            db_url = format!("sqlite::memory:");
+            
         }
+    } else
+    {
+        println!("unable to determine platform directories, using ram instead.");
+        db_url = format!("sqlite::memory:");
     }
 
-    let db = dbo.unwrap();
+    let db_pool;
+    match rt.block_on(SqlitePool::connect(&db_url)) {
+        Ok(pool) => db_pool = pool,
+        Err(err) => {println!("DB OPEN ERRROR: {:?}", err);
+                    std::process::exit(-2);},
+    }
 
-    match db.execute("SELECT version FROM raspberrytracker LIMIT 1;") {
-        Err(err) => {
-            if err.message == Some("no such table: raspberrytracker".to_string()) {
-                println!("Setting up local database.");
-                db.execute("CREATE TABLE raspberrytracker (version NUMBER);
-                        INSERT INTO raspberrytracker VALUES (0.1); 
-                        CREATE TABLE windows (name TEXT, width NUMBER, height NUMBER);
-                        INSERT INTO windows VALUES ('main', 800.0, 480.0);
-                        CREATE TABLE characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER, PRIMARY KEY (id));
-                        CREATE TABLE weapons (name TEXT, id TEXT);
-                        ",).unwrap() ;
-            } else {
-                println!("sqlhuh? {:?}", err.message);
-            }},
-        Ok(_) => {},
+    let db = DatabaseCore{
+        conn: db_pool,
     };
-      
-    //Scope the DB statement
-    {
-        let mut statement = db.prepare("SELECT version FROM raspberrytracker LIMIT 1;").unwrap();
-        if let State::Row = statement.next().unwrap() {
-            println!("db ver = {}", statement.read::<f64>(0).unwrap());
-        }
-    }
+    let sync_db = DatabaseSync{
+       dbc: db.clone(),
+       rt: rt,
+    };
 
-    let character_list = Arc::new(RwLock::new(CharacterList::new(tx_to_websocket.clone())));
+    sync_db.init_sync();
 
-    //Scope the DB cursor and write access to character_list
-    {
-        let mut char_builder = character_list.write().unwrap();
-        let mut cursor = db.prepare("SELECT * FROM characters;").unwrap().into_cursor();
-        while let Some(row) = cursor.next().unwrap() {
-            //println!("{:?}", row);
-            let mut achar = Character {
-                full_name: row[0].as_string().unwrap().to_string(),
-                lower_name: row[1].as_string().unwrap().to_string(),
-                outfit: None,
-                outfit_full: None,
-                character_id: row[4].as_string().unwrap().to_string(),
-                auto_track: row[5].as_integer().unwrap() > 0,
-                server: row[6].as_integer().unwrap().into(),
-                faction: row[7].as_integer().unwrap().into(),
-                to_remove: false,
-                confirm_visible: false,
-                to_track: false,
-                changed_auto_track: false,
-            };
-            match row[2].as_string() {
-                Some(outfit_alias) => achar.outfit = Some(outfit_alias.to_string()),
-                None => {},
-            }
-            match row[3].as_string() {
-                Some(outfit_name) => achar.outfit_full = Some(outfit_name.to_string()),
-                None => {},
-            }
+    let character_list = Arc::new(RwLock::new(sync_db.get_character_list_sync(tx_to_websocket.clone())));
 
-
-            let _res = tx_to_websocket.blocking_send(
-                Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
-                achar.character_id).to_owned()));
-
-            char_builder.push(achar);
-
-        }
+  
+    for achar in &character_list.read().unwrap().characters {
+        let _res = tx_to_websocket.blocking_send(
+            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+            achar.character_id).to_owned()));
     }
 
     let mut native_options = eframe::NativeOptions::default();
-    let mut x_size:f64 = 800.0;
-    let mut y_size:f64 = 480.0;
+    let (x_size, y_size) = sync_db.get_window_specs_sync();    
+    
+    println!("setting window as {} x {} ", x_size, y_size);
+    native_options.initial_window_size = Some(egui::Vec2{ x: x_size as f32, y: y_size as f32});
 
-    //Scope the DB statement
-    {
-        let mut statement = db.prepare("SELECT * FROM windows WHERE name LIKE 'main' LIMIT 1;").unwrap();
-        if let State::Row = statement.next().unwrap() {
-            x_size =  statement.read::<f64>(1).unwrap();
-            y_size =  statement.read::<f64>(2).unwrap();
-            println!("setting window as {} x {} ", x_size, y_size);
-            native_options.initial_window_size = Some(egui::Vec2{ x: x_size as f32, y: y_size as f32});
-        }
-    }
-
+    sync_db.rt.spawn(websocket_threads(rx_from_app,
+                               tx_to_websocket.clone(),
+                               report_to_main,
+                               character_list.clone(),
+                               session_list.clone(),
+                               rx_frame_from_ui,
+                               db,
+                              ));
 
     let app = ui::TrackerApp{
-        //from_main: rx_from_main,
         in_character_ui: true,
         char_list: character_list.clone(),
         session_list: session_list.clone(),
-        db: db,
+        db: sync_db,
         lastx: x_size as f32,
         lasty: y_size as f32,
         size_changed: false,
@@ -141,31 +106,10 @@ fn main() {
         session_count: 0,
     };
 
-    let _ws_threads = thread::spawn(move || {runtime_thread(rx_from_app,
-                                                            tx_to_websocket.clone(),
-                                                            report_to_main,
-                                                            character_list.clone(),
-                                                            session_list.clone(),
-                                                            rx_frame_from_ui,
-                                                            )
-                                             });
-
-    //let bill: Session;
 
     eframe::run_native(Box::new(app), native_options);
 }
 
-fn runtime_thread(rx_from_app: mpsc::Receiver<Message>,
-                  ws_out: mpsc::Sender<Message>,
-                  report_to_main: mpsc::Sender<serde_json::Value>,
-                  char_list: Arc<RwLock<CharacterList>>,
-                  session_list:  Arc<RwLock<Vec<Session>>>,
-                  rx_ui_frame: oneshot::Receiver<epi::Frame>,
-                  ){
-    let rt = Runtime::new().unwrap();
-    let _x = rt.enter();
-    rt.block_on(websocket_threads(rx_from_app, ws_out, report_to_main, char_list, session_list, rx_ui_frame));
-}
 
 async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
                            ws_out: mpsc::Sender<Message>,
@@ -173,6 +117,7 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
                            char_list: Arc<RwLock<CharacterList>>,
                            session_list:  Arc<RwLock<Vec<Session>>>,
                            rx_ui_frame: oneshot::Receiver<epi::Frame>,
+                           db: DatabaseCore,
                            ){
     let ws_url = url::Url::parse("wss://push.planetside2.com/streaming?environment=ps2&service-id=s:raspberrytracker").unwrap();
     let (ws_str, _) = connect_async(ws_url).await.unwrap();//.expect("failed to connect to streaming api");
