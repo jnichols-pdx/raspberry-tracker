@@ -58,15 +58,16 @@ fn main() {
                     std::process::exit(-2);},
     }
 
-    let db = DatabaseCore{
-        conn: db_pool,
-    };
-    let sync_db = DatabaseSync{
-       dbc: db.clone(),
+    let db = DatabaseCore::new(db_pool);
+   
+
+    let mut sync_db = DatabaseSync{
+       dbc: db,
        rt: rt,
     };
 
     sync_db.init_sync();
+
 
     let character_list = Arc::new(RwLock::new(sync_db.get_character_list_sync(tx_to_websocket.clone())));
 
@@ -89,7 +90,7 @@ fn main() {
                                character_list.clone(),
                                session_list.clone(),
                                rx_frame_from_ui,
-                               db,
+                               sync_db.dbc.clone(),
                               ));
 
     let app = ui::TrackerApp{
@@ -127,7 +128,7 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
     let ui_frame =  rx_ui_frame.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame));
+    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame, db.clone()));
 
     tokio::select!{
         _ = out_task => {},
@@ -193,6 +194,7 @@ async fn parse_messages(
                 ws_out: mpsc::Sender<Message>,
                 session_list:  Arc<RwLock<Vec<Session>>>,
                 ui_frame: epi::Frame,
+                mut db: DatabaseCore,
         ) 
 {
     let mut parsing = true;
@@ -249,19 +251,7 @@ async fn parse_messages(
                 } else if json["payload"]["event_name"].eq("Death") {
                     println!("Found a death");
                     println!("{:?}", json);
-                    //if DB.get(weapon_id) has no results then:
-                    let weapon_name;
-                    match lookup_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()) {
-                        Err(whut) => {
-                            println!("{}", whut);
-                            weapon_name = "Unknown".to_owned();
-                        },
-                        Ok(weapon) => {
-                            println!("with:");
-                            println!("{:?}", weapon);
-                            weapon_name = weapon["item_list"][0]["name"]["en"].to_string().unquote();
-                        }
-                    }
+                    let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
 
                     let mut attacker = false;
                     {

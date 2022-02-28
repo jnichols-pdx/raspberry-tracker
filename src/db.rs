@@ -8,11 +8,13 @@ use sqlx::{Pool, Executor, Sqlite, Row};
 use crate::common::*;
 use crate::session::FullCharacter;
 use futures_util::TryStreamExt;
+use std::collections::BTreeMap;
 
 
 #[derive(Clone)]
 pub struct DatabaseCore {
     pub conn: SqlitePool,
+    weapons: BTreeMap<String, String>,
 }
 
 pub struct DatabaseSync {
@@ -52,13 +54,20 @@ impl DatabaseSync {
     pub fn set_window_specs_sync(&self, x: f64, y: f64) {
         self.rt.block_on(self.dbc.set_window_specs(x,y));
     }
-    pub fn init_sync(&self) {
+    pub fn init_sync(&mut self) {
         self.rt.block_on(self.dbc.init());
     }
 
 }
 
 impl DatabaseCore {
+    pub fn new(conn: SqlitePool) -> Self{
+        DatabaseCore {
+            conn: conn,
+            weapons: BTreeMap::new(),
+        }
+    }
+
     pub async fn save_new_char(&self, char: &Character) -> bool {
         let mut result = true;
     //characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER)
@@ -144,8 +153,8 @@ impl DatabaseCore {
     }
 
     pub async fn get_window_specs(&self) -> (f64,f64) { //x_y_size {
-        let mut x_size:f64 = 800.0;
-        let mut y_size:f64 = 480.0;
+        let x_size:f64;
+        let y_size:f64;
         {
             match  self.conn.fetch_one("SELECT * FROM windows WHERE name LIKE 'main' LIMIT 1;").await {
                 Ok(row) => {
@@ -176,8 +185,43 @@ impl DatabaseCore {
                 },
         }
     }
+    
+    pub async fn get_weapon_name(&mut self, weapon_id: &String) -> String {
+        let weapon_name;
+        match self.weapons.get(weapon_id) {
+            Some(weapon) => weapon_name = weapon.to_owned(),
+            None => {
+                println!("Going to Census for {}", weapon_id);
+                match lookup_weapon_name(weapon_id) {
+                    Err(whut) => {
+                        println!("{}", whut);
+                        weapon_name = "Unknown".to_owned();
+                    },
+                    Ok(weapon) => {
+                        println!("with:");
+                        println!("{:?}", weapon);
+                        weapon_name = weapon["item_list"][0]["name"]["en"].to_string().unquote();
+                        self.weapons.insert(weapon_id.to_owned(), weapon_name.to_owned());
+                        match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
+                            .bind(weapon_id)
+                            .bind(weapon_name.to_owned())
+                            .execute(&self.conn).await {
+                                Ok(_) => {},
+                                Err(err) => {
+                                        println!("Error saving new weapon in DB:");
+                                        println!("{:?}", err);
+                                        std::process::exit(-10);
+                                }
+                        }
+                    }
+                }
+            }
+        }
+        
+        weapon_name
+    }
 
-    pub async fn init(&self) {
+    pub async fn init(&mut self) {
         match self.conn.execute("SELECT version FROM raspberrytracker LIMIT 1;").await {
             Err(err) => {
                 if let Some(db_err) = err.as_database_error() {
@@ -188,7 +232,7 @@ impl DatabaseCore {
                               CREATE TABLE windows (name TEXT, width NUMBER, height NUMBER);
                               INSERT INTO windows VALUES ('main', 800.0, 480.0);
                               CREATE TABLE characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER, PRIMARY KEY (id));
-                              CREATE TABLE weapons (name TEXT, id TEXT);
+                              CREATE TABLE weapons (id TEXT NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id));
                               ",).await {
                             Ok(_) => println!(" finished"),
                             Err(e) => {
@@ -212,6 +256,12 @@ impl DatabaseCore {
                                 println!("{:?}", e);
                                 std::process::exit(-4);
             }
+        }
+
+        let mut cursor = self.conn.fetch("SELECT * FROM weapons;");
+        while let Some(row) = cursor.try_next().await.unwrap() {
+            println!("Loading weapon: >{}< - >{}<", row.get::<String, usize>(0), row.get::<String, usize>(1));
+            self.weapons.insert(row.get(0),row.get(1));
         }
 
 
