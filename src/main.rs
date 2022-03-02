@@ -254,6 +254,7 @@ async fn parse_messages(
                     let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
 
                     let mut attacker = false;
+                    let mut some_player_char: Option<FullCharacter> = None;
                     {
                         let session_list_ro = session_list.read().unwrap();
                         if let Some(current_session) = session_list_ro.last() {
@@ -264,34 +265,61 @@ async fn parse_messages(
                                 println!("You died!!!!");
                                 attacker = false;
                             }
+                            some_player_char = Some(current_session.current_character()); //May be incomplete if KD ratio has shifted during session?
                         }
                     }
+                    let player_char = some_player_char.unwrap();
                     let mut final_event: Option<Event> = None;
-                    if attacker {
-                        //TODO: handle suicides, and teamkills
-                        match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
-                            Err(whut) => println!("{}", whut),
-                            Ok(details) => {
-                                println!("YOUR VICTIM:");
-                                println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
-                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                                let ratio = kill_count as f32/ death_count as f32;
-                                let event = Event {
-                                    kind: EventType::Kill,
-                                    faction: Faction::from(faction_num),
-                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                    class: Class::Unknown,
-                                    name: details["character_list"][0]["name"]["first"].to_string().unquote(),
-                                    weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
-                                    kdr: ratio,
-                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                    vehicle: None, //TODO - handle vehicle events
-                                };
-                                final_event = Some(event);
+                    if attacker { //Player character's ID was the attacker
+                        //Suicide
+                        if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
+                            let event = Event {
+                                kind: EventType::Suicide,
+                                faction: player_char.faction,
+                                br: player_char.br,
+                                asp: player_char.asp,
+                                class: Class::Unknown,
+                                name: "yourself".to_owned(),
+                                weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
+                                headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
+                                kdr: 0.5,//TODO - get from current player details.
+                                timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
+                                vehicle: None, //TODO - handle vehicle events
+                            };
+                            final_event = Some(event);
+                    
+                        } else {
+                            //Killed other player
+                            match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
+                                Err(whut) => println!("{}", whut),
+                                Ok(details) => {
+                                    println!("YOUR VICTIM:");
+                                    println!("{:?}", details);
+                                    let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                                    let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                                    let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                                    let ratio = kill_count as f32/ death_count as f32;
+                                    let kill_type;
+                                    if Faction::from(faction_num) == player_char.faction {
+                                        kill_type = EventType::TeamKill;
+                                    } else {
+                                        kill_type = EventType::Kill;
+                                    }
+                                    let event = Event {
+                                        kind: kill_type,
+                                        faction: Faction::from(faction_num),
+                                        br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
+                                        asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
+                                        class: Class::Unknown,
+                                        name: details["character_list"][0]["name"]["first"].to_string().unquote(),
+                                        weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
+                                        headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
+                                        kdr: ratio,
+                                        timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
+                                        vehicle: None, //TODO - handle vehicle events
+                                    };
+                                    final_event = Some(event);
+                                }
                             }
                         }
                         

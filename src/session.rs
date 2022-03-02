@@ -135,9 +135,17 @@ pub struct Event {
 
 impl Event {
     pub fn ui(&self, ui: &mut egui::Ui) {
+        let headshot_str ;
+        if self.headshot {
+            headshot_str = " HS!";
+        } else {
+            headshot_str = "";
+        }
         match self.kind {
-            EventType::Death => ui.label(format!("{} killed you with {}.", self.name, self.weapon)),
-            EventType::Kill => ui.label(format!("You killed {} with {}.", self.name, self.weapon)),
+            EventType::Death => ui.label(format!("{} killed you with {}.{}", self.name, self.weapon, headshot_str)),
+            EventType::Kill => ui.label(format!("You killed {} with {}.{}", self.name, self.weapon, headshot_str)),
+            EventType::Suicide => ui.label(format!("You killed yourself with {}.{}", self.weapon, headshot_str)),
+            EventType::TeamKill => ui.label(format!("You TEAMkilled {} with {}.{}", self.name, self.weapon, headshot_str)),
             _ => ui.label("other".to_owned()),
         };
     }
