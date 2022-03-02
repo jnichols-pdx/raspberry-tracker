@@ -141,11 +141,17 @@ impl Event {
         } else {
             headshot_str = "";
         }
+        let vehicle_str = match self.vehicle {
+            Some(vehicle) => vehicle.to_string(),
+            None => "".to_owned(),
+        };
+
         match self.kind {
-            EventType::Death => ui.label(format!("{} killed you with {}.{}", self.name, self.weapon, headshot_str)),
-            EventType::Kill => ui.label(format!("You killed {} with {}.{}", self.name, self.weapon, headshot_str)),
-            EventType::Suicide => ui.label(format!("You killed yourself with {}.{}", self.weapon, headshot_str)),
-            EventType::TeamKill => ui.label(format!("You TEAMkilled {} with {}.{}", self.name, self.weapon, headshot_str)),
+            EventType::Death => ui.label(format!("{}{} - {} killed you with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
+            EventType::TeamDeath => ui.label(format!("{}{} - {} TEAMkilled you with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
+            EventType::Kill => ui.label(format!("{}You killed {} - {} with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
+            EventType::Suicide => ui.label(format!("{}You killed {} yourself with {}.{} {}", vehicle_str, self.class, self.weapon, headshot_str, self.kdr)),
+            EventType::TeamKill => ui.label(format!("{}You TEAMkilled {} - {} with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
             _ => ui.label("other".to_owned()),
         };
     }

@@ -10,21 +10,21 @@ use crate::session::*;
 use crate::db::*;
 use sqlx::sqlite::SqlitePool;
 
-pub struct Action {
+/*pub struct Action {
     pub val: u32,
-}
+}*/
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
 #[repr(i64)]
 pub enum Faction {
-    VS = 0x01,
-    #[num_enum(default)]
-    NC = 0x02,
-    TR = 0x03,
-    NSO = 0x04,
+    VS = 1,
+    NC = 2,
+    TR = 3,
+    NSO = 4,
 
-    UNK = 0x00,
+    #[num_enum(default)]
+    UNK = 0,
 }
 
 #[derive(Debug, Clone)]
@@ -269,43 +269,210 @@ pub enum EventType {
     LoseVehicle,
 }
 
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
 pub enum Vehicle {
-    Flash,
-    Javelin,
-    Harasser,
-    Sunderer,
-    Lightning,
-    Prowler,
-    Vanguard,
-    Magrider,
-    Chimera,
-    Colossus,
-    Ant,
-    Deliverer,
+    Flash = 1,
+    Javelin = 2033,
+    Harasserr = 12,
+    Sunderer = 2,
+    Lightning = 3,
+    Prowler = 6,
+    Vanguard = 5,
+    Magrider = 4,
+    Chimera = -0x10,  //Currently unknown (not listed by census Vehicles collection)
+    Colossus = 2007,
+    Ant = 15,
+    Deliverer = 2039,
 
-    DropPod,
-    Mosquito,
-    Scythe,
-    Reaver,
-    Dervish,
-    Valkyrie,
-    Wasp,
-    Liberator,
-    Galaxy,
-    Lodestar,
-    BastionFleetCarrier,
+    DropPod = 13,
+    Mosquito = 9,
+    Scythe = 7,
+    Reaver = 8,
+    Dervish = 2136,
+    Valkyrie = 14,
+    Wasp = 2040,
+    Liberator = 10,
+    Galaxy = 11,
+    Lodestar = -0x20,//Currently unknown (not listed by census Vehicles collection)
+    BastionFleetCarrier = 2019,
 
-    Unknown,
+    AIPhalanxTurret = 100,
+    ManaAITurret = 101,
+    ManaAVTurret = 102,
+    Spitfire = 103,
+    SpitfireAlt1 = 104, //is one of these aux spitty?
+    SpitfireAlt2 = 105,
+    AAPhalanxTurret = 150,
+    AVPhalanxTurret = 151,
+    AVBuilderTower = 160,
+    AABuilderTower = 161,
+    AIBuilderTower = 162, 
+    
+    Glaive = 163,
+    AVPhalanxTurretAlt = 2006,
+    DropPodALt = 2008,
+    AIPhalanxTurretAlt = 2009,
+    PocketFlash = 2010,
+    Flail = 2021,
+    
+    MosquitoInterceptor = 2122,
+    ReaverInterceptor = 2123,
+    ScytheInterceptor = 2124,
+    JavelinAlt1 = 2125,
+    SpitfireALt3 = 2128,
+    JavelinAlt2 = 2129,
+
+    ReclaimedSunderer = 2130,
+    ReclaimedGalaxy = 2131,
+    ReclaimedValkyrie = 2132,
+    ReclaimedMagrider = 2133,
+    ReclaimedVanguard = 2134,
+    ReclaimedProwler = 2135,
+
+    #[num_enum(default)]
+    NoVehicle= 0,
+
+    Unknown = -1,
 }
 
+
+impl std::fmt::Display for Vehicle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Vehicle::Flash => write!(f,"Flash"),
+            Vehicle::Javelin => write!(f,"Javelin"),
+            Vehicle::Harasserr => write!(f,"Harasser"),
+            Vehicle::Sunderer => write!(f,"Sunderer"),
+            Vehicle::Lightning => write!(f,"Lightning"),
+            Vehicle::Prowler => write!(f,"Prowler"),
+            Vehicle::Vanguard => write!(f,"Vanguard"),
+            Vehicle::Magrider => write!(f,"Magrider"),
+            Vehicle::Chimera => write!(f,"Chimera"),
+            Vehicle::Colossus => write!(f,"Colossus"),
+            Vehicle::Ant => write!(f,"Ant"),
+            Vehicle::Deliverer => write!(f,"Deliverer"),
+
+            Vehicle::DropPod => write!(f,"DropPod"),
+            Vehicle::Mosquito => write!(f,"Mosquito"),
+            Vehicle::Scythe => write!(f,"Scythe"),
+            Vehicle::Reaver => write!(f,"Reaver"),
+            Vehicle::Dervish => write!(f,"Dervish"),
+            Vehicle::Valkyrie => write!(f,"Valkyrie"),
+            Vehicle::Wasp => write!(f,"Wasp"),
+            Vehicle::Liberator => write!(f,"Liberator"),
+            Vehicle::Galaxy => write!(f,"Galaxy"),
+            Vehicle::Lodestar => write!(f,"Lodestar"),
+            Vehicle::BastionFleetCarrier => write!(f,"BastionFleetCarrier"),
+
+            Vehicle::AIPhalanxTurret => write!(f,"AIPhalanxTurret"),
+            Vehicle::ManaAITurret => write!(f,"ManaAITurret"),
+            Vehicle::ManaAVTurret => write!(f,"ManaAVTurret"),
+            Vehicle::Spitfire => write!(f,"Spitfire"),
+            Vehicle::SpitfireAlt1 => write!(f,"Spitfire1"),
+            Vehicle::SpitfireAlt2 => write!(f,"Spitfire2"),
+            Vehicle::AAPhalanxTurret => write!(f,"AAPhalanxTurret"),
+            Vehicle::AVPhalanxTurret => write!(f,"AVPhalanxTurret"),
+            Vehicle::AVBuilderTower => write!(f,"AVBuilderTower"),
+            Vehicle::AABuilderTower => write!(f,"AABuilderTower"),
+            Vehicle::AIBuilderTower => write!(f,"AIBuilderTower"),
+
+            Vehicle::Glaive => write!(f,"Glaive"),
+            Vehicle::AVPhalanxTurretAlt => write!(f,"AVPhalanxTurret1"),
+            Vehicle::DropPodALt => write!(f,"Droppod1"),
+            Vehicle::AIPhalanxTurretAlt => write!(f,"AIPhalanxTurret1"),
+            Vehicle::PocketFlash => write!(f,"PocketFlash"),
+            Vehicle::Flail => write!(f,"Flail"),
+
+            Vehicle::MosquitoInterceptor => write!(f,"Mossy-Interceptor"),
+            Vehicle::ReaverInterceptor => write!(f,"Reaver-Interceptor"),
+            Vehicle::ScytheInterceptor => write!(f,"Scythe-Interceptor"),
+            Vehicle::JavelinAlt1 => write!(f,"Javelin1"),
+            Vehicle::SpitfireALt3 => write!(f,"Spitfire3"),
+            Vehicle::JavelinAlt2 => write!(f,"Javelin2"),
+
+            Vehicle::ReclaimedSunderer => write!(f,"Sunderer-Reclaimed"),
+            Vehicle::ReclaimedGalaxy => write!(f,"Galaxy-Reclaimed"),
+            Vehicle::ReclaimedValkyrie => write!(f,"Valkyrie-Reclaimed"),
+            Vehicle::ReclaimedMagrider => write!(f,"Magrider-Reclaimed"),
+            Vehicle::ReclaimedVanguard => write!(f,"Vanguard-Reclaimed"),
+            Vehicle::ReclaimedProwler => write!(f,"Prowler-Reclaimed"),
+
+            Vehicle::NoVehicle=> write!(f,"NONE"),
+            Vehicle::Unknown => write!(f,"???"),
+        }
+    }
+}
+
+
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
 pub enum Class {
-    LightAssault,
-    Medic,
-    Engineer,
-    HeavyAssault,
-    Infiltrator,
-    Max,
+    NCInfiltrator = 1,
+    NCLightAssault = 3,
+    NCMedic = 4,
+    NCEngineer = 5,
+    NCHeavyAssault = 6,
+    NCMax = 7,
 
-    Unknown,
+    TRInfiltrator = 8,
+    TRLightAssault = 10,
+    TRMedic = 11,
+    TREngineer = 12,
+    TRHeavyAssault = 13,
+    TRMax = 14,
+
+    VSInfiltrator = 15,
+    VSLightAssault = 17,
+    VSMedic = 18,
+    VSEngineer = 19,
+    VSHeavyAssault = 20,
+    VSMax = 21,
+
+    NSOInfiltrator = 28,
+    NSOLightAssault = 29,
+    NSOMedic = 30,
+    NSOEngineer = 31,
+    NSOHeavyAssault = 32,
+    NSOMax = 45,
+
+    #[num_enum(default)]
+    Unknown = 0,
 }
 
+
+impl std::fmt::Display for Class {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Class::NCInfiltrator => write!(f, "Infiltrator"),
+            Class::NCLightAssault => write!(f, "LightAssault"),
+            Class::NCMedic => write!(f, "Medic"),
+            Class::NCEngineer => write!(f, "Engineer"),
+            Class::NCHeavyAssault => write!(f, "HeavyAssault"),
+            Class::NCMax => write!(f, "MAX"),
+
+            Class::TRInfiltrator => write!(f, "Infiltrator"),
+            Class::TRLightAssault => write!(f, "LightAssault"),
+            Class::TRMedic => write!(f, "Medic"),
+            Class::TREngineer => write!(f, "Engineer"),
+            Class::TRHeavyAssault => write!(f, "HeavyAssault"),
+            Class::TRMax => write!(f, "MAX"),
+
+            Class::VSInfiltrator => write!(f, "Infiltrator"),
+            Class::VSLightAssault => write!(f, "LightAssault"),
+            Class::VSMedic => write!(f, "Medic"),
+            Class::VSEngineer => write!(f, "Engineer"),
+            Class::VSHeavyAssault => write!(f, "HeavyAssault"),
+            Class::VSMax => write!(f, "MAX"),
+
+            Class::NSOInfiltrator => write!(f, "Infiltrator"),
+            Class::NSOLightAssault => write!(f, "LightAssault"),
+            Class::NSOMedic => write!(f, "Medic"),
+            Class::NSOEngineer => write!(f, "Engineer"),
+            Class::NSOHeavyAssault => write!(f, "HeavyAssault"),
+            Class::NSOMax => write!(f, "MAX"),
+
+            Class::Unknown => write!(f, "???"),
+        }
+    }
+}

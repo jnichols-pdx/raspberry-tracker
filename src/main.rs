@@ -252,7 +252,13 @@ async fn parse_messages(
                     println!("Found a death");
                     println!("{:?}", json);
                     let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
-
+                    let vehicle_num =  json["payload"]["attacker_vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {-1});
+                    let vehicle;
+                    if vehicle_num <= 0 {
+                        vehicle = None;
+                    } else {
+                        vehicle = Some( Vehicle::from(vehicle_num));
+                    }
                     let mut attacker = false;
                     let mut some_player_char: Option<FullCharacter> = None;
                     {
@@ -278,16 +284,15 @@ async fn parse_messages(
                                 faction: player_char.faction,
                                 br: player_char.br,
                                 asp: player_char.asp,
-                                class: Class::Unknown,
+                                class: Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0})),
                                 name: "yourself".to_owned(),
                                 weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
                                 headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                 kdr: 0.5,//TODO - get from current player details.
                                 timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                vehicle: None, //TODO - handle vehicle events
+                                vehicle: vehicle,
                             };
                             final_event = Some(event);
-                    
                         } else {
                             //Killed other player
                             match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
@@ -310,13 +315,13 @@ async fn parse_messages(
                                         faction: Faction::from(faction_num),
                                         br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                         asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                        class: Class::Unknown,
+                                        class: Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0})),
                                         name: details["character_list"][0]["name"]["first"].to_string().unquote(),
                                         weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
                                         headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                         kdr: ratio,
                                         timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                        vehicle: None, //TODO - handle vehicle events
+                                        vehicle: vehicle
                                     };
                                     final_event = Some(event);
                                 }
@@ -344,13 +349,13 @@ async fn parse_messages(
                                     faction: Faction::from(faction_num),
                                     br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                    class: Class::Unknown,
+                                    class: Class::from(json["payload"]["attacker_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0})),
                                     name: details["character_list"][0]["name"]["first"].to_string().unquote(),
                                     weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
                                     headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                                     kdr: ratio,
                                     timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                    vehicle: None, //TODO - handle vehicle events
+                                    vehicle: vehicle
                                 };
                                 final_event = Some(event);
                             }
