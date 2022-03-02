@@ -188,30 +188,34 @@ impl DatabaseCore {
     
     pub async fn get_weapon_name(&mut self, weapon_id: &String) -> String {
         let weapon_name;
-        match self.weapons.get(weapon_id) {
-            Some(weapon) => weapon_name = weapon.to_owned(),
-            None => {
-                println!("Going to Census for {}", weapon_id);
-                match lookup_weapon_name(weapon_id) {
-                    Err(whut) => {
-                        println!("{}", whut);
-                        weapon_name = "Unknown".to_owned();
-                    },
-                    Ok(weapon) => {
-                        println!("with:");
-                        println!("{:?}", weapon);
-                        weapon_name = weapon["item_list"][0]["name"]["en"].to_string().unquote();
-                        self.weapons.insert(weapon_id.to_owned(), weapon_name.to_owned());
-                        match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
-                            .bind(weapon_id)
-                            .bind(weapon_name.to_owned())
-                            .execute(&self.conn).await {
-                                Ok(_) => {},
-                                Err(err) => {
-                                        println!("Error saving new weapon in DB:");
-                                        println!("{:?}", err);
-                                        std::process::exit(-10);
-                                }
+        if weapon_id == "0" {
+            weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
+        } else {
+            match self.weapons.get(weapon_id) {
+                Some(weapon) => weapon_name = weapon.to_owned(),
+                None => {
+                    println!("Going to Census for {}", weapon_id);
+                    match lookup_weapon_name(weapon_id) {
+                        Err(whut) => {
+                            println!("{}", whut);
+                            weapon_name = "Unknown".to_owned();
+                        },
+                        Ok(weapon) => {
+                            println!("with:");
+                            println!("{:?}", weapon);
+                            weapon_name = weapon["item_list"][0]["name"]["en"].to_string().unquote();
+                            self.weapons.insert(weapon_id.to_owned(), weapon_name.to_owned());
+                            match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
+                                .bind(weapon_id)
+                                .bind(weapon_name.to_owned())
+                                .execute(&self.conn).await {
+                                    Ok(_) => {},
+                                    Err(err) => {
+                                            println!("Error saving new weapon in DB:");
+                                            println!("{:?}", err);
+                                            std::process::exit(-10);
+                                    }
+                            }
                         }
                     }
                 }
