@@ -127,14 +127,14 @@ impl View for Character {
             } else {
                 ui.label("<no outfit>");
             }
-            ui.label(name_from_world(self.server));
+            ui.label(self.server.to_string());
             if self.confirm_visible {
                 ui.label(egui::RichText::new("Actually remove this character?".to_owned()).color(Color32::from_rgb(200,0,0)));
             }
         });
         ui.horizontal(|ui| {
             ui.label(&self.character_id);
-            ui.label(name_from_faction(self.faction));
+            ui.label(self.faction.to_string());
             if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
                 self.changed_auto_track = true;
             }

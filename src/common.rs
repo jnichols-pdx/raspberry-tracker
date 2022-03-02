@@ -43,14 +43,15 @@ pub struct Character {
     pub changed_auto_track: bool,
 }
 
-pub fn name_from_faction(faction: Faction) -> String
-{
-    match faction {
-        Faction::VS => "VS".to_owned(),
-        Faction::NC => "NC".to_owned(),
-        Faction::TR => "TR".to_owned(),
-        Faction::NSO => "Robit".to_owned(),
-        Faction::UNK => "???".to_owned(),
+impl std::fmt::Display for Faction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Faction::VS => write!(f,"VS"),
+            Faction::NC => write!(f,"NC"),
+            Faction::TR => write!(f,"TR"),
+            Faction::NSO => write!(f,"Robit"),
+            Faction::UNK => write!(f,"???"),
+        }
     }
 }
 
@@ -67,15 +68,16 @@ pub enum World {
     ST = 40,
 }
 
-pub fn name_from_world(world: World) -> String
-{
-    match world{
-        World::CN => "Connery".to_owned(),
-        World::EM => "Emerald".to_owned(),
-        World::ML => "Miller".to_owned(),
-        World::CB => "Cobalt".to_owned(),
-        World::JA => "Jaeger".to_owned(),
-        World::ST => "SolTech".to_owned(),
+impl std::fmt::Display for World {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            World::CN => write!(f,"Connery"),
+            World::EM => write!(f,"Emerald"),
+            World::ML => write!(f,"Miller"),
+            World::CB => write!(f,"Cobalt"),
+            World::JA => write!(f,"Jaeger"),
+            World::ST => write!(f,"SolTech"),
+        }
     }
 }
 
