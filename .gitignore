@@ -16,3 +16,6 @@
 # Added by cargo
 
 /target
+
+#Local notes file
+notes
