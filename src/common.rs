@@ -261,6 +261,7 @@ pub enum EventType {
     Death,
     Kill,
     TeamKill,
+    TeamDeath,
     Suicide,
     DestroyVehicle,
     LoseVehicle,

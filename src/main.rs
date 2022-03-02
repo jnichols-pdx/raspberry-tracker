@@ -333,8 +333,14 @@ async fn parse_messages(
                                 let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
                                 let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
                                 let ratio = kill_count as f32/ death_count as f32;
+                                let kill_type;
+                                if Faction::from(faction_num) == player_char.faction {
+                                    kill_type = EventType::TeamDeath;
+                                } else {
+                                    kill_type = EventType::Death;
+                                }
                                 let event = Event {
-                                    kind: EventType::Death,
+                                    kind: EventType::TeamDeath,
                                     faction: Faction::from(faction_num),
                                     br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
