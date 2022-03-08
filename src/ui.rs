@@ -268,7 +268,7 @@ impl epi::App for TrackerApp {
         self.load_image_bytes("ManaAVTurret", include_bytes!("../Images/ManaAVTurret.png"), ctx);
         self.load_image_bytes("Flail", include_bytes!("../Images/Flail.png"), ctx);
         self.load_image_bytes("Glaive", include_bytes!("../Images/Glaive.png"), ctx);
-        //self.load_image_bytes("", include_bytes!("../Images/.png"), ctx);
+        self.load_image_bytes("BastionFleetCarrier", include_bytes!("../Images/BastionFleetCarrier.png"), ctx);
 
 
     }
