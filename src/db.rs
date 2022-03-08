@@ -54,6 +54,12 @@ impl DatabaseSync {
     pub fn set_window_specs_sync(&self, x: f64, y: f64) {
         self.rt.block_on(self.dbc.set_window_specs(x,y));
     }
+    pub fn exist_or_download_image_sync(&mut self, name: &str, census_id: u32) -> bool {
+        self.rt.block_on(self.dbc.exist_or_download_image(name, census_id))
+    }
+    pub fn get_image_sync(&self, name: &str) -> Option<Vec<u8>> {
+        self.rt.block_on(self.dbc.get_image(name))
+    }
     pub fn init_sync(&mut self) {
         self.rt.block_on(self.dbc.init());
     }
@@ -247,6 +253,7 @@ impl DatabaseCore {
         }
 
 
+
         let mut cursor = self.conn.fetch("SELECT * FROM weapons;");
         while let Some(row) = cursor.try_next().await.unwrap() {
             println!("Loading weapon: >{}< - >{}<", row.get::<String, usize>(0), row.get::<String, usize>(1));
@@ -254,6 +261,70 @@ impl DatabaseCore {
         }
 
 
+    }
+
+    pub async fn exist_or_download_image(&mut self, name: &str, census_id: u32) -> bool {
+        match sqlx::query("SELECT census_id FROM images WHERE name IS ? LIMIT 1;")
+            .bind(name)
+            .fetch_one(&self.conn).await {
+            Ok(row) => {
+                //x_size = row.get(1);
+                //y_size = row.get(2);
+                true
+            },
+            Err(RowNotFound) => {
+                match download_census_image(census_id) {
+                    Ok(response) => {
+                        match response {
+                            Some(image_bytes) => {
+                                println!("Found image for {}", name);
+                                match sqlx::query("INSERT INTO images VALUES (?,?,?);")
+                                    .bind(name)
+                                    .bind(census_id)
+                                    .bind(&image_bytes)
+                                    .execute(&self.conn).await {
+                                        Ok(_) => true,
+                                        Err(err) => {
+                                            println!("Error saving new image in DB:");
+                                            println!("{:?}", err);
+                                            std::process::exit(-12);
+                                        },
+                                }
+
+                            },
+                            None => false,
+                        }
+                    },
+                    Err(e) => {
+                        println!("{:?}", e);
+                        false
+                    },
+                }
+            },
+            Err(e) => {
+                println!("Error pulling image from DB:");
+                println!("{:?}", e);
+                std::process::exit(-11);
+            }
+        }
+    }
+
+    pub async fn get_image(&self, name: &str) -> Option<Vec<u8>> {
+        match sqlx::query("SELECT img FROM images WHERE name IS ? LIMIT 1;")
+            .bind(name)
+            .fetch_one(&self.conn).await {
+            Ok(row) => {
+                Some(row.get(0))
+            },
+            Err(RowNotFound) => {
+                None
+            },
+            Err(e) => {
+                println!("Error pulling image from DB:");
+                println!("{:?}", e);
+                std::process::exit(-13);
+            }
+        }
     }
 
 }
