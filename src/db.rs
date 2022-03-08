@@ -54,10 +54,10 @@ impl DatabaseSync {
     pub fn set_window_specs_sync(&self, x: f64, y: f64) {
         self.rt.block_on(self.dbc.set_window_specs(x,y));
     }
-    pub fn exist_or_download_image_sync(&mut self, name: &str, census_id: u32) -> bool {
+    pub fn exist_or_download_image_sync(&mut self, name: &String, census_id: u32) -> bool {
         self.rt.block_on(self.dbc.exist_or_download_image(name, census_id))
     }
-    pub fn get_image_sync(&self, name: &str) -> Option<Vec<u8>> {
+    pub fn get_image_sync(&self, name: &String) -> Option<Vec<u8>> {
         self.rt.block_on(self.dbc.get_image(name))
     }
     pub fn init_sync(&mut self) {
@@ -263,7 +263,7 @@ impl DatabaseCore {
 
     }
 
-    pub async fn exist_or_download_image(&mut self, name: &str, census_id: u32) -> bool {
+    pub async fn exist_or_download_image(&mut self, name: &String, census_id: u32) -> bool {
         match sqlx::query("SELECT census_id FROM images WHERE name IS ? LIMIT 1;")
             .bind(name)
             .fetch_one(&self.conn).await {
@@ -309,7 +309,7 @@ impl DatabaseCore {
         }
     }
 
-    pub async fn get_image(&self, name: &str) -> Option<Vec<u8>> {
+    pub async fn get_image(&self, name: &String) -> Option<Vec<u8>> {
         match sqlx::query("SELECT img FROM images WHERE name IS ? LIMIT 1;")
             .bind(name)
             .fetch_one(&self.conn).await {

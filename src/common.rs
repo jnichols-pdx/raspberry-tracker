@@ -494,3 +494,19 @@ impl std::fmt::Display for Class {
         }
     }
 }
+
+pub fn master_images() -> std::array::IntoIter<(String, u32), 9> {
+    [("NC".to_owned(), 12),
+    ("TR".into(), 18),
+    ("VS".into(), 94),
+    ("HeavyAssault".into(), 59),
+    ("LightAssault".into(), 62),
+    ("Medic".into(), 65),
+    ("Engineer".into(), 201),
+    ("Infiltrator".into(), 204),
+    ("MAX".into(), 207)
+    /*("".into(), ),
+    ("".into(), ),
+    ("".into(), ),*/
+    ].into_iter()
+}
