@@ -123,42 +123,65 @@ impl View for Character {
     fn ui(&mut self, _ctx: &egui::Context) {
     }
     fn draw(&mut self, ui: &mut egui::Ui){
-        ui.horizontal(|ui| {
-            ui.label(&self.full_name);
-            if let Some(outfit_name) = &self.outfit {
-                ui.label(outfit_name);
-            } else {
-                ui.label("<no outfit>");
-            }
-            ui.label(self.server.to_string());
-            if self.confirm_visible {
-                ui.label(egui::RichText::new("Actually remove this character?".to_owned()).color(Color32::from_rgb(200,0,0)));
-            }
-        });
-        ui.horizontal(|ui| {
-            ui.label(&self.character_id);
-            ui.label(self.faction.to_string());
-            if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
-                self.changed_auto_track = true;
-            }
-            if !self.auto_track {
-                if ui.button("Start Session").clicked() {
-                    self.to_track = true;
-                }
-            }
-            if !self.confirm_visible {
-                if ui.button("remove").clicked() {
-                    self.confirm_visible= true;
-                }
-            } else {
-                if ui.button(" cancel ").clicked() {
-                    self.confirm_visible = false;
-                }
-                if ui.button("confirm").clicked() {
-                    self.to_remove = true;
-                }
-
-            }
+        egui::Grid::new(format!("charctrs{}", self.character_id))
+            .min_col_width(10.0)
+            .show(ui, |ui| {
+            match ui.ctx().textureByName(&self.faction.to_string()) {
+                Some(image) => ui.image(image.id(), (28.0,28.0)),
+                None => ui.label(self.faction.to_string()),
+            };
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    if let Some(outfit_name) = &self.outfit {
+                        ui.label(format!("[{}] {}", outfit_name, self.full_name));
+                    } else {
+                        ui.label(&self.full_name);
+                    }
+                    ui.label(self.server.to_string());
+                });
+                ui.horizontal(|ui| {
+                    ui.label(&self.character_id);
+                });
+            });
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                        ui.label(""); //hold space open
+                });
+                ui.horizontal(|ui| {
+                    if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
+                        self.changed_auto_track = true;
+                    }
+                    if !self.auto_track {
+                        if ui.button("Start Session").clicked() {
+                            self.to_track = true;
+                        }
+                    }
+                });
+            });
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    if self.confirm_visible {
+                        ui.label(egui::RichText::new("Actually remove this character?".to_owned()).color(Color32::from_rgb(200,0,0)));
+                    } else {
+                        ui.label(""); //hold space open
+                    }
+                });
+                ui.horizontal(|ui| {
+                    if !self.confirm_visible {
+                        if ui.button("remove").clicked() {
+                            self.confirm_visible= true;
+                        }
+                    } else {
+                        if ui.button(" cancel ").clicked() {
+                            self.confirm_visible = false;
+                        }
+                        if ui.button("confirm").clicked() {
+                            self.to_remove = true;
+                        }
+                    }
+                });
+            });
+            ui.end_row();
         });
     }
 }
