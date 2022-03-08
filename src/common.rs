@@ -495,7 +495,7 @@ impl std::fmt::Display for Class {
     }
 }
 
-pub fn master_images() -> std::array::IntoIter<(String, u32), 9> {
+pub fn master_images() -> std::array::IntoIter<(String, u32), 29> {
     [("NC".to_owned(), 12),
     ("TR".into(), 18),
     ("VS".into(), 94),
@@ -504,9 +504,29 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 9> {
     ("Medic".into(), 65),
     ("Engineer".into(), 201),
     ("Infiltrator".into(), 204),
-    ("MAX".into(), 207)
-    /*("".into(), ),
+    ("MAX".into(), 207),
+    ("Galaxy".into(), 256),
+    ("Liberator".into(), 257),
+    ("Lightning".into(), 258),
+    ("Magrider".into(), 259),
+    ("Mosquito".into(), 260),
+    ("Prowler".into(), 261),
+    ("Flash".into(), 262),
+    ("Reaver".into(), 263),
+    ("Sundy".into(), 264),
+    ("Vanguard".into(), 265),
+    ("Scythe".into(), 266),
+    ("Harasser".into(), 8852),
+    ("DropPod".into(), 12259),
+    ("Valkyrie".into(), 79711),
+    ("Spitfire".into(), 82143),
+    ("Ant".into(), 84726),
+    ("Javelin".into(), 92332),
+    ("Colossus".into(), 92799),
+    ("Chimera".into(), 93602),
+    ("Dervish".into(), 93605),
+    /*
     ("".into(), ),
-    ("".into(), ),*/
+    */
     ].into_iter()
 }
