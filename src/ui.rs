@@ -126,7 +126,7 @@ impl View for Character {
         egui::Grid::new(format!("charctrs{}", self.character_id))
             .min_col_width(10.0)
             .show(ui, |ui| {
-            match ui.ctx().textureByName(&self.faction.to_string()) {
+            match ui.ctx().texture_by_name(&self.faction.to_string()) {
                 Some(image) => ui.image(image.id(), (28.0,28.0)),
                 None => ui.label(self.faction.to_string()),
             };
@@ -358,7 +358,7 @@ impl epi::App for TrackerApp {
 }
 
 impl TextureLookup for egui::Context {
-    fn textureByName(&self, name: &str) -> Option<egui::TextureHandle>{
+    fn texture_by_name(&self, name: &str) -> Option<egui::TextureHandle>{
         let mut new_handle = None;
         let manager = self.tex_manager();
         let manager_cloned = manager.clone();
