@@ -135,12 +135,12 @@ pub struct Event {
 
 impl Event {
     pub fn ui(&self, ui: &mut egui::Ui) {
-        let headshot_str ;
+        /*let headshot_str ;
         if self.headshot {
             headshot_str = " HS!";
         } else {
             headshot_str = "";
-        }
+        }*/
 
         ui.horizontal(|ui| {
             match ui.ctx().texture_by_name(&self.faction.to_string()) {
@@ -174,13 +174,22 @@ impl Event {
             }
 
             match self.kind {
-                EventType::Death => ui.label(format!("{} {}{} killed You with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
-                EventType::TeamDeath => ui.label(format!("{} {}{} TEAMkilled You with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
-                EventType::Kill => ui.label(format!("{} {}You killed {} with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
-                EventType::Suicide => ui.label(format!("{} {}You killed {} with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
-                EventType::TeamKill => ui.label(format!("{} {}You TEAMkilled {} with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
+                EventType::Death => ui.label(format!("{} {}{} killed You with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
+                EventType::TeamDeath => ui.label(format!("{} {}{} TEAMkilled You with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
+                EventType::Kill => ui.label(format!("{} {}You killed {} with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
+                EventType::Suicide => ui.label(format!("{} {}You killed {} with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
+                EventType::TeamKill => ui.label(format!("{} {}You TEAMkilled {} with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
                 _ => ui.label("other".to_owned()),
             };
+
+            if self.headshot {
+                match ui.ctx().texture_by_name("HeadShot") {
+                    Some(image) => ui.image(image.id(), (18.0,18.0)),
+                    None => ui.label("HS!"),
+                };
+            }
+
+
         });
     }
 }

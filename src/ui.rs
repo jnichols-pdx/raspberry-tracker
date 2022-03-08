@@ -241,7 +241,7 @@ impl epi::App for TrackerApp {
             };
         }
 
-        let nso_bytes = include_bytes!("../NSO.png");
+        let nso_bytes = include_bytes!("../Images/NSO.png");
         match  ImageReader::with_format(Cursor::new(nso_bytes), image::ImageFormat::Png)
             .decode() {
                 Ok(image) => {
@@ -256,9 +256,25 @@ impl epi::App for TrackerApp {
                         None => {},
                     }
                 },
-                Err(e) => {
+                Err(e) => {},
+        }
 
+        let headshot_bytes = include_bytes!("../Images/HeadShot.png");
+        match  ImageReader::with_format(Cursor::new(headshot_bytes), image::ImageFormat::Png)
+            .decode() {
+                Ok(image) => {
+                    let size = [image.width() as usize, image.height() as usize];
+                    let image_buffer = image.to_rgba8();
+                    let pixels = image_buffer.as_flat_samples();
+                    match self.images.as_mut() {
+                        Some(list) => {
+                            list.push(ctx.load_texture("Headshot", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                            println!("Readied Custom : {}", "Headshot");
+                        },
+                        None => {},
+                    }
                 },
+                Err(e) => {},
         }
 
     }
