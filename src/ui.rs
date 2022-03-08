@@ -186,6 +186,27 @@ impl View for Character {
     }
 }
 
+impl TrackerApp {
+
+    fn load_image_bytes(&mut self, image_name: &str, bytes: &[u8], ctx: &egui::Context) {
+        match  ImageReader::with_format(Cursor::new(bytes), image::ImageFormat::Png)
+            .decode() {
+                Ok(image) => {
+                    let size = [image.width() as usize, image.height() as usize];
+                    let image_buffer = image.to_rgba8();
+                    let pixels = image_buffer.as_flat_samples();
+                    match self.images.as_mut() {
+                        Some(list) => {
+                            list.push(ctx.load_texture(image_name, ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                            println!("Readied Custom : {}", image_name);
+                        },
+                        None => {},
+                    }
+                },
+                Err(e) => {},
+        }
+    }
+}
 
 impl epi::App for TrackerApp {
     fn name(&self) -> &str {
@@ -241,77 +262,14 @@ impl epi::App for TrackerApp {
             };
         }
 
-        let nso_bytes = include_bytes!("../Images/NSO.png");
-        match  ImageReader::with_format(Cursor::new(nso_bytes), image::ImageFormat::Png)
-            .decode() {
-                Ok(image) => {
-                    let size = [image.width() as usize, image.height() as usize];
-                    let image_buffer = image.to_rgba8();
-                    let pixels = image_buffer.as_flat_samples();
-                    match self.images.as_mut() {
-                        Some(list) => {
-                            list.push(ctx.load_texture("Robit", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
-                            println!("Readied Custom : {}", "Robit");
-                        },
-                        None => {},
-                    }
-                },
-                Err(e) => {},
-        }
+        self.load_image_bytes("Robit", include_bytes!("../Images/NSO.png"), ctx);
+        self.load_image_bytes("Headshot", include_bytes!("../Images/Headshot.png"), ctx);
+        self.load_image_bytes("Pumpkin", include_bytes!("../Images/Pumpkin.png"), ctx);
+        self.load_image_bytes("ManaAVTurret", include_bytes!("../Images/ManaAVTurret.png"), ctx);
+        self.load_image_bytes("Flail", include_bytes!("../Images/Flail.png"), ctx);
+        self.load_image_bytes("Glaive", include_bytes!("../Images/Glaive.png"), ctx);
+        //self.load_image_bytes("", include_bytes!("../Images/.png"), ctx);
 
-        let headshot_bytes = include_bytes!("../Images/HeadShot.png");
-        match  ImageReader::with_format(Cursor::new(headshot_bytes), image::ImageFormat::Png)
-            .decode() {
-                Ok(image) => {
-                    let size = [image.width() as usize, image.height() as usize];
-                    let image_buffer = image.to_rgba8();
-                    let pixels = image_buffer.as_flat_samples();
-                    match self.images.as_mut() {
-                        Some(list) => {
-                            list.push(ctx.load_texture("Headshot", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
-                            println!("Readied Custom : {}", "Headshot");
-                        },
-                        None => {},
-                    }
-                },
-                Err(e) => {},
-        }
-
-        let pumpkin_bytes = include_bytes!("../Images/Pumpkin.png");
-        match  ImageReader::with_format(Cursor::new(pumpkin_bytes), image::ImageFormat::Png)
-            .decode() {
-                Ok(image) => {
-                    let size = [image.width() as usize, image.height() as usize];
-                    let image_buffer = image.to_rgba8();
-                    let pixels = image_buffer.as_flat_samples();
-                    match self.images.as_mut() {
-                        Some(list) => {
-                            list.push(ctx.load_texture("Pumpkin", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
-                            println!("Readied Custom : {}", "Pumpkin");
-                        },
-                        None => {},
-                    }
-                },
-                Err(e) => {},
-        }
-
-        let mana_av_bytes = include_bytes!("../Images/ManaAVTurret.png");
-        match  ImageReader::with_format(Cursor::new(mana_av_bytes), image::ImageFormat::Png)
-            .decode() {
-                Ok(image) => {
-                    let size = [image.width() as usize, image.height() as usize];
-                    let image_buffer = image.to_rgba8();
-                    let pixels = image_buffer.as_flat_samples();
-                    match self.images.as_mut() {
-                        Some(list) => {
-                            list.push(ctx.load_texture("ManaAVTurret", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
-                            println!("Readied Custom : {}", "ManaAvTurret");
-                        },
-                        None => {},
-                    }
-                },
-                Err(e) => {},
-        }
 
     }
 
@@ -407,6 +365,7 @@ impl epi::App for TrackerApp {
         }
 
     }
+
 }
 
 impl TextureLookup for egui::Context {
@@ -429,3 +388,4 @@ impl TextureLookup for egui::Context {
         new_handle
     }
 }
+
