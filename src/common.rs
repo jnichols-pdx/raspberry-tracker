@@ -272,6 +272,10 @@ impl StripQuote for String {
     }
 }
 
+pub trait TextureLookup {
+    fn textureByName(&self, name: &str) -> Option<egui::TextureHandle>;
+}
+
 
 pub enum EventType {
     Death,

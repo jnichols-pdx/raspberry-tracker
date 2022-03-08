@@ -229,6 +229,8 @@ impl epi::App for TrackerApp {
             };
         }
 
+        ctx.textureByName("VS");
+
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -325,3 +327,23 @@ impl epi::App for TrackerApp {
     }
 }
 
+impl TextureLookup for egui::Context {
+    fn textureByName(&self, name: &str) -> Option<egui::TextureHandle>{
+        let mut new_handle = None;
+        let manager = self.tex_manager();
+        let manager_cloned = manager.clone();
+        {
+            let mut manager_rw = manager.write();
+            for (id, meta) in manager_rw.allocated() {
+                if meta.name == name {
+                    new_handle = Some(TextureHandle::new(manager_cloned, id.clone()));
+                    break;
+                }
+            }
+            if let Some(ref nh) = new_handle {
+                 manager_rw.retain(nh.id());
+            }
+        }
+        new_handle
+    }
+}
