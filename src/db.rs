@@ -272,7 +272,7 @@ impl DatabaseCore {
                 //y_size = row.get(2);
                 true
             },
-            Err(RowNotFound) => {
+            Err(sqlx::Error::RowNotFound) => {
                 match download_census_image(census_id) {
                     Ok(response) => {
                         match response {
@@ -316,7 +316,7 @@ impl DatabaseCore {
             Ok(row) => {
                 Some(row.get(0))
             },
-            Err(RowNotFound) => {
+            Err(sqlx::Error::RowNotFound) => {
                 None
             },
             Err(e) => {
