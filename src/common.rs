@@ -495,7 +495,7 @@ impl std::fmt::Display for Class {
     }
 }
 
-pub fn master_images() -> std::array::IntoIter<(String, u32), 29> {
+pub fn master_images() -> std::array::IntoIter<(String, u32), 30> {
     [("NC".to_owned(), 12),
     ("TR".into(), 18),
     ("VS".into(), 94),
@@ -525,6 +525,7 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 29> {
     ("Colossus".into(), 92799),
     ("Chimera".into(), 93602),
     ("Dervish".into(), 93605),
+    ("ManaAITurret".into(), 12260),
     /*
     ("".into(), ),
     */
