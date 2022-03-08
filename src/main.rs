@@ -105,6 +105,7 @@ fn main() {
         ws_out: tx_to_websocket.clone(),
         frame_cb: Some(tx_frame_to_ws),
         session_count: 0,
+        images: None,
     };
 
 

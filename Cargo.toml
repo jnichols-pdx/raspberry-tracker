@@ -19,3 +19,4 @@ directories-next = "2"
 url = "2"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 sqlx = { version = "0.5", features = [ "runtime-tokio-native-tls", "sqlite" ] }
+image = "0.24"

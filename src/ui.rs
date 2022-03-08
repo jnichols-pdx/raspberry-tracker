@@ -8,6 +8,8 @@ use crate::db::*;
 use sqlx::sqlite::SqlitePool;
 use std::sync::{Arc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
+use image::io::Reader as ImageReader;
+use std::io::Cursor;
 
 pub struct TrackerApp {
     //pub from_main: mpsc::Receiver<Action>,
@@ -22,6 +24,7 @@ pub struct TrackerApp {
     pub ws_out: mpsc::Sender<Message>,
     pub frame_cb: Option<oneshot::Sender<epi::Frame>>,
     pub session_count: usize,
+    pub images: Option<Vec<TextureHandle>>,
 }
 
 impl ViewWithDB for CharacterList {
@@ -178,6 +181,53 @@ impl epi::App for TrackerApp {
             let _blah = callback.send(frame.clone());
         }
         ctx.set_visuals(egui::Visuals::dark()); 
+
+        self.images = Some(Vec::new());
+        let images = [("NC", 12),
+                      ("TR", 18),
+                      ("VS", 94)];/*,
+                      ("HeavyAssault", 59);
+                      ("LightAssault", 62);
+                      ("Medic", 65);
+                      ("Engineer", 201);
+                      ("Infiltrator", 204);
+                      ("MAX", 207);
+                      ("", );
+                      ("", );*/
+
+
+
+        
+        for (name, census_id) in images {
+            match self.db.exist_or_download_image_sync(name, census_id) {
+                true => {
+                        match self.db.get_image_sync(name) {
+                            Some(image_bytes) => {
+                                match  ImageReader::with_format(Cursor::new(image_bytes), image::ImageFormat::Png)
+                                    .decode() {
+                                        Ok(image) => {
+                                let size = [image.width() as usize, image.height() as usize];
+                                let image_buffer = image.to_rgba8();
+                                let pixels = image_buffer.as_flat_samples();
+                                match self.images.as_mut() {
+                                    Some(list) => {
+                                        list.push(ctx.load_texture(name, ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                                        println!("Readied {}: {}", census_id, name);
+                                    },
+                                    None => {},
+                                }
+                                        },
+                                        Err(e) => {
+
+                                        },
+                                }
+                            },
+                            None => {},
+                        }
+                    },
+                false => println!("Unable to load image {}: {}", census_id, name),
+            };
+        }
 
     }
 
