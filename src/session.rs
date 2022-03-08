@@ -183,7 +183,7 @@ impl Event {
             };
 
             if self.headshot {
-                match ui.ctx().texture_by_name("HeadShot") {
+                match ui.ctx().texture_by_name("Headshot") {
                     Some(image) => ui.image(image.id(), (18.0,18.0)),
                     None => ui.label("HS!"),
                 };
