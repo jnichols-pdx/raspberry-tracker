@@ -295,6 +295,24 @@ impl epi::App for TrackerApp {
                 Err(e) => {},
         }
 
+        let mana_av_bytes = include_bytes!("../Images/ManaAVTurret.png");
+        match  ImageReader::with_format(Cursor::new(mana_av_bytes), image::ImageFormat::Png)
+            .decode() {
+                Ok(image) => {
+                    let size = [image.width() as usize, image.height() as usize];
+                    let image_buffer = image.to_rgba8();
+                    let pixels = image_buffer.as_flat_samples();
+                    match self.images.as_mut() {
+                        Some(list) => {
+                            list.push(ctx.load_texture("ManaAVTurret", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                            println!("Readied Custom : {}", "ManaAvTurret");
+                        },
+                        None => {},
+                    }
+                },
+                Err(e) => {},
+        }
+
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
