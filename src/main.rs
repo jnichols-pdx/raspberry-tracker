@@ -346,7 +346,7 @@ async fn parse_messages(
                                     kill_type = EventType::Death;
                                 }
                                 let event = Event {
-                                    kind: EventType::TeamDeath,
+                                    kind: kill_type,
                                     faction: Faction::from(faction_num),
                                     br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
                                     asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
