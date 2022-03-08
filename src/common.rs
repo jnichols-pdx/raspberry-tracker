@@ -334,6 +334,8 @@ pub enum Vehicle {
     PocketFlash = 2010,
     Flail = 2021,
     
+    Pumpkin = 2036,
+
     MosquitoInterceptor = 2122,
     ReaverInterceptor = 2123,
     ScytheInterceptor = 2124,
@@ -415,6 +417,8 @@ impl std::fmt::Display for Vehicle {
             Vehicle::ReclaimedMagrider => write!(f,"Magrider-Reclaimed"),
             Vehicle::ReclaimedVanguard => write!(f,"Vanguard-Reclaimed"),
             Vehicle::ReclaimedProwler => write!(f,"Prowler-Reclaimed"),
+
+            Vehicle::Pumpkin => write!(f,"Pumpkin"),
 
             Vehicle::NoVehicle=> write!(f,"NONE"),
             Vehicle::Unknown => write!(f,"???"),

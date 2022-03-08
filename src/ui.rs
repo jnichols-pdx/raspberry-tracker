@@ -277,6 +277,24 @@ impl epi::App for TrackerApp {
                 Err(e) => {},
         }
 
+        let pumpkin_bytes = include_bytes!("../Images/Pumpkin.png");
+        match  ImageReader::with_format(Cursor::new(pumpkin_bytes), image::ImageFormat::Png)
+            .decode() {
+                Ok(image) => {
+                    let size = [image.width() as usize, image.height() as usize];
+                    let image_buffer = image.to_rgba8();
+                    let pixels = image_buffer.as_flat_samples();
+                    match self.images.as_mut() {
+                        Some(list) => {
+                            list.push(ctx.load_texture("Pumpkin", ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                            println!("Readied Custom : {}", "Pumpkin");
+                        },
+                        None => {},
+                    }
+                },
+                Err(e) => {},
+        }
+
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
