@@ -226,33 +226,17 @@ impl DatabaseCore {
     }
 
     pub async fn init(&mut self) {
-        match self.conn.execute("SELECT version FROM raspberrytracker LIMIT 1;").await {
-            Err(err) => {
-                if let Some(db_err) = err.as_database_error() {
-                    if db_err.message()== "no such table: raspberrytracker".to_string() {
-                        print!("Setting up local database...");
-                        match self.conn.execute("CREATE TABLE raspberrytracker (version NUMBER);
-                              INSERT INTO raspberrytracker VALUES (0.1); 
-                              CREATE TABLE windows (name TEXT, width NUMBER, height NUMBER);
-                              INSERT INTO windows VALUES ('main', 800.0, 480.0);
-                              CREATE TABLE characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER, PRIMARY KEY (id));
-                              CREATE TABLE weapons (id TEXT NOT NULL, name TEXT NOT NULL, PRIMARY KEY (id));
-                              ",).await {
-                            Ok(_) => println!(" finished"),
-                            Err(e) => {
-                                println!(" Error:");
-                                println!("{:?}", e);
-                                std::process::exit(-3);
-                            },
-                        }
-                    } else {
-                        println!("sqlhuh? {:?}", db_err.message());
-                    }
-                }
-                },
+        match sqlx::migrate!().run(&self.conn).await
+        {
             Ok(_) => {},
-        };
+            Err(e) => {
+                                println!("Error running DB migration:");
+                                println!("{:?}", e);
+                                std::process::exit(10);
+            }
 
+        }
+        
         match  self.conn.fetch_one("SELECT version FROM raspberrytracker LIMIT 1;").await {
             Ok(row) => println!("db ver = {}", row.get::<f64, usize>(0) ),
             Err(e) => {
@@ -261,6 +245,7 @@ impl DatabaseCore {
                                 std::process::exit(-4);
             }
         }
+
 
         let mut cursor = self.conn.fetch("SELECT * FROM weapons;");
         while let Some(row) = cursor.try_next().await.unwrap() {
