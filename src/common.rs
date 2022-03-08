@@ -9,6 +9,7 @@ use tokio::sync::{mpsc};
 use crate::session::*;
 use crate::db::*;
 use sqlx::sqlite::SqlitePool;
+use std::io::Read;
 
 /*pub struct Action {
     pub val: u32,
@@ -156,6 +157,19 @@ pub fn full_character_from_json(json: &serde_json::Value) -> Result<FullCharacte
     Ok(biff)
 }
 
+pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Error> {
+    let resp = ureq::get(&*format!("http://census.daybreakgames.com/files/ps2/images/static/{}.png", census_id))
+                .call()?;
+    if resp.status() == 200 {
+        println!("{:?}",resp); 
+        let mut image_bytes: Vec<u8> = Vec::with_capacity(1024);
+        resp.into_reader().take(5242880).read_to_end(&mut image_bytes)?;
+        Ok(Some(image_bytes))
+    } else {
+        Ok(None)
+    }
+
+}
 
 impl Character {
     /*pub fn new(new_lower: String) -> Self
