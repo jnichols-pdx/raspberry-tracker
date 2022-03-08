@@ -141,19 +141,47 @@ impl Event {
         } else {
             headshot_str = "";
         }
-        let vehicle_str = match self.vehicle {
-            Some(vehicle) => vehicle.to_string(),
-            None => "".to_owned(),
-        };
 
-        match self.kind {
-            EventType::Death => ui.label(format!("{}{} - {} killed you with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
-            EventType::TeamDeath => ui.label(format!("{}{} - {} TEAMkilled you with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
-            EventType::Kill => ui.label(format!("{}You killed {} - {} with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
-            EventType::Suicide => ui.label(format!("{}You killed {} yourself with {}.{} {}", vehicle_str, self.class, self.weapon, headshot_str, self.kdr)),
-            EventType::TeamKill => ui.label(format!("{}You TEAMkilled {} - {} with {}.{} {}", vehicle_str, self.class, self.name, self.weapon, headshot_str, self.kdr)),
-            _ => ui.label("other".to_owned()),
-        };
+        ui.horizontal(|ui| {
+            match ui.ctx().texture_by_name(&self.faction.to_string()) {
+                Some(image) => ui.image(image.id(), (18.0,18.0)),
+                None => ui.label(self.faction.to_string()),
+            };
+
+            match ui.ctx().texture_by_name(&self.class.to_string()) {
+                Some(image) => ui.image(image.id(), (18.0,18.0)),
+                None => ui.label(self.faction.to_string()),
+            };
+            
+            let vehicle_str;
+            if let Some(vehicle) = self.vehicle {
+                match ui.ctx().texture_by_name(&vehicle.to_string()) {
+                    Some(image) => {
+                        ui.image(image.id(), (18.0,18.0));
+                        vehicle_str = "".to_owned();
+                    },
+                    None => vehicle_str = vehicle.to_string().to_owned(),
+                };
+            } else {
+                vehicle_str = "".to_owned();
+            }
+
+            let br;
+            if self.asp > 0 {
+                br = format!("{}~{}", self.br, self.asp);
+            } else {
+                br = format!("{}",self.br);
+            }
+
+            match self.kind {
+                EventType::Death => ui.label(format!("{} {}{} killed You with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
+                EventType::TeamDeath => ui.label(format!("{} {}{} TEAMkilled You with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
+                EventType::Kill => ui.label(format!("{} {}You killed {} with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
+                EventType::Suicide => ui.label(format!("{} {}You killed {} with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
+                EventType::TeamKill => ui.label(format!("{} {}You TEAMkilled {} with {}.{} {:.2}", br,vehicle_str, self.name, self.weapon, headshot_str, self.kdr)),
+                _ => ui.label("other".to_owned()),
+            };
+        });
     }
 }
 pub struct EventList {
