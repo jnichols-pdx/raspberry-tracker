@@ -132,8 +132,16 @@ impl View for Character {
             };
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
-                    if let Some(outfit_name) = &self.outfit {
-                        ui.label(format!("[{}] {}", outfit_name, self.full_name));
+                    if let Some(outfit_alias) = &self.outfit {
+                        if outfit_alias == "" {
+                            if let Some(outfit_name) = &self.outfit_full {
+                                ui.label(format!("[{}] {}", outfit_name, self.full_name));
+                            } else {
+                                ui.label(&self.full_name);
+                            }
+                        } else {
+                            ui.label(format!("[{}] {}", outfit_alias, self.full_name));
+                        }
                     } else {
                         ui.label(&self.full_name);
                     }

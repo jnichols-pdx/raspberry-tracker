@@ -282,7 +282,15 @@ async fn parse_messages(
                         if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
                             let name;
                             if let Some(outfit_alias) = player_char.outfit {
-                                name = format!("[{}] {}", outfit_alias, player_char.full_name);
+                                if outfit_alias == "" {
+                                    if let Some(outfit_name) = player_char.outfit_full {
+                                        name = format!("[{}] {}", outfit_name, player_char.full_name);
+                                    } else {
+                                        name = player_char.full_name.to_owned();
+                                    }
+                                } else {
+                                    name = format!("[{}] {}", outfit_alias, player_char.full_name);
+                                }
                             } else {
                                 name = player_char.full_name.to_owned();
                             }
@@ -319,9 +327,14 @@ async fn parse_messages(
                                     }
                                     let name;
                                     if details["character_list"][0]["outfit"].is_object() {
-                                        let outfit_alias =  details["character_list"][0]["outfit"]["alias"].to_string().unquote();
                                         let player_name = details["character_list"][0]["name"]["first"].to_string().unquote();
-                                        name = format!("[{}] {}", outfit_alias, player_name);
+                                        let outfit_alias =  details["character_list"][0]["outfit"]["alias"].to_string().unquote();
+                                        let outfit_name =  details["character_list"][0]["outfit"]["name"].to_string().unquote();
+                                        if outfit_alias == "" {
+                                            name = format!("[{}] {}", outfit_name, player_name);
+                                        } else {
+                                            name = format!("[{}] {}", outfit_alias, player_name);
+                                        }
 
                                     } else {
                                         name = details["character_list"][0]["name"]["first"].to_string().unquote();
@@ -363,9 +376,14 @@ async fn parse_messages(
                                 }
                                 let name;
                                 if details["character_list"][0]["outfit"].is_object() {
-                                    let outfit_alias =  details["character_list"][0]["outfit"]["alias"].to_string().unquote();
                                     let player_name = details["character_list"][0]["name"]["first"].to_string().unquote();
-                                    name = format!("[{}] {}", outfit_alias, player_name);
+                                    let outfit_alias =  details["character_list"][0]["outfit"]["alias"].to_string().unquote();
+                                    let outfit_name =  details["character_list"][0]["outfit"]["name"].to_string().unquote();
+                                    if outfit_alias == "" {
+                                        name = format!("[{}] {}", outfit_name, player_name);
+                                    } else {
+                                        name = format!("[{}] {}", outfit_alias, player_name);
+                                    }
 
                                 } else {
                                     name = details["character_list"][0]["name"]["first"].to_string().unquote();
