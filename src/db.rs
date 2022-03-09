@@ -193,7 +193,7 @@ impl DatabaseCore {
     }
     
     pub async fn get_weapon_name(&mut self, weapon_id: &String) -> String {
-        let weapon_name;
+        let mut weapon_name;
         if weapon_id == "0" {
             weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
         } else {
@@ -210,17 +210,24 @@ impl DatabaseCore {
                             println!("with:");
                             println!("{:?}", weapon);
                             weapon_name = weapon["item_list"][0]["name"]["en"].to_string().unquote();
-                            self.weapons.insert(weapon_id.to_owned(), weapon_name.to_owned());
-                            match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
-                                .bind(weapon_id)
-                                .bind(weapon_name.to_owned())
-                                .execute(&self.conn).await {
-                                    Ok(_) => {},
-                                    Err(err) => {
-                                            println!("Error saving new weapon in DB:");
-                                            println!("{:?}", err);
-                                            std::process::exit(-10);
-                                    }
+                            if weapon_name == "ul" { //"null" with the n and l removed by unquote.
+                                //Census didn't actually return anything. Might be a new NSO
+                                //weapon that isn't reporting correctly.
+                                // Known ids that trigger this: 6011526, 6011563, 6011564.
+                                weapon_name = format!("Missing ({})", weapon_id);
+                            } else {
+                                self.weapons.insert(weapon_id.to_owned(), weapon_name.to_owned());
+                                match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
+                                    .bind(weapon_id)
+                                    .bind(weapon_name.to_owned())
+                                    .execute(&self.conn).await {
+                                        Ok(_) => {},
+                                        Err(err) => {
+                                                println!("Error saving new weapon in DB:");
+                                                println!("{:?}", err);
+                                                std::process::exit(-10);
+                                        }
+                                }
                             }
                         }
                     }
