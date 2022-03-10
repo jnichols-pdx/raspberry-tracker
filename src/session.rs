@@ -64,6 +64,8 @@ impl Session {
     }
 
     pub fn ui(&self, ctx: &egui::Context) {
+        self.events.ui(&ctx);
+
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
             //ui.heading(format!("{} Stats", new_char_name));
@@ -71,7 +73,6 @@ impl Session {
                 ui.label(self.get_list_name());
         });
 
-            self.events.ui(&ctx);
          
     }
     
