@@ -155,7 +155,7 @@ impl Event {
                 None => ui.label(self.faction.to_string()),
             };
             
-            let vehicle_str;
+            let mut vehicle_str;
             if let Some(vehicle) = self.vehicle {
                 match ui.ctx().texture_by_name(&vehicle.to_string()) {
                     Some(image) => {
@@ -166,6 +166,14 @@ impl Event {
                 };
             } else {
                 vehicle_str = "".to_owned();
+            }
+            //Override for orbital strike direct kills (can't track when players die from falling
+            //damage after being thrown airborn by orbital :( )
+            if self.weapon == "Orbital Strike Uplink" {
+                if let Some(image) = ui.ctx().texture_by_name(&"Orbital") {
+                    ui.image(image.id(), (18.0,18.0));
+                    vehicle_str = "".to_owned();
+                };
             }
 
             let br;
