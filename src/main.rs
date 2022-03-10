@@ -266,7 +266,8 @@ async fn parse_messages(
                     let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
                     let datetime = OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(local_tz);
                     let formatted_time;
-                    let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period] [year]-[month]-[day]",).unwrap();
+                    //let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period] [year]-[month]-[day]",).unwrap();
+                    let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period]",).unwrap();
                     if let Ok(tstamp) = datetime.format(&formatter) {
                         formatted_time = tstamp;
                     } else {

@@ -72,11 +72,11 @@ impl Session {
             //ui.heading(format!("{} Stats", new_char_name));
             ui.heading("<char> Stats");
                 ui.label(self.get_list_name());
-            TableBuilder::new(ui)
+            /*TableBuilder::new(ui)
                 .column(Size::Absolute(40.0))
                 .column(Size::RemainderMinimum(100.0))
                 .column(Size::Absolute(50.0))
-                .header(20.0, |mut header| {
+                .header(15.0, |mut header| {
                     header.col(|ui| {
                         ui.heading("Fixed-S");
                     });
@@ -88,7 +88,7 @@ impl Session {
                     });
                 })
                 .body(|mut body| {
-                    body.row(25.0, |mut row| {
+                    body.row(20.0, |mut row| {
                         row.col_clip(|ui| {
                             ui.label("smol");
                         });
@@ -99,7 +99,7 @@ impl Session {
                             ui.label("beeg");
                         });
                     });
-                });
+                });*/
 
         });
 
@@ -168,53 +168,74 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn ui(&self, ui: &mut egui::Ui) {
-        /*let headshot_str ;
-        if self.headshot {
-            headshot_str = " HS!";
-        } else {
-            headshot_str = "";
-        }*/
-
-        ui.horizontal(|ui| {
-            match ui.ctx().texture_by_name(&self.faction.to_string()) {
-                Some(image) => ui.image(image.id(), (18.0,18.0)),
-                None => ui.label(self.faction.to_string()),
-            };
-
-            match ui.ctx().texture_by_name(&self.class.to_string()) {
-                Some(image) => ui.image(image.id(), (18.0,18.0)),
-                None => ui.label(self.faction.to_string()),
-            };
-            
-            let mut vehicle_str;
-            if let Some(vehicle) = self.vehicle {
-                match ui.ctx().texture_by_name(&vehicle.to_string()) {
-                    Some(image) => {
-                        ui.image(image.id(), (18.0,18.0));
-                        vehicle_str = "".to_owned();
-                    },
-                    None => vehicle_str = vehicle.to_string().to_owned(),
+    pub fn ui(&self, body: &mut egui_extras::TableBody) {
+        let img_size = (14.0,14.0);
+        body.row(20.0, |mut row| {
+            row.col_clip(|ui| { //faction
+                match ui.ctx().texture_by_name(&self.faction.to_string()) {
+                    Some(image) => ui.image(image.id(), img_size),
+                    None => ui.label(egui::RichText::new(self.faction.to_string()).small()),
                 };
-            } else {
-                vehicle_str = "".to_owned();
-            }
-            //Override for orbital strike direct kills (can't track when players die from falling
-            //damage after being thrown airborn by orbital :( )
-            if self.weapon == "Orbital Strike Uplink" {
-                if let Some(image) = ui.ctx().texture_by_name(&"Orbital") {
-                    ui.image(image.id(), (18.0,18.0));
-                    vehicle_str = "".to_owned();
+            });
+            row.col_clip(|ui| { //BR
+                if self.asp > 0 {
+                    ui.label(egui::RichText::new(format!("{}~{}", self.br, self.asp)).small());
+                } else {
+                    ui.label(egui::RichText::new(format!("{}", self.br)).small());
+                }
+            });
+            row.col_clip(|ui| { //Class
+                match ui.ctx().texture_by_name(&self.class.to_string()) {
+                    Some(image) => ui.image(image.id(), img_size),
+                    None => ui.label(egui::RichText::new(self.faction.to_string()).small()),
                 };
-            }
+            });
+            row.col_clip(|ui| { //Vehicle
+                //Override for orbital strike direct kills (can't track when players die from falling
+                //damage after being thrown airborn by orbital :( )
+                if self.weapon == "Orbital Strike Uplink" {
+                    if let Some(image) = ui.ctx().texture_by_name(&"Orbital") {
+                        ui.image(image.id(), img_size);
+                    };
+                } else if let Some(vehicle) = self.vehicle {
+                    match ui.ctx().texture_by_name(&vehicle.to_string()) {
+                        Some(image) => ui.image(image.id(), img_size),
+                        None => ui.label(egui::RichText::new(vehicle.to_string()).small()),
+                    };
+                }
+            });
+            row.col(|ui| { //Player Name
+                let bg_color;
+                match self.kind {
+                    EventType::Death => bg_color = Color32::from_rgb(80,0,0),
+                    EventType::TeamDeath => bg_color = Color32::from_rgb(80,80,0),
+                    EventType::Kill => bg_color = Color32::from_rgb(0,80,0),
+                    EventType::Suicide => bg_color = Color32::from_rgb(0,0,80),
+                    EventType::TeamKill => bg_color = Color32::from_rgb(65,80,0),
+                    _ => bg_color = Color32::from_rgb(80,80,80),
+                };
+                ui.label(egui::RichText::new(&self.name).small().background_color(bg_color).color(Color32::from_rgb(255,255,255)));
+            });
+            row.col_clip(|ui| { //Weapon
+                ui.label(egui::RichText::new(&self.weapon).small());
+            });
+            row.col_clip(|ui| { //Headshot
+                if self.headshot {
+                    match ui.ctx().texture_by_name("Headshot") {
+                        Some(image) => ui.image(image.id(), img_size),
+                        None => ui.label(egui::RichText::new("HS!").small()),
+                    };
+                }
+            });
+            row.col_clip(|ui| { //KD ratio
+                ui.label(egui::RichText::new(format!("{:.2}",self.kdr)).small());
+            });
+            row.col_clip(|ui| { //Timestamp
+                ui.label(egui::RichText::new(&self.datetime).small());
+            });
+        });
 
-            let br;
-            if self.asp > 0 {
-                br = format!("{}~{}", self.br, self.asp);
-            } else {
-                br = format!("{}",self.br);
-            }
-
+/*
 
             match self.kind {
                 EventType::Death => ui.label(format!("{} {}{} killed You with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
@@ -225,15 +246,9 @@ impl Event {
                 _ => ui.label("other".to_owned()),
             };
 
-            if self.headshot {
-                match ui.ctx().texture_by_name("Headshot") {
-                    Some(image) => ui.image(image.id(), (18.0,18.0)),
-                    None => ui.label("HS!"),
-                };
-            }
 
 
-        });
+        });*/
     }
 }
 pub struct EventList {
@@ -252,9 +267,53 @@ impl EventList {
     }
 
     pub fn ui(&self, ctx: &egui::Context) {
-        egui::SidePanel::right("events_panel").min_width(250.0).show(ctx, |ui| {
-            ui.heading("Event feed");
-            let text_style = TextStyle::Body;
+        egui::SidePanel::right("events_panel").min_width(400.0).show(ctx, |ui| {
+
+            TableBuilder::new(ui)
+                .column(Size::Absolute(25.0)) //Faction
+                .column(Size::Absolute(30.0)) //BR
+                .column(Size::Absolute(25.0)) //Class
+                .column(Size::Absolute(25.0)) //Vehicle
+                .column(Size::RemainderMinimum(100.0)) //playername
+                .column(Size::RemainderMinimum(80.0)) //weapon
+                .column(Size::Absolute(25.0)) //headshot
+                .column(Size::Absolute(30.0)) //KD
+                .column(Size::Absolute(80.0)) //Timestamp
+                .header(15.0, |mut header| {
+                    header.col(|ui| {
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("BR").small());
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("Class").small());
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("Veh.").small());
+                    });
+                    header.col_clip(|ui| {
+                        ui.label(egui::RichText::new("Player").small());
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("Method").small());
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("HS").small());
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("KD").small());
+                    });
+                    header.col(|ui| {
+                        ui.label(egui::RichText::new("Time").small());
+                    });
+                })
+                .body(|mut body| {
+                    for event in self.events.iter().rev() {
+                        event.ui(&mut body);
+                    }
+                });
+
+/*
             let row_height = ui.text_style_height(&text_style);
             ScrollArea::vertical().show_rows( //is an stick_to_bottom, but no stick_to_top ...
                 ui,
@@ -275,6 +334,7 @@ impl EventList {
 
                 }
             );
+            */
         });
     }
 }
