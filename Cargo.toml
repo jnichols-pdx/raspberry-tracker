@@ -20,3 +20,5 @@ url = "2"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 sqlx = { version = "0.5", features = [ "runtime-tokio-native-tls", "sqlite" ] }
 image = "0.24"
+time = { version = "0.3", features = [ "std", "formatting", "parsing", "macros", "local-offset"] }
+time-tz = { version = "0.4", features = [ "system" ] }

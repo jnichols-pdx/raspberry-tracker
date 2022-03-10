@@ -26,7 +26,7 @@ pub enum Faction {
     NSO = 4,
 
     #[num_enum(default)]
-    UNK = 0,
+    Unknown = 0,
 }
 
 #[derive(Debug, Clone)]
@@ -52,7 +52,7 @@ impl std::fmt::Display for Faction {
             Faction::NC => write!(f,"NC"),
             Faction::TR => write!(f,"TR"),
             Faction::NSO => write!(f,"Robit"),
-            Faction::UNK => write!(f,"???"),
+            Faction::Unknown => write!(f,"???"),
         }
     }
 }
@@ -286,6 +286,7 @@ pub enum EventType {
     Suicide,
     DestroyVehicle,
     LoseVehicle,
+    Unknown,
 }
 
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]

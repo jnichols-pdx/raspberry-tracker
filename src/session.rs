@@ -12,8 +12,8 @@ pub struct Session {
    character: FullCharacter,
    events: EventList,
    weapons: WeaponStatsList,
-   start_time: u64,
-   end_time: Option<u64>,
+   start_time: i64,
+   end_time: Option<i64>,
 }
 
 #[allow(dead_code)]
@@ -26,7 +26,7 @@ impl Session {
         self.character.full_name.to_owned()
     }
 
-    pub fn new(character: Character, br: u8, asp: u8, start: u64) -> Self {
+    pub fn new(character: Character, br: u8, asp: u8, start: i64) -> Self {
         let character = FullCharacter::new(&character, br, asp);
         Session {
             character: character,
@@ -37,7 +37,7 @@ impl Session {
         }
     }
 
-    pub fn new_from_full(character: FullCharacter, start: u64) -> Self {
+    pub fn new_from_full(character: FullCharacter, start: i64) -> Self {
         Session {
             character: character,
             events: EventList::new(),
@@ -75,7 +75,7 @@ impl Session {
          
     }
     
-    pub fn end(&mut self, time: u64)
+    pub fn end(&mut self, time: i64)
     {
         self.end_time = Some(time);
     }
@@ -130,8 +130,9 @@ pub struct Event {
     pub weapon: String,
     pub headshot: bool,
     pub kdr: f32,
-    pub timestamp: u64,
+    pub timestamp: i64,
     pub vehicle: Option<Vehicle>,
+    pub datetime: String,
 
 }
 
@@ -183,12 +184,13 @@ impl Event {
                 br = format!("{}",self.br);
             }
 
+
             match self.kind {
-                EventType::Death => ui.label(format!("{} {}{} killed You with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
-                EventType::TeamDeath => ui.label(format!("{} {}{} TEAMkilled You with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
-                EventType::Kill => ui.label(format!("{} {}You killed {} with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
-                EventType::Suicide => ui.label(format!("{} {}You killed {} with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
-                EventType::TeamKill => ui.label(format!("{} {}You TEAMkilled {} with {}. {:.2}", br,vehicle_str, self.name, self.weapon, self.kdr)),
+                EventType::Death => ui.label(format!("{} {}{} killed You with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
+                EventType::TeamDeath => ui.label(format!("{} {}{} TEAMkilled You with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
+                EventType::Kill => ui.label(format!("{} {}You killed {} with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
+                EventType::Suicide => ui.label(format!("{} {}You killed {} with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
+                EventType::TeamKill => ui.label(format!("{} {}You TEAMkilled {} with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
                 _ => ui.label("other".to_owned()),
             };
 

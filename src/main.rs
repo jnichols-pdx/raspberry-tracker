@@ -18,6 +18,8 @@ use std::thread;
 use tokio::runtime::Runtime;
 use std::sync::{Arc, RwLock};
 use sqlx::sqlite::SqlitePool;
+use time::OffsetDateTime;
+use time_tz::OffsetDateTimeExt;
 //use tokio::time::{self, Duration};
 
 
@@ -199,6 +201,7 @@ async fn parse_messages(
         ) 
 {
     let mut parsing = true;
+    let local_tz = time_tz::system::get_timezone().expect("Failed to find system timezeon");
     while parsing {
         match ws_messages.recv().await {
             Some(json) => {
@@ -240,7 +243,7 @@ async fn parse_messages(
                                 {
                                     //HERE
                                     let mut session_list_rw = session_list.write().unwrap();
-                                    session_list_rw.push(Session::new_from_full(bob, json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap()));
+                                    session_list_rw.push(Session::new_from_full(bob, json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap()));
                                     ui_frame.request_repaint();
                                 }
                             },
@@ -253,6 +256,16 @@ async fn parse_messages(
                     println!("Found a death");
                     println!("{:?}", json);
                     let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
+                    let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                    let datetime = OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or_else(|_| {OffsetDateTime::now_utc()}.to_timezone(local_tz));
+                    let formatted_time;
+                    let formatter = time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour \
+                        sign:mandatory]:[offset_minute]:[offset_second]",).unwrap();
+                    if let Ok(tstamp) = datetime.format(&formatter) {
+                        formatted_time = tstamp;
+                    } else {
+                        formatted_time = "?-?-? ?:?:?".to_owned();
+                    }
                     let vehicle_num =  json["payload"]["attacker_vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {-1});
                     let vehicle;
                     if vehicle_num <= 0 {
@@ -260,6 +273,7 @@ async fn parse_messages(
                     } else {
                         vehicle = Some( Vehicle::from(vehicle_num));
                     }
+
                     let mut attacker = false;
                     let mut some_player_char: Option<FullCharacter> = None;
                     {
@@ -276,39 +290,41 @@ async fn parse_messages(
                         }
                     }
                     let player_char = some_player_char.unwrap();
-                    let mut final_event: Option<Event> = None;
-                    if attacker { //Player character's ID was the attacker
-                        //Suicide
-                        if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
-                            let name;
-                            if let Some(outfit_alias) = player_char.outfit {
-                                if outfit_alias == "" {
-                                    if let Some(outfit_name) = player_char.outfit_full {
-                                        name = format!("[{}] {}", outfit_name, player_char.full_name);
-                                    } else {
-                                        name = player_char.full_name.to_owned();
-                                    }
+//////////////////////
+
+                    let mut event_type = EventType::Unknown;
+                    let br;
+                    let asp;
+                    let name;
+                    let mut class = Class::Unknown;
+                    let ratio;
+                    let mut faction = Faction::Unknown ;
+
+                    //Suicide
+                    if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
+                        event_type =  EventType::Suicide;
+                        if let Some(outfit_alias) = player_char.outfit {
+                            if outfit_alias == "" {
+                                if let Some(outfit_name) = player_char.outfit_full {
+                                    name = format!("[{}] {}", outfit_name, player_char.full_name);
                                 } else {
-                                    name = format!("[{}] {}", outfit_alias, player_char.full_name);
+                                    name = player_char.full_name.to_owned();
                                 }
                             } else {
-                                name = player_char.full_name.to_owned();
+                                name = format!("[{}] {}", outfit_alias, player_char.full_name);
                             }
-                            let event = Event {
-                                kind: EventType::Suicide,
-                                faction: player_char.faction,
-                                br: player_char.br,
-                                asp: player_char.asp,
-                                class: Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0})),
-                                name: name,
-                                weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
-                                kdr: 0.5,//TODO - get from current player details.
-                                timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                vehicle: vehicle,
-                            };
-                            final_event = Some(event);
                         } else {
+                            name = player_char.full_name.to_owned();
+                        }
+                        class = Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0}));
+                        br = player_char.br;
+                        asp = player_char.asp;
+                        faction = player_char.faction;
+                        ratio = 0.5;//TODO - get from current player details.
+
+                    } else {
+                        let mut deets = None;
+                        if attacker { //Player character's ID was the attacker
                             //Killed other player
                             match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
                                 Err(whut) => println!("{}", whut),
@@ -316,112 +332,91 @@ async fn parse_messages(
                                     println!("YOUR VICTIM:");
                                     println!("{:?}", details);
                                     let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
-                                    let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                                    let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                                    let ratio = kill_count as f32/ death_count as f32;
-                                    let kill_type;
-                                    if Faction::from(faction_num) == player_char.faction {
-                                        kill_type = EventType::TeamKill;
+                                    faction = Faction::from(faction_num);
+                                    if faction == player_char.faction {
+                                        event_type = EventType::TeamKill;
                                     } else {
-                                        kill_type = EventType::Kill;
+                                        event_type = EventType::Kill;
                                     }
-                                    let name;
-                                    if details["character_list"][0]["outfit"].is_object() {
-                                        let player_name = details["character_list"][0]["name"]["first"].to_string().unquote();
-                                        let outfit_alias =  details["character_list"][0]["outfit"]["alias"].to_string().unquote();
-                                        let outfit_name =  details["character_list"][0]["outfit"]["name"].to_string().unquote();
-                                        if outfit_alias == "" {
-                                            name = format!("[{}] {}", outfit_name, player_name);
-                                        } else {
-                                            name = format!("[{}] {}", outfit_alias, player_name);
-                                        }
-
-                                    } else {
-                                        name = details["character_list"][0]["name"]["first"].to_string().unquote();
-
-                                    }
-                                    let event = Event {
-                                        kind: kill_type,
-                                        faction: Faction::from(faction_num),
-                                        br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                        asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                        class: Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0})),
-                                        name: name,
-                                        weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                        headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
-                                        kdr: ratio,
-                                        timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                        vehicle: vehicle
-                                    };
-                                    final_event = Some(event);
+                                    class = Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0}));
+                                    deets = Some(details["character_list"][0].clone());
                                 }
                             }
-                        }
-                        
-                    } else {
-                        match  lookup_new_char_details(&json["payload"]["attacker_character_id"].to_string().unquote()) {
-                            Err(whut) => println!("{}", whut),
-                            Ok(details) => {
-                                println!("YOUR KILLER:");
-                                println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
-                                let kill_count = details["character_list"][0]["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                                let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                                let ratio = kill_count as f32/ death_count as f32;
-                                let kill_type;
-                                if Faction::from(faction_num) == player_char.faction {
-                                    kill_type = EventType::TeamDeath;
-                                } else {
-                                    kill_type = EventType::Death;
-                                }
-                                let name;
-                                if details["character_list"][0]["outfit"].is_object() {
-                                    let player_name = details["character_list"][0]["name"]["first"].to_string().unquote();
-                                    let outfit_alias =  details["character_list"][0]["outfit"]["alias"].to_string().unquote();
-                                    let outfit_name =  details["character_list"][0]["outfit"]["name"].to_string().unquote();
-                                    if outfit_alias == "" {
-                                        name = format!("[{}] {}", outfit_name, player_name);
+                        } else { //Unrecognized character ID was attacker
+                            //Died to other player
+                            match  lookup_new_char_details(&json["payload"]["attacker_character_id"].to_string().unquote()) {
+                                Err(whut) => println!("{}", whut),
+                                Ok(details) => {
+                                    println!("YOUR KILLER:");
+                                    println!("{:?}", details);
+                                    let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                                    faction = Faction::from(faction_num);
+                                    if faction == player_char.faction {
+                                        event_type = EventType::TeamDeath;
                                     } else {
-                                        name = format!("[{}] {}", outfit_alias, player_name);
+                                        event_type = EventType::Death;
                                     }
-
-                                } else {
-                                    name = details["character_list"][0]["name"]["first"].to_string().unquote();
-
+                                    class = Class::from(json["payload"]["attacker_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0}));
+                                    deets = Some(details["character_list"][0].clone());
                                 }
-                                let event = Event {
-                                    kind: kill_type,
-                                    faction: Faction::from(faction_num),
-                                    br: details["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                    asp: details["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}),
-                                    class: Class::from(json["payload"]["attacker_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0})),
-                                    name: name,
-                                    weapon: weapon_name,//json["payload"]["attacker_weapon_id"].to_string().unquote(),
-                                    headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
-                                    kdr: ratio,
-                                    timestamp: json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap_or_else(|_| {0}),
-                                    vehicle: vehicle
-                                };
-                                final_event = Some(event);
                             }
-                        }
 
+                        }
+                        //Pull relevant data from the Census details for the attacker/victim.
+                        if let Some(deets) = deets {
+                            let player_name = deets["name"]["first"].to_string().unquote();
+                            if deets["outfit"].is_object() {
+                                let outfit_alias =  deets["outfit"]["alias"].to_string().unquote();
+                                let outfit_name =  deets["outfit"]["name"].to_string().unquote();
+                                if outfit_alias == "" {
+                                    name = format!("[{}] {}", outfit_name, player_name);
+                                } else {
+                                    name = format!("[{}] {}", outfit_alias, player_name);
+                                }
+
+                            } else {
+                                name = player_name;
+                            }
+                            br = deets["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0});
+                            asp = deets["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0});
+                            let kill_count = deets["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                            let death_count = deets["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                            ratio = kill_count as f32/ death_count as f32;
+                       } else {
+
+                        println!("no data.");
+                        std::process::exit(-2);
+                       }
                     }
 
-                    if let Some(event) = final_event {
-                        let mut session_list_rw = session_list.write().unwrap();
-                        if let Some(current_session) = session_list_rw.last_mut() {
-                            current_session.log_event(event);
-                            ui_frame.request_repaint();
-                        }
+                    //Assemble it all and save.
+                    let event = Event {
+                        kind: event_type,
+                        faction: faction,
+                        br: br,
+                        asp: asp,
+                        class: class,
+                        name: name,
+                        weapon: weapon_name,
+                        headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
+                        kdr: ratio,
+                        timestamp: timestamp,
+                        vehicle: vehicle,
+                        datetime: formatted_time,
+                    };
 
+                    let mut session_list_rw = session_list.write().unwrap();
+                    if let Some(current_session) = session_list_rw.last_mut() {
+                        current_session.log_event(event);
+                        ui_frame.request_repaint();
                     }
 
 
+/////////////////////
 
                 } else if json["payload"]["event_name"].eq("PlayerLogout") {
                     println!("offline!");
-                    let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<u64>().unwrap();
+                    let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap();
                     let _res = ws_out.send(
                             Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}"
                                 .to_string())).await;
