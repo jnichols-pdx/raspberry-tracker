@@ -519,7 +519,7 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 31> {
     ("Prowler".into(), 261),
     ("Flash".into(), 262),
     ("Reaver".into(), 263),
-    ("Sundy".into(), 264),
+    ("Sunderer".into(), 264),
     ("Vanguard".into(), 265),
     ("Scythe".into(), 266),
     ("Harasser".into(), 8852),
