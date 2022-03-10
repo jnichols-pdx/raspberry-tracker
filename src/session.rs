@@ -6,6 +6,7 @@ use tokio::sync::{mpsc};
 use crate::common::*;
 use eframe::{egui, epi};
 use egui::*;
+use egui_extras::{TableBuilder, Size};
 
 #[allow(dead_code)]
 pub struct Session {
@@ -71,6 +72,35 @@ impl Session {
             //ui.heading(format!("{} Stats", new_char_name));
             ui.heading("<char> Stats");
                 ui.label(self.get_list_name());
+            TableBuilder::new(ui)
+                .column(Size::Absolute(40.0))
+                .column(Size::RemainderMinimum(100.0))
+                .column(Size::Absolute(50.0))
+                .header(20.0, |mut header| {
+                    header.col(|ui| {
+                        ui.heading("Fixed-S");
+                    });
+                    header.col(|ui| {
+                        ui.heading("Grows");
+                    });
+                    header.col(|ui| {
+                        ui.heading("Fixed-L");
+                    });
+                })
+                .body(|mut body| {
+                    body.row(25.0, |mut row| {
+                        row.col_clip(|ui| {
+                            ui.label("smol");
+                        });
+                        row.col(|ui| {
+                            ui.label("stretechyalkajd lakdjflasdkj flasdkfj a");
+                        });
+                        row.col_clip(|ui| {
+                            ui.label("beeg");
+                        });
+                    });
+                });
+
         });
 
          

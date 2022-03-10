@@ -8,9 +8,9 @@ edition = "2021"
 
 [dependencies]
 tokio-tungstenite = { version = "0.17", features = ["native-tls"] }
-egui = "0.17"
-eframe = "0.17"
-epi = "0.17"
+#egui = "0.17"
+#eframe = "0.17"
+#epi = "0.17"
 ureq = { version = "2.4.0", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 num_enum = "0.5"
@@ -22,3 +22,8 @@ sqlx = { version = "0.5", features = [ "runtime-tokio-native-tls", "sqlite" ] }
 image = "0.24"
 time = { version = "0.3", features = [ "std", "formatting", "parsing", "macros", "local-offset"] }
 time-tz = { version = "0.4", features = [ "system" ] }
+egui = { git = "https://github.com/elwerene/egui/" , branch = "dynamic-grid" }
+egui_glow = { git = "https://github.com/elwerene/egui/" , branch = "dynamic-grid" }
+eframe = { git = "https://github.com/elwerene/egui/" , branch = "dynamic-grid"}
+epi = { git = "https://github.com/elwerene/egui/" , branch = "dynamic-grid"}
+egui_extras = { git = "https://github.com/elwerene/egui/" , branch = "dynamic-grid"}

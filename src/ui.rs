@@ -10,6 +10,7 @@ use std::sync::{Arc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
+use egui_extras::TableBuilder;
 
 pub struct TrackerApp {
     //pub from_main: mpsc::Receiver<Action>,
