@@ -7,6 +7,7 @@ use crate::common::*;
 use eframe::{egui, epi};
 use egui::*;
 
+#[allow(dead_code)]
 pub struct Session {
    character: FullCharacter,
    events: EventList,
@@ -15,6 +16,7 @@ pub struct Session {
    end_time: Option<u64>,
 }
 
+#[allow(dead_code)]
 impl Session {
     pub fn match_player_id(&self, to_match: &String) -> bool {
         to_match.eq(&self.character.character_id)
@@ -236,6 +238,7 @@ impl EventList {
     }
 }
 
+#[allow(dead_code)]
 pub struct WeaponStats {
     weapon_id: String,
     name: String,
@@ -249,6 +252,7 @@ pub struct WeaponStats {
     starting_hsr: f32,
 }
 
+#[allow(dead_code)]
 pub struct WeaponStatsList {
     weapons: Vec<WeaponStats>,
 }

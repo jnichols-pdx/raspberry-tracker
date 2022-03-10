@@ -1,4 +1,5 @@
 
+#![allow(dead_code)]
 
 use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio::sync::{mpsc};
