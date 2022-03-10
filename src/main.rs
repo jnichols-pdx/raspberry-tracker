@@ -201,7 +201,14 @@ async fn parse_messages(
         ) 
 {
     let mut parsing = true;
-    let local_tz = time_tz::system::get_timezone().expect("Failed to find system timezeon");
+    let local_tz;
+    let local_tz_q = time_tz::system::get_timezone();
+    match local_tz_q {
+        Ok(local) => local_tz = local,
+        Err(e) => {println!("Error finding system timezone: {}", e);
+                        std::process::exit(-2);
+        },
+    }
     while parsing {
         match ws_messages.recv().await {
             Some(json) => {
@@ -257,10 +264,9 @@ async fn parse_messages(
                     println!("{:?}", json);
                     let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
                     let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
-                    let datetime = OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or_else(|_| {OffsetDateTime::now_utc()}.to_timezone(local_tz));
+                    let datetime = OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(local_tz);
                     let formatted_time;
-                    let formatter = time::format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour \
-                        sign:mandatory]:[offset_minute]:[offset_second]",).unwrap();
+                    let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period] [year]-[month]-[day]",).unwrap();
                     if let Ok(tstamp) = datetime.format(&formatter) {
                         formatted_time = tstamp;
                     } else {
@@ -293,11 +299,11 @@ async fn parse_messages(
 //////////////////////
 
                     let mut event_type = EventType::Unknown;
-                    let br;
-                    let asp;
-                    let name;
+                    let mut br = 0;
+                    let mut asp = 0;
+                    let mut name = "Unknown".to_owned();
                     let mut class = Class::Unknown;
-                    let ratio;
+                    let mut ratio = 0.5;
                     let mut faction = Faction::Unknown ;
 
                     //Suicide
@@ -383,9 +389,7 @@ async fn parse_messages(
                             let death_count = deets["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
                             ratio = kill_count as f32/ death_count as f32;
                        } else {
-
                         println!("no data.");
-                        std::process::exit(-2);
                        }
                     }
 
