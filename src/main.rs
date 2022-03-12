@@ -73,7 +73,7 @@ fn main() {
     sync_db.init_sync();
 
     let mut char_to_track = None;
-    let character_list = Arc::new(RwLock::new(sync_db.get_character_list_sync(tx_to_websocket.clone())));
+    let character_list = Arc::new(RwLock::new(sync_db.get_character_list_sync(tx_to_websocket.clone(), session_list.clone())));
     {
         let mut char_list_rw  = character_list.write().unwrap();
         for achar in &char_list_rw.characters {

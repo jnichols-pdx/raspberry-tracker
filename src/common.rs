@@ -11,6 +11,7 @@ use crate::session::*;
 use crate::db::*;
 use sqlx::sqlite::SqlitePool;
 use std::io::Read;
+use std::sync::{Arc, RwLock};
 
 /*pub struct Action {
     pub val: u32,
@@ -209,16 +210,18 @@ pub struct CharacterList {
     pub new_char_name: String,
     pub message: Option<String>,
     pub websocket_out: mpsc::Sender<Message>,
+    pub session_list: Arc<RwLock<Vec<Session>>>,
 }
 
 impl CharacterList {
-    pub fn new(ws_out: mpsc::Sender<Message>) -> Self
+    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> Self
     {
         CharacterList {
             characters: Vec::new(),
             new_char_name: "".to_owned(),
             message: None,
             websocket_out: ws_out,
+            session_list: sl,
         }
     }
 

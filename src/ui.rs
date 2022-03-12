@@ -11,6 +11,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
 use egui_extras::TableBuilder;
+use time::OffsetDateTime;
 
 pub struct TrackerApp {
     //pub from_main: mpsc::Receiver<Action>,
@@ -87,7 +88,40 @@ impl ViewWithDB for CharacterList {
                                 Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\"]}}",
                                 char.character_id).to_owned())) {
                             Err(e) => println!("dah {:?}",e),
-                            Ok(_) => {},
+                            Ok(_) => {
+//HERE
+                                match  lookup_new_char_details(&char.character_id) {
+                                    Err(whut) => println!("{}", whut),
+                                    Ok(details) => {
+
+                                        let active_char = full_character_from_json(&details).unwrap();
+
+                                        db.update_char_with_full_sync(&active_char);
+
+                                        char.full_name =  active_char.full_name.to_owned();
+                                        char.lower_name =  active_char.lower_name.to_owned();
+                                        char.server =  active_char.server;
+                                        if let Some(outfit_alias) = &active_char.outfit {
+                                            char.outfit = Some(outfit_alias.to_owned());
+                                        } else {
+                                            char.outfit = None;
+                                        }
+                                        if let Some(outfit_name) = &active_char.outfit {
+                                            char.outfit_full = Some(outfit_name.to_owned());
+                                        } else {
+                                            char.outfit_full = None;
+                                        }
+                                        char.character_id =  active_char.character_id.to_owned();
+                                        char.faction =  active_char.faction;
+
+                                        {
+                                            let mut session_list_rw = self.session_list.write().unwrap();
+                                            session_list_rw.push(Session::new_from_full(active_char, OffsetDateTime::now_utc().unix_timestamp()));
+                                        }
+                                    },
+                                }
+
+                                },
                             }
                         char.to_track = false;
                     }

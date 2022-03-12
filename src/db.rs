@@ -10,6 +10,8 @@ use crate::common::*;
 use crate::session::FullCharacter;
 use futures_util::TryStreamExt;
 use std::collections::BTreeMap;
+use std::sync::{Arc, RwLock};
+use crate::session::*;
 
 
 #[derive(Clone)]
@@ -39,8 +41,8 @@ impl DatabaseSync {
     pub fn remove_char_sync(&self, char: &Character) {
         self.rt.block_on(self.dbc.remove_char(char));
     }
-    pub fn get_character_list_sync(&self, ws_out: mpsc::Sender<Message>) -> CharacterList {
-        match self.rt.block_on(self.dbc.get_character_list(ws_out)) {
+    pub fn get_character_list_sync(&self, ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> CharacterList {
+        match self.rt.block_on(self.dbc.get_character_list(ws_out, sl)) {
             Ok(c) => c,
             Err(e) => {
                 println!(" Error getting character list:");
@@ -134,8 +136,8 @@ impl DatabaseCore {
         }
     }
 
-    pub async fn get_character_list(&self, ws_out: mpsc::Sender<Message>) -> Result<CharacterList,sqlx::Error> {
-        let mut characters = CharacterList::new(ws_out);
+    pub async fn get_character_list(&self, ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> Result<CharacterList,sqlx::Error> {
+        let mut characters = CharacterList::new(ws_out, sl);
 
         let mut cursor = self.conn.fetch("SELECT * FROM characters;");
         while let Some(row) = cursor.try_next().await? {
