@@ -72,14 +72,45 @@ fn main() {
 
     sync_db.init_sync();
 
-
+    let mut char_to_track = None;
     let character_list = Arc::new(RwLock::new(sync_db.get_character_list_sync(tx_to_websocket.clone())));
+    {
+        let mut char_list_rw  = character_list.write().unwrap();
+        for achar in &char_list_rw.characters {
+            let _res = tx_to_websocket.blocking_send(
+                Message::Text(
+                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+                    achar.character_id)
+                .to_owned()));
 
-  
-    for achar in &character_list.read().unwrap().characters {
-        let _res = tx_to_websocket.blocking_send(
-            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
-            achar.character_id).to_owned()));
+            if is_online(&achar.character_id).unwrap() {//danger!
+                println!("{} is already online!", achar.full_name);
+                char_to_track = Some(achar.character_id.to_owned());
+            }
+        }
+        if let Some(active_char_id) = char_to_track {
+            match  lookup_new_char_details(&active_char_id) {
+                Err(whut) => println!("{}", whut),
+                Ok(details) => {
+
+                    let active_char = full_character_from_json(&details).unwrap();
+
+                    sync_db.update_char_with_full_sync(&active_char);
+
+                    char_list_rw.update_entry_from_full(&active_char);
+                    let _res = tx_to_websocket.blocking_send(
+                        Message::Text(
+                        format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
+                        &active_char.character_id).to_owned()));
+
+                    {
+                        let mut session_list_rw = session_list.write().unwrap();
+                        session_list_rw.push(Session::new_from_full(active_char, OffsetDateTime::now_utc().unix_timestamp()));
+                    }
+                },
+            }
+        }
+
     }
 
     let mut native_options = eframe::NativeOptions::default();

@@ -172,6 +172,19 @@ pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Er
 
 }
 
+pub fn is_online(char_id: &String) -> Result<bool, ureq::Error> {
+    let resp = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/characters_online_status/?character_id={}", char_id))
+        .call()?;
+    if resp.status() == 200 {
+        let json: serde_json::Value = resp.into_json()?;
+        //println!("Online check: {:?}", json);
+        let status = &json["characters_online_status_list"][0]["online_status"];
+        Ok(status.is_string() && status != "0")
+    } else {
+        Ok(false)
+    }
+}
+
 impl Character {
     /*pub fn new(new_lower: String) -> Self
     {
