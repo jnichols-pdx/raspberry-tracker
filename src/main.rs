@@ -20,6 +20,8 @@ use std::sync::{Arc, RwLock};
 use sqlx::sqlite::SqlitePool;
 use time::OffsetDateTime;
 use time_tz::OffsetDateTimeExt;
+use image::io::Reader as ImageReader;
+use std::io::Cursor;
 //use tokio::time::{self, Duration};
 
 
@@ -82,9 +84,23 @@ fn main() {
 
     let mut native_options = eframe::NativeOptions::default();
     let (x_size, y_size) = sync_db.get_window_specs_sync();    
-    
+
+
     println!("setting window as {} x {} ", x_size, y_size);
     native_options.initial_window_size = Some(egui::Vec2{ x: x_size as f32, y: y_size as f32});
+
+    match  ImageReader::with_format(Cursor::new(include_bytes!("../Images/RaspberryTrackerIcon.png")), image::ImageFormat::Png)
+        .decode() {
+            Ok(image) => {
+                let image_buffer = image.to_rgba8();
+                native_options.icon_data = Some(eframe::epi::IconData {
+                    rgba: image_buffer.into_raw(),
+                    width: image.width(),
+                    height: image.height(),
+                });
+            },
+            Err(e) => {},
+    }
 
     sync_db.rt.spawn(websocket_threads(rx_from_app,
                                tx_to_websocket.clone(),
