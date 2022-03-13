@@ -7,14 +7,27 @@ use crate::common::*;
 use eframe::{egui, epi};
 use egui::*;
 use egui_extras::{TableBuilder, Size};
+use time::OffsetDateTime;
+use time_tz::{OffsetDateTimeExt,Tz};
 
 #[allow(dead_code)]
 pub struct Session {
-   character: FullCharacter,
-   events: EventList,
-   weapons: WeaponStatsList,
-   start_time: i64,
-   end_time: Option<i64>,
+    character: FullCharacter,
+    events: EventList,
+    weapons: WeaponStatsList,
+    start_time: i64,
+    end_time: Option<i64>,
+
+    kill_count: u32,
+    death_count: u32,
+    headshot_kills: u32,
+    headshot_deaths: u32,
+    vehicles_destroyed: u32,
+    vehicles_lost: u32,
+    vehicle_kills: u32, //Killed someone using a vehicle
+    vehicle_deaths: u32, //killed by someone else in a vehicle
+    //accuracy: f32,
+    time_zone: &'static Tz,
 }
 
 #[allow(dead_code)]
@@ -28,6 +41,14 @@ impl Session {
     }
 
     pub fn new(character: Character, br: u8, asp: u8, start: i64) -> Self {
+        let local_tz_q = time_tz::system::get_timezone();
+        let local_tz;
+        match local_tz_q {
+            Ok(local) => local_tz = local,
+            Err(e) => {println!("Error finding system timezone: {}", e);
+                            std::process::exit(-2);
+            },
+        }
         let character = FullCharacter::new(&character, br, asp);
         Session {
             character: character,
@@ -35,16 +56,46 @@ impl Session {
             weapons: WeaponStatsList::new(),
             start_time: start,
             end_time: None,
+
+            kill_count: 0,
+            death_count: 0,
+            headshot_kills: 0,
+            headshot_deaths: 0,
+            vehicles_destroyed: 0,
+            vehicles_lost: 0,
+            vehicle_kills: 0,
+            vehicle_deaths: 0,
+
+            time_zone: local_tz,
         }
     }
 
     pub fn new_from_full(character: FullCharacter, start: i64) -> Self {
+        let local_tz_q = time_tz::system::get_timezone();
+        let local_tz;
+        match local_tz_q {
+            Ok(local) => local_tz = local,
+            Err(e) => {println!("Error finding system timezone: {}", e);
+                            std::process::exit(-2);
+            },
+        }
         Session {
             character: character,
             events: EventList::new(),
             weapons: WeaponStatsList::new(),
             start_time: start,
             end_time: None,
+
+            kill_count: 0,
+            death_count: 0,
+            headshot_kills: 0,
+            headshot_deaths: 0,
+            vehicles_destroyed: 0,
+            vehicles_lost: 0,
+            vehicle_kills: 0,
+            vehicle_deaths: 0,
+
+            time_zone: local_tz,
         }
     }
 
@@ -61,6 +112,33 @@ impl Session {
     }
 
     pub fn log_event(&mut self, event: Event) {
+        match event.kind {
+            EventType::Death | EventType::TeamDeath | EventType::Suicide => {
+                self.death_count += 1;
+                if let Some(vehicle) = event.vehicle {
+                    if vehicle.is_true_vehicle() {
+                        self.vehicle_deaths += 1;
+                    }
+                }
+                if event.headshot {
+                    self.headshot_deaths += 1;
+                }
+            },
+            EventType::Kill => {
+                self.kill_count += 1;
+                if let Some(vehicle) = event.vehicle {
+                    if vehicle.is_true_vehicle() {
+                        self.vehicle_kills += 1; 
+                    }
+                }
+                if event.headshot {
+                    self.headshot_kills += 1;
+                }
+            },
+            EventType::DestroyVehicle => {self.vehicles_destroyed += 1},
+            EventType::LoseVehicle => { self.vehicles_lost += 1},
+            _ => {},
+        };
         self.events.push(event);
     }
 
@@ -70,8 +148,44 @@ impl Session {
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
             //ui.heading(format!("{} Stats", new_char_name));
-            ui.heading("<char> Stats");
-                ui.label(self.get_list_name());
+            let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period]",).unwrap();
+            let start_time = OffsetDateTime::from_unix_timestamp(self.start_time).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(self.time_zone); //TODO: cleanup
+            let formatted_start_time;
+            if let Ok(tstamp) = start_time.format(&formatter) {
+                formatted_start_time = tstamp;
+            } else {
+                formatted_start_time = "?-?-? ?:?:?".to_owned();
+            }
+            if let Some(end_time_i) = self.end_time {
+                let end_time= OffsetDateTime::from_unix_timestamp(end_time_i).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(self.time_zone); //TODO: cleanup
+                let formatted_end_time;
+                if let Ok(tstamp) = end_time.format(&formatter) {
+                    formatted_end_time= tstamp;
+                } else {
+                    formatted_end_time = "?-?-? ?:?:?".to_owned();
+                }
+
+                ui.label(format!("{} {}-{}", self.character.full_name, formatted_start_time, formatted_end_time ));
+            } else {
+                ui.label(format!("{} {}-Active", self.character.full_name, formatted_start_time));
+            }
+
+            //TODO - current session Duration display.
+
+            ui.label(format!("Kills {}", self.kill_count));
+            ui.label(format!("by HS {}", self.headshot_kills));
+            ui.label(format!("Vehicle kills {}", self.vehicle_kills));
+            ui.label(format!("Deaths {}", self.death_count));
+            ui.label(format!("by HS {}", self.headshot_deaths));
+            ui.label(format!("Vehicle deaths {}", self.vehicle_deaths));
+            ui.label(format!("Vehicles destroyed {}", self.vehicles_destroyed));
+            ui.label(format!("Vehicles lost {}", self.vehicles_lost));
+            if self.death_count > 0 {
+                ui.label(format!("KDR {:.3}", self.kill_count as f32 / self.death_count as f32));
+            } else {
+                ui.label("KDR -");
+            }
+
             /*TableBuilder::new(ui)
                 .column(Size::Absolute(40.0))
                 .column(Size::RemainderMinimum(100.0))
