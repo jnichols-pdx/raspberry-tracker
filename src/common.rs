@@ -444,6 +444,59 @@ impl std::fmt::Display for Vehicle {
     }
 }
 
+impl Vehicle {
+
+    pub fn is_true_vehicle(&self) -> bool{
+       match self {
+            Vehicle::Flash  |
+            Vehicle::Javelin  |
+            Vehicle::Harasserr  |
+            Vehicle::Sunderer  |
+            Vehicle::Lightning  |
+            Vehicle::Prowler  |
+            Vehicle::Vanguard  |
+            Vehicle::Magrider  |
+            Vehicle::Chimera  |
+            Vehicle::Colossus  |
+            Vehicle::Ant  |
+            Vehicle::Deliverer  |
+
+            Vehicle::DropPod  |
+            Vehicle::Mosquito  |
+            Vehicle::Scythe  |
+            Vehicle::Reaver  |
+            Vehicle::Dervish  |
+            Vehicle::Valkyrie  |
+            Vehicle::Wasp  |
+            Vehicle::Liberator  |
+            Vehicle::Galaxy  |
+            Vehicle::Lodestar  |
+            Vehicle::BastionFleetCarrier  |
+            Vehicle::PocketFlash  |
+            Vehicle::MosquitoInterceptor  |
+            Vehicle::ReaverInterceptor  |
+            Vehicle::ScytheInterceptor  |
+            Vehicle::JavelinAlt1  |
+            Vehicle::SpitfireALt3  |
+            Vehicle::JavelinAlt2  |
+
+            Vehicle::ReclaimedSunderer  |
+            Vehicle::ReclaimedGalaxy  |
+            Vehicle::ReclaimedValkyrie  |
+            Vehicle::ReclaimedMagrider  |
+            Vehicle::ReclaimedVanguard  |
+            Vehicle::ReclaimedProwler => true,
+
+            _ => false
+
+
+
+       }
+
+    }
+
+}
+
 
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
 #[repr(i64)]
