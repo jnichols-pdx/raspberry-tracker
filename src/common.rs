@@ -302,6 +302,8 @@ pub enum EventType {
     Suicide,
     DestroyVehicle,
     LoseVehicle,
+    DestroyVehicleFF,
+    LoseVehicleFF,
     Unknown,
 }
 
@@ -336,12 +338,12 @@ pub enum Vehicle {
     AIPhalanxTurret = 100,
     ManaAITurret = 101,
     ManaAVTurret = 102,
-    Spitfire = 103,
+    Spitfire = 103, //WORKS for standard spitty.
     SpitfireAlt1 = 104, //is one of these aux spitty?
     SpitfireAlt2 = 105,
     AAPhalanxTurret = 150,
     AVPhalanxTurret = 151,
-    AVBuilderTower = 160,
+    AVBuilderTower = 160, //THIS appears to be correct, these are the towers
     AABuilderTower = 161,
     AIBuilderTower = 162, 
     

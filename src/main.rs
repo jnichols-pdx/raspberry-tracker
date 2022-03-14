@@ -104,7 +104,7 @@ fn main() {
                     char_list_rw.update_entry_from_full(&active_char);
                     let _res = tx_to_websocket.blocking_send(
                         Message::Text(
-                        format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
+                        format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
                         &active_char.character_id).to_owned()));
 
                     {
@@ -276,7 +276,7 @@ async fn parse_messages(
                         match ws_out
                             .send(
                                     Message::Text(
-                                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\"]}}",
+                                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
                                     json["payload"]["character_id"].to_owned()))).await 
                             {
                                 Err(e) => println!("dah {:?}",e),
@@ -310,8 +310,15 @@ async fn parse_messages(
                     } else {
                         println!("Unknown or not auto-tracked, ignoring.");
                     }
-                } else if json["payload"]["event_name"].eq("Death") {
-                    println!("Found a death");
+                } else if json["payload"]["event_name"].eq("Death") || json["payload"]["event_name"].eq("VehicleDestroy") {
+                    let vehicle_destroyed;
+                    if json["payload"]["event_name"].eq("VehicleDestroy") {
+                        println!("Found a VehicleDestroy");
+                        vehicle_destroyed = true;
+                    }else {
+                        println!("Found a death");
+                        vehicle_destroyed = false;
+                    }
                     println!("{:?}", json);
                     let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
                     let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
@@ -338,10 +345,18 @@ async fn parse_messages(
                         let session_list_ro = session_list.read().unwrap();
                         if let Some(current_session) = session_list_ro.last() {
                             if current_session.match_player_id(&json["payload"]["attacker_character_id"].to_string().unquote()) {
-                                println!("You killed someone!");
-                                attacker = true;
+                                if ! vehicle_destroyed {
+                                    println!("You killed someone!");
+                                } else {
+                                    println!("You destroyed something!");
+                                }
+                                    attacker = true;
                             } else {
-                                println!("You died!!!!");
+                                if ! vehicle_destroyed {
+                                    println!("You died!!!!");
+                                } else {
+                                    println!("You lost something!");
+                                }
                                 attacker = false;
                             }
                             some_player_char = Some(current_session.current_character()); //May be incomplete if KD ratio has shifted during session?
@@ -387,7 +402,11 @@ async fn parse_messages(
                             match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
                                 Err(whut) => println!("{}", whut),
                                 Ok(details) => {
-                                    println!("YOUR VICTIM:");
+                                    if !vehicle_destroyed {
+                                        println!("YOUR VICTIM:");
+                                    } else {
+                                        println!("YOUR TARGET'S OWNER:");
+                                    }
                                     println!("{:?}", details);
                                     let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
                                     faction = Faction::from(faction_num);
@@ -405,7 +424,11 @@ async fn parse_messages(
                             match  lookup_new_char_details(&json["payload"]["attacker_character_id"].to_string().unquote()) {
                                 Err(whut) => println!("{}", whut),
                                 Ok(details) => {
-                                    println!("YOUR KILLER:");
+                                    if !vehicle_destroyed {
+                                        println!("YOUR KILLER:");
+                                    } else {
+                                        println!("YOUR RIDE'S DESTROYER:");
+                                    }
                                     println!("{:?}", details);
                                     let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
                                     faction = Faction::from(faction_num);
@@ -445,6 +468,22 @@ async fn parse_messages(
                        }
                     }
 
+                    if vehicle_destroyed {
+                        let materiel_num =  json["payload"]["vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {-1});
+                        if materiel_num > 0 {
+                            name = format!("{}({})", Vehicle::from(materiel_num), name);
+                        }
+
+                        event_type = match event_type {
+                            EventType::Death => EventType::LoseVehicle,
+                            EventType::TeamDeath => EventType::LoseVehicleFF,
+                            EventType::Suicide => EventType::LoseVehicleFF,
+                            EventType::Kill => EventType::DestroyVehicle,
+                            EventType::TeamKill => EventType::DestroyVehicleFF,
+                            _ => EventType::Unknown
+                        };
+                    }
+
                     //Assemble it all and save.
                     let event = Event {
                         kind: event_type,
@@ -474,7 +513,7 @@ async fn parse_messages(
                     println!("offline!");
                     let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap();
                     let _res = ws_out.send(
-                            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\"]}"
+                            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VEHICLE_DESTROY\"]}"
                                 .to_string())).await;
                     let mut session_list_rw = session_list.write().unwrap();
                     if let Some(current_session) = session_list_rw.last_mut() {

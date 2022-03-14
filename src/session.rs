@@ -137,6 +137,7 @@ impl Session {
             },
             EventType::DestroyVehicle => {self.vehicles_destroyed += 1},
             EventType::LoseVehicle => { self.vehicles_lost += 1},
+            EventType::LoseVehicleFF => { self.vehicles_lost += 1},
             _ => {},
         };
         self.events.push(event);
@@ -301,7 +302,7 @@ impl Event {
             row.col_clip(|ui| { //Class
                 match ui.ctx().texture_by_name(&self.class.to_string()) {
                     Some(image) => ui.image(image.id(), img_size),
-                    None => ui.label(egui::RichText::new(self.faction.to_string()).small()),
+                    None =>ui.label(""),// ui.label(egui::RichText::new(self.class.to_string()).small()),
                 };
             });
             row.col_clip(|ui| { //Vehicle
@@ -326,6 +327,10 @@ impl Event {
                     EventType::Kill => bg_color = Color32::from_rgb(0,80,0),
                     EventType::Suicide => bg_color = Color32::from_rgb(0,0,80),
                     EventType::TeamKill => bg_color = Color32::from_rgb(65,80,0),
+                    EventType::LoseVehicle => bg_color = Color32::from_rgb(80,0,0),
+                    EventType::LoseVehicleFF => bg_color = Color32::from_rgb(80,80,0),
+                    EventType::DestroyVehicle => bg_color = Color32::from_rgb(0,80,0),
+                    EventType::DestroyVehicleFF=> bg_color = Color32::from_rgb(0,0,80),
                     _ => bg_color = Color32::from_rgb(80,80,80),
                 };
                 ui.label(egui::RichText::new(&self.name).small().background_color(bg_color).color(Color32::from_rgb(255,255,255)));
