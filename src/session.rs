@@ -186,6 +186,11 @@ impl Session {
             } else {
                 ui.label("KDR -");
             }
+            if self.kill_count > 0 {
+                ui.label(format!("HSR {:.3}", self.headshot_kills as f32 / self.kill_count as f32));
+            } else {
+                ui.label("HSR -");
+            }
 
             /*TableBuilder::new(ui)
                 .column(Size::Absolute(40.0))
