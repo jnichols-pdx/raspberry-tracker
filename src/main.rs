@@ -470,18 +470,25 @@ async fn parse_messages(
 
                     if vehicle_destroyed {
                         let materiel_num =  json["payload"]["vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {-1});
-                        if materiel_num > 0 {
-                            name = format!("{}({})", Vehicle::from(materiel_num), name);
-                        }
+                        let material = Vehicle::from(materiel_num);
+                        if material.is_true_vehicle() {
+                            if materiel_num > 0 {
+                                name = format!("{}({})", Vehicle::from(materiel_num), name);
+                            }
 
-                        event_type = match event_type {
-                            EventType::Death => EventType::LoseVehicle,
-                            EventType::TeamDeath => EventType::LoseVehicleFF,
-                            EventType::Suicide => EventType::LoseVehicleFF,
-                            EventType::Kill => EventType::DestroyVehicle,
-                            EventType::TeamKill => EventType::DestroyVehicleFF,
-                            _ => EventType::Unknown
-                        };
+                            event_type = match event_type {
+                                EventType::Death => EventType::LoseVehicle,
+                                EventType::TeamDeath => EventType::LoseVehicleFF,
+                                EventType::Suicide => EventType::LoseVehicleFF,
+                                EventType::Kill => EventType::DestroyVehicle,
+                                EventType::TeamKill => EventType::DestroyVehicleFF,
+                                _ => EventType::Unknown
+                            };
+                        } else {
+                            //Not a mobile vehicle (spitty, mana turret, base turret etc.) don't count it as a vehicle destroyed event.
+                            println!("Supressing non-really-a-vehicle destruction.");
+                            continue;
+                        }
                     }
 
                     //Assemble it all and save.
