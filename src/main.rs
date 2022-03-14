@@ -22,7 +22,7 @@ use time::OffsetDateTime;
 use time_tz::OffsetDateTimeExt;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
-//use tokio::time::{self, Duration};
+use tokio::time::{sleep, Duration};
 
 
 //EGUI offers both native and web assembly compilation targets, I don't intend to use WASM.
@@ -182,12 +182,14 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
     let ui_frame =  rx_ui_frame.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame, db.clone()));
+    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame.clone(), db.clone()));
+    let ticker_task = tokio::spawn(ticker(ui_frame));
 
     tokio::select!{
         _ = out_task => {},
         _ = in_task => {},
         _ = parse_task => {},
+        _ = ticker_task => {},
     }
 
 }
@@ -538,5 +540,12 @@ async fn parse_messages(
             },
         }
 
+    }
+}
+
+async fn ticker( ui_frame: epi::Frame,) {
+    loop {
+        sleep(Duration::from_millis(100)).await;
+        ui_frame.request_repaint();
     }
 }

@@ -166,9 +166,19 @@ impl Session {
                     formatted_end_time = "?-?-? ?:?:?".to_owned();
                 }
 
-                ui.label(format!("{} {}-{}", self.character.full_name, formatted_start_time, formatted_end_time ));
+                ui.label(format!("{}  {} - {}", self.character.full_name, formatted_start_time, formatted_end_time ));
             } else {
-                ui.label(format!("{} {}-Active", self.character.full_name, formatted_start_time));
+                let now_time = OffsetDateTime::now_utc();
+                let session_duration = now_time - start_time;
+                let hours = session_duration.whole_hours();
+                let minutes = session_duration.whole_minutes() % 60;
+                let seconds = session_duration.whole_seconds() % 60;
+                let millis = session_duration.subsec_milliseconds() /10;
+                ui.label(format!("{}  {},  {:02}:{:02}:{:02}.{:02}",
+                    self.character.full_name,
+                    formatted_start_time,
+                    hours, minutes, seconds, millis
+                ));
             }
 
             //TODO - current session Duration display.
