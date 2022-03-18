@@ -332,7 +332,7 @@ pub enum Vehicle {
     Wasp = 2040,
     Liberator = 10,
     Galaxy = 11,
-    Lodestar = -0x20,//Currently unknown (not listed by census Vehicles collection)
+    Lodestar = 2140,//found by empirical testing.
     BastionFleetCarrier = 2019,
 
     AIPhalanxTurret = 100,
