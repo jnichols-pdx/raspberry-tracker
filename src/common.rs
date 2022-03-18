@@ -4,14 +4,14 @@
 
 //use eframe::{egui, epi};
 
-use tokio_tungstenite::tungstenite::protocol::Message;
+//use tokio_tungstenite::tungstenite::protocol::Message;
 use num_enum::FromPrimitive;
 use tokio::sync::{mpsc};
 use crate::session::*;
 use crate::db::*;
 use sqlx::sqlite::SqlitePool;
 use std::io::Read;
-use std::sync::{Arc, RwLock};
+//use std::sync::{Arc, RwLock};
 
 /*pub struct Action {
     pub val: u32,
@@ -30,21 +30,6 @@ pub enum Faction {
     Unknown = 0,
 }
 
-#[derive(Debug, Clone)]
-pub struct Character {
-    pub full_name: String,
-    pub lower_name: String,
-    pub server: World,
-    pub outfit: Option<String>,
-    pub outfit_full: Option<String>,
-    pub character_id: String,
-    pub auto_track: bool,
-    pub faction: Faction,
-    pub to_remove: bool,
-    pub confirm_visible: bool,
-    pub to_track: bool,
-    pub changed_auto_track: bool,
-}
 
 impl std::fmt::Display for Faction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -121,43 +106,6 @@ pub fn lookup_weapon_name(new_id: &String) -> Result<serde_json::Value, ureq::Er
     Ok(resp)
 }
 
-pub fn character_from_json(json: &serde_json::Value) -> Result<Character, String> {
-
-    let new_char = &json["character_list"][0];
-    println!("deets: {:?}", new_char);
-    let faction_num = new_char["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-    let world_num = new_char["world_id"].to_string().unquote().parse::<i64>().unwrap();
-
-    let mut bob = Character {
-        full_name: new_char["name"]["first"].to_string().unquote(),
-        lower_name: new_char["name"]["first_lower"].to_string().unquote(),
-        server: World::from(world_num),
-        outfit: None,
-        outfit_full: None,
-        character_id: new_char["character_id"].to_string().unquote(),
-        auto_track: true,
-        faction: Faction::from(faction_num),
-        to_remove: false,
-        confirm_visible: false,
-        to_track: false,
-        changed_auto_track: false,
-    };
-
-    if new_char["outfit"].is_object() {
-        bob.outfit = Some(new_char["outfit"]["alias"].to_string().unquote());
-        bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
-    }
-    Ok(bob)
-
-}
-
-pub fn full_character_from_json(json: &serde_json::Value) -> Result<FullCharacter, String> {
-    let bob = character_from_json(json).unwrap();
-    let biff = FullCharacter::new(&bob, 
-            json["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(), 
-            json["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap());
-    Ok(biff)
-}
 
 pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Error> {
     let resp = ureq::get(&*format!("http://census.daybreakgames.com/files/ps2/images/static/{}.png", census_id))
@@ -186,87 +134,6 @@ pub fn is_online(char_id: &String) -> Result<bool, ureq::Error> {
     }
 }
 
-impl Character {
-    /*pub fn new(new_lower: String) -> Self
-    {
-        Character {
-            full_name: new_lower.to_uppercase(),
-            lower_name: new_lower,
-            server: World::EM,
-            outfit: Some("OTFS".to_owned()),
-            outfit_full: Some("OUTFITTERS".to_owned()),
-            character_id: "123454987954698".to_owned(),
-            auto_track: true,
-            faction: Faction::VS,
-            to_remove: false,
-            confirm_visible: false,
-            to_track: false,
-        }
-    }*/
-}
-
-pub struct CharacterList {
-    pub characters: Vec<Character>,
-    pub new_char_name: String,
-    pub message: Option<String>,
-    pub websocket_out: mpsc::Sender<Message>,
-    pub session_list: Arc<RwLock<Vec<Session>>>,
-}
-
-impl CharacterList {
-    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> Self
-    {
-        CharacterList {
-            characters: Vec::new(),
-            new_char_name: "".to_owned(),
-            message: None,
-            websocket_out: ws_out,
-            session_list: sl,
-        }
-    }
-
-    pub fn push(&mut self, new_char: Character) {
-        self.characters.push(new_char);
-    }
-
-    pub fn has_auto_tracked(&self, target_id: String) -> bool {
-        println!("track check for >{}<", target_id);
-        if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
-            target.auto_track
-        } else{
-            false
-        }
-    }
-
-    pub fn find_character_by_id(&self, target_id: String) -> Option<&Character> {
-        if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
-            Some(&target)
-        } else{
-            None
-        }
-    }
-
-    pub fn update_entry_from_full(&mut self, newer_char: &FullCharacter) {
-       if let Some(mut target) = self.characters.iter_mut().find(|chara| (**chara).character_id.eq(&newer_char.character_id))  {
-            target.full_name =  newer_char.full_name.to_owned();
-            target.lower_name =  newer_char.lower_name.to_owned();
-            target.server =  newer_char.server;
-            if let Some(outfit_alias) = &newer_char.outfit {
-                target.outfit = Some(outfit_alias.to_owned());
-            } else {
-                target.outfit = None;
-            }
-            if let Some(outfit_name) = &newer_char.outfit {
-                target.outfit_full = Some(outfit_name.to_owned());
-            } else {
-                target.outfit_full = None;
-            }
-            target.character_id =  newer_char.character_id.to_owned();
-            target.faction =  newer_char.faction;
-       }
-    }
-
-}
 
 pub trait ViewWithDB {
     fn ui(&mut self, ctx: &egui::Context, db: &DatabaseSync);

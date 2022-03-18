@@ -4,6 +4,10 @@ mod common;
 mod session;
 mod ui;
 mod db;
+mod character;
+mod events;
+mod character_list;
+
 
 //use std::env;
 use crate::common::*;
@@ -23,6 +27,9 @@ use time_tz::OffsetDateTimeExt;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
 use tokio::time::{sleep, Duration};
+use crate::character::*;
+use crate::character_list::*;
+use crate::events::*;
 
 
 //EGUI offers both native and web assembly compilation targets, I don't intend to use WASM.
@@ -97,7 +104,7 @@ fn main() {
                 Err(whut) => println!("{}", whut),
                 Ok(details) => {
 
-                    let active_char = full_character_from_json(&details).unwrap();
+                    let active_char = FullCharacter::from_json(&details).unwrap();
 
                     sync_db.update_char_with_full_sync(&active_char);
 
@@ -289,7 +296,7 @@ async fn parse_messages(
                             Err(whut) => println!("{}", whut),
                             Ok(details) => {
 
-                                let bob = full_character_from_json(&details).unwrap();
+                                let bob = FullCharacter::from_json(&details).unwrap();
                                 {
                                     let mut char_list_rw = char_list.write().unwrap();
                                     char_list_rw.update_entry_from_full(&bob);
