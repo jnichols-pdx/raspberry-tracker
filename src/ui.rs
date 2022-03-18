@@ -158,7 +158,7 @@ impl View for Character {
     fn ui(&mut self, _ctx: &egui::Context) {
     }
     fn draw(&mut self, ui: &mut egui::Ui){
-        egui::Grid::new(format!("charctrs{}", self.character_id))
+        egui::Grid::new(format!("characters{}", self.character_id))
             .min_col_width(10.0)
             .show(ui, |ui| {
             match ui.ctx().texture_by_name(&self.faction.to_string()) {

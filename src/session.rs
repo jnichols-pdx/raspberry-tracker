@@ -157,79 +157,97 @@ impl Session {
             } else {
                 formatted_start_time = "?-?-? ?:?:?".to_owned();
             }
-            if let Some(end_time_i) = self.end_time {
-                let end_time= OffsetDateTime::from_unix_timestamp(end_time_i).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(self.time_zone); //TODO: cleanup
-                let formatted_end_time;
-                if let Ok(tstamp) = end_time.format(&formatter) {
-                    formatted_end_time= tstamp;
+
+
+            ui.horizontal(|ui| {
+                ui.heading(format!("{}", self.character.full_name));
+
+                if let Some(end_time_i) = self.end_time {
+                    let end_time= OffsetDateTime::from_unix_timestamp(end_time_i).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(self.time_zone); //TODO: cleanup
+                    let formatted_end_time;
+                    if let Ok(tstamp) = end_time.format(&formatter) {
+                        formatted_end_time= tstamp;
+                    } else {
+                        formatted_end_time = "?-?-? ?:?:?".to_owned();
+                    }
+
+                    ui.label(format!("  {} - {}", formatted_start_time, formatted_end_time ));
                 } else {
-                    formatted_end_time = "?-?-? ?:?:?".to_owned();
+                    let now_time = OffsetDateTime::now_utc();
+                    let session_duration = now_time - start_time;
+                    let hours = session_duration.whole_hours();
+                    let minutes = session_duration.whole_minutes() % 60;
+                    let seconds = session_duration.whole_seconds() % 60;
+                    let millis = session_duration.subsec_milliseconds() /10;
+                    ui.label(format!("  {},  {:02}:{:02}:{:02}.{:02}",
+                        formatted_start_time,
+                        hours, minutes, seconds, millis
+                    ));
                 }
 
-                ui.label(format!("{}  {} - {}", self.character.full_name, formatted_start_time, formatted_end_time ));
-            } else {
-                let now_time = OffsetDateTime::now_utc();
-                let session_duration = now_time - start_time;
-                let hours = session_duration.whole_hours();
-                let minutes = session_duration.whole_minutes() % 60;
-                let seconds = session_duration.whole_seconds() % 60;
-                let millis = session_duration.subsec_milliseconds() /10;
-                ui.label(format!("{}  {},  {:02}:{:02}:{:02}.{:02}",
-                    self.character.full_name,
-                    formatted_start_time,
-                    hours, minutes, seconds, millis
-                ));
-            }
+            });
 
-            //TODO - current session Duration display.
+            ui.separator();
+            egui::Grid::new("session_stats")
+                .min_col_width(10.0)
+                .show(ui, |ui| {
+                    ui.label("Session:");
+                    ui.end_row();
+                    ui.label(format!("Kills {}", self.kill_count));
+                    ui.label(format!("by HS {}", self.headshot_kills));
+                    ui.label(format!("Vehicle kills {}", self.vehicle_kills));
+                    ui.end_row();
+                    ui.label(format!("Deaths {}", self.death_count));
+                    ui.label(format!("by HS {}", self.headshot_deaths));
+                    ui.label(format!("Vehicle deaths {}", self.vehicle_deaths));
+                    ui.end_row();
+                    ui.label(format!("Vehicles destroyed {}", self.vehicles_destroyed));
+                    ui.label(format!("Vehicles lost {}", self.vehicles_lost));
+                    ui.end_row();
+                    if self.death_count > 0 {
+                        ui.label(format!("KDR {:.3}", self.kill_count as f32 / self.death_count as f32));
+                    } else {
+                        ui.label("KDR -");
+                    }
+                    if self.kill_count > 0 {
+                        ui.label(format!("HSR {:.3}", self.headshot_kills as f32 / self.kill_count as f32));
+                    } else {
+                        ui.label("HSR -");
+                    }
+                    //accuracy needed
 
-            ui.label(format!("Kills {}", self.kill_count));
-            ui.label(format!("by HS {}", self.headshot_kills));
-            ui.label(format!("Vehicle kills {}", self.vehicle_kills));
-            ui.label(format!("Deaths {}", self.death_count));
-            ui.label(format!("by HS {}", self.headshot_deaths));
-            ui.label(format!("Vehicle deaths {}", self.vehicle_deaths));
-            ui.label(format!("Vehicles destroyed {}", self.vehicles_destroyed));
-            ui.label(format!("Vehicles lost {}", self.vehicles_lost));
-            if self.death_count > 0 {
-                ui.label(format!("KDR {:.3}", self.kill_count as f32 / self.death_count as f32));
-            } else {
-                ui.label("KDR -");
-            }
-            if self.kill_count > 0 {
-                ui.label(format!("HSR {:.3}", self.headshot_kills as f32 / self.kill_count as f32));
-            } else {
-                ui.label("HSR -");
-            }
+            });
 
-            /*TableBuilder::new(ui)
-                .column(Size::Absolute(40.0))
-                .column(Size::RemainderMinimum(100.0))
-                .column(Size::Absolute(50.0))
-                .header(15.0, |mut header| {
-                    header.col(|ui| {
-                        ui.heading("Fixed-S");
-                    });
-                    header.col(|ui| {
-                        ui.heading("Grows");
-                    });
-                    header.col(|ui| {
-                        ui.heading("Fixed-L");
-                    });
-                })
-                .body(|mut body| {
-                    body.row(20.0, |mut row| {
-                        row.col_clip(|ui| {
-                            ui.label("smol");
-                        });
-                        row.col(|ui| {
-                            ui.label("stretechyalkajd lakdjflasdkj flasdkfj a");
-                        });
-                        row.col_clip(|ui| {
-                            ui.label("beeg");
-                        });
-                    });
-                });*/
+            ui.separator();
+            egui::Grid::new("lifetime_stats")
+                .min_col_width(10.0)
+                .show(ui, |ui| {
+                    ui.label("Lifetime:");
+                    ui.end_row();
+                  /*  ui.label(format!("Kills {}", self.kill_count));
+                    ui.label(format!("by HS {}", self.headshot_kills));
+                    ui.label(format!("Vehicle kills {}", self.vehicle_kills));
+                    ui.end_row();
+                    ui.label(format!("Deaths {}", self.death_count));
+                    ui.label(format!("by HS {}", self.headshot_deaths));
+                    ui.label(format!("Vehicle deaths {}", self.vehicle_deaths));
+                    ui.end_row();
+                    ui.label(format!("Vehicles destroyed {}", self.vehicles_destroyed));
+                    ui.label(format!("Vehicles lost {}", self.vehicles_lost));
+                    ui.end_row();
+                    if self.death_count > 0 {
+                        ui.label(format!("KDR {:.3}", self.kill_count as f32 / self.death_count as f32));
+                    } else {
+                        ui.label("KDR -");
+                    }
+                    if self.kill_count > 0 {
+                        ui.label(format!("HSR {:.3}", self.headshot_kills as f32 / self.kill_count as f32));
+                    } else {
+                        ui.label("HSR -");
+                    }
+                    //accuracy needed*/
+
+            });
 
         });
 
