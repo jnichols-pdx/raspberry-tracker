@@ -191,14 +191,16 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
     let ui_frame =  rx_ui_frame.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list, ui_frame.clone(), db.clone()));
+    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list.clone(), ui_frame.clone(), db.clone()));
     let ticker_task = tokio::spawn(ticker(ui_frame));
+    let session_long_update_task = tokio::spawn(session_historical_update(session_list.clone()));
 
     tokio::select!{
         _ = out_task => {},
         _ = in_task => {},
         _ = parse_task => {},
         _ = ticker_task => {},
+        _ = session_long_update_task => {},
     }
 
 }
@@ -556,5 +558,16 @@ async fn ticker( ui_frame: epi::Frame,) {
     loop {
         sleep(Duration::from_millis(100)).await;
         ui_frame.request_repaint();
+    }
+}
+
+async fn session_historical_update( session_list:  Arc<RwLock<Vec<Session>>>) {
+    loop {
+        sleep(Duration::from_secs(300)).await;
+        let mut session_list_rw = session_list.write().unwrap();
+        if let Some(current_session) = session_list_rw.last_mut() {
+            current_session.update_historical_stats();
+        }
+
     }
 }
