@@ -90,13 +90,15 @@ fn main() {
                     achar.character_id)
                 .to_owned()));
 
-            match is_online(&achar.character_id){
-                Ok(true) => {
-                    println!("{} is already online!", achar.full_name);
-                    char_to_track = Some(achar.character_id.to_owned());
-                    },
-                Ok(false) => {},
-                Err(e) => println!("Failed to get online status for {}:\n {}", &achar.character_id, e),
+            if achar.auto_track {
+                match is_online(&achar.character_id){
+                    Ok(true) => {
+                        println!("{} is already online!", achar.full_name);
+                        char_to_track = Some(achar.character_id.to_owned());
+                        },
+                    Ok(false) => {},
+                    Err(e) => println!("Failed to get online status for {}:\n {}", &achar.character_id, e),
+                }
             }
         }
         if let Some(active_char_id) = char_to_track {
