@@ -185,7 +185,7 @@ pub enum Vehicle {
     Prowler = 6,
     Vanguard = 5,
     Magrider = 4,
-    Chimera = -0x10,  //Currently unknown (not listed by census Vehicles collection)
+    Chimera = 2137,  //found by empirical testing
     Colossus = 2007,
     Ant = 15,
     Deliverer = 2039,
