@@ -56,7 +56,7 @@ impl Event {
                     };
                 }
             });
-            row.col(|ui| { //Player Name
+            row.col_clip(|ui| { //Player Name
                 let bg_color;
                 match self.kind {
                     EventType::Death => bg_color = Color32::from_rgb(80,0,0),
@@ -75,7 +75,7 @@ impl Event {
             row.col_clip(|ui| { //Weapon
                 ui.label(egui::RichText::new(&self.weapon).small());
             });
-            row.col_clip(|ui| { //Headshot
+            row.col(|ui| { //Headshot
                 if self.headshot {
                     match ui.ctx().texture_by_name("Headshot") {
                         Some(image) => ui.image(image.id(), img_size),
@@ -91,20 +91,6 @@ impl Event {
             });
         });
 
-/*
-
-            match self.kind {
-                EventType::Death => ui.label(format!("{} {}{} killed You with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
-                EventType::TeamDeath => ui.label(format!("{} {}{} TEAMkilled You with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
-                EventType::Kill => ui.label(format!("{} {}You killed {} with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
-                EventType::Suicide => ui.label(format!("{} {}You killed {} with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
-                EventType::TeamKill => ui.label(format!("{} {}You TEAMkilled {} with {}. {:.2} {}", br,vehicle_str, self.name, self.weapon, self.kdr, self.datetime)),
-                _ => ui.label("other".to_owned()),
-            };
-
-
-
-        });*/
     }
 }
 pub struct EventList {
@@ -126,6 +112,7 @@ impl EventList {
         egui::SidePanel::right("events_panel").min_width(400.0).show(ctx, |ui| {
 
             TableBuilder::new(ui)
+                .striped(true)
                 .column(Size::Absolute(25.0)) //Faction
                 .column(Size::Absolute(30.0)) //BR
                 .column(Size::Absolute(25.0)) //Class
@@ -150,7 +137,7 @@ impl EventList {
                     header.col_clip(|ui| {
                         ui.label(egui::RichText::new("Player").small());
                     });
-                    header.col(|ui| {
+                    header.col_clip(|ui| {
                         ui.label(egui::RichText::new("Method").small());
                     });
                     header.col(|ui| {

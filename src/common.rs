@@ -216,7 +216,7 @@ pub enum Vehicle {
     SpitfireAlt1 = 104, //is one of these aux spitty?
     SpitfireAlt2 = 105,
     AAPhalanxTurret = 150,
-    AVPhalanxTurret = 151,
+    AVPhalanxTurret = 151,  //connfirmed to be prebuilt base turret
     AVBuilderTower = 160, //THIS appears to be correct, these are the towers
     AABuilderTower = 161,
     AIBuilderTower = 162, 
