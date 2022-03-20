@@ -13,6 +13,7 @@ use image::io::Reader as ImageReader;
 use std::io::Cursor;
 use egui_extras::TableBuilder;
 use time::OffsetDateTime;
+use std::rc::Rc;
 
 pub struct TrackerApp {
     //pub from_main: mpsc::Receiver<Action>,
@@ -64,6 +65,7 @@ impl epi::App for TrackerApp {
         ctx: &egui::Context,
         frame: &epi::Frame,
         _storage: Option<&dyn epi::Storage>,
+        glcx: &Rc<epi::glow::Context>,
     ) {
         if let Some(callback) = self.frame_cb.take() {
             let _blah = callback.send(frame.clone());
