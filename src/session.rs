@@ -368,7 +368,7 @@ impl Session {
                         ui.label("KDR (true) -");
                     }
                     ui.end_row();
-                    ui.label(format!("Deaths (rezzed) {}", self.initial_revived_deaths_total));
+                    ui.label(format!("Deaths (rezzed) {}", self.latest_api_revived_deaths));
                     if self.initial_revived_deaths_total> 0 {
                         let current_kdr = self.latest_api_kills as f64 / self.latest_api_revived_deaths as f64;
                         let init_kdr = if self.initial_revived_deaths_total > 0 {
