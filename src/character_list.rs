@@ -129,7 +129,7 @@ impl ViewWithDB for CharacterList {
                     if char.to_track {
                         match self.websocket_out
                             .blocking_send(
-                                Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\"]}}",
+                                Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
                                 char.character_id).to_owned())) {
                             Err(e) => println!("dah {:?}",e),
                             Ok(_) => {

@@ -533,7 +533,7 @@ async fn parse_messages(
                     println!("offline!");
                     let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap();
                     let _res = ws_out.send(
-                            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VEHICLE_DESTROY\"]}"
+                            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VehicleDestroy\"]}"
                                 .to_string())).await;
                     let mut session_list_rw = session_list.write().unwrap();
                     if let Some(current_session) = session_list_rw.last_mut() {
