@@ -70,16 +70,24 @@ impl Event {
         body.row(17.0, Some(bg_color), |mut row| {
             row.col_clip(|ui| { //faction
                 match ui.ctx().texture_by_name(&self.faction.to_string()) {
-                    Some(image) => ui.image(image.id(), img_size),
-                    None => ui.label(egui::RichText::new(self.faction.to_string()).small()),
+                    Some(image) => {ui.image(image.id(), img_size);},
+                    None => {
+                            ui.vertical(|ui| {
+                                ui.add_space(1.5);
+                                ui.label(egui::RichText::new(self.faction.to_string()).small().color(text_color));
+                            });
+                        },
                 };
             });
             row.col_clip(|ui| { //BR
-                if self.asp > 0 {
-                    ui.label(egui::RichText::new(format!("{}~{}", self.br, self.asp)).small());
-                } else {
-                    ui.label(egui::RichText::new(format!("{}", self.br)).small());
-                }
+                ui.vertical(|ui| {
+                    ui.add_space(1.5);
+                    if self.asp > 0 {
+                        ui.label(egui::RichText::new(format!("{}~{}", self.br, self.asp)).small().color(text_color));
+                    } else {
+                        ui.label(egui::RichText::new(format!("{}", self.br)).small().color(text_color));
+                    }
+                });
             });
             row.col_clip(|ui| { //Class
                 match ui.ctx().texture_by_name(&self.class.to_string()) {
@@ -96,8 +104,13 @@ impl Event {
                     };
                 } else if let Some(vehicle) = self.vehicle {
                     match ui.ctx().texture_by_name(&vehicle.to_string()) {
-                        Some(image) => ui.image(image.id(), img_size),
-                        None => ui.label(egui::RichText::new(vehicle.to_string()).small()),
+                        Some(image) => {ui.image(image.id(), img_size);},
+                        None => {
+                            ui.vertical(|ui| {
+                                ui.add_space(1.5);
+                                ui.label(egui::RichText::new(vehicle.to_string()).small());
+                            });
+                        },
                     };
                 }
             });
@@ -108,21 +121,35 @@ impl Event {
                 });
             });
             row.col_clip(|ui| { //Weapon
-                ui.label(egui::RichText::new(&self.weapon).small());
+                ui.vertical(|ui| {
+                    ui.add_space(1.5);
+                    ui.label(egui::RichText::new(&self.weapon).small().color(text_color));
+                });
             });
             row.col(|ui| { //Headshot
                 if self.headshot {
                     match ui.ctx().texture_by_name("Headshot") {
-                        Some(image) => ui.image(image.id(), img_size),
-                        None => ui.label(egui::RichText::new("HS!").small()),
+                        Some(image) => {ui.image(image.id(), img_size);},
+                        None => {
+                            ui.vertical(|ui| {
+                                ui.add_space(1.5);
+                                ui.label(egui::RichText::new("HS!").small().color(text_color));
+                            });
+                        },
                     };
                 }
             });
             row.col_clip(|ui| { //KD ratio
-                ui.label(egui::RichText::new(format!("{:.2}",self.kdr)).small());
+                ui.vertical(|ui| {
+                    ui.add_space(1.5);
+                    ui.label(egui::RichText::new(format!("{:.2}",self.kdr)).small().color(text_color));
+                });
             });
             row.col_clip(|ui| { //Timestamp
-                ui.label(egui::RichText::new(&self.datetime).small());
+                ui.vertical(|ui| {
+                    ui.add_space(1.5);
+                    ui.label(egui::RichText::new(&self.datetime).small().color(text_color));
+                });
             });
         });
 
