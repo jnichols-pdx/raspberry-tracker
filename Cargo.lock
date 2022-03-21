@@ -765,7 +765,7 @@ checksum = "6907e25393cdcc1f4f3f513d9aac1e840eb1cc341a0fccb01171f7d14d10b946"
 [[package]]
 name = "eframe"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "egui",
  "egui-winit",
@@ -777,7 +777,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "ahash 0.7.6",
  "epaint",
@@ -790,7 +790,7 @@ dependencies = [
 [[package]]
 name = "egui-winit"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "copypasta",
  "dark-light",
@@ -807,7 +807,7 @@ dependencies = [
 [[package]]
 name = "egui_extras"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "egui",
  "parking_lot 0.12.0",
@@ -816,7 +816,7 @@ dependencies = [
 [[package]]
 name = "egui_glow"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "bytemuck",
  "egui",
@@ -833,7 +833,7 @@ dependencies = [
 [[package]]
 name = "egui_web"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "bytemuck",
  "egui",
@@ -856,7 +856,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "bytemuck",
  "serde",
@@ -886,7 +886,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "ab_glyph",
  "ahash 0.7.6",
@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "epi"
 version = "0.17.0"
-source = "git+https://github.com/elwerene/egui/?branch=dynamic-grid#6d4e10cf9162a3157af7fafcc3fd7982fc3d85b2"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#bc435b8d314484bb89827c573642818b67ceb7eb"
 dependencies = [
  "directories-next",
  "egui",
