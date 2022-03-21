@@ -171,20 +171,20 @@ impl EventList {
     }
 
     pub fn ui(&self, ctx: &egui::Context) {
-        egui::SidePanel::right("events_panel").min_width(400.0).show(ctx, |ui| {
+        egui::SidePanel::right("events_panel").min_width(387.0).show(ctx, |ui| {
 
             TableBuilder::new(ui)
                 .striped(true)
-                .column(Size::Absolute(25.0)) //Faction
+                .column(Size::Absolute(20.0)) //Faction
                 .column(Size::Absolute(30.0)) //BR
-                .column(Size::Absolute(25.0)) //Class
-                .column(Size::Absolute(25.0)) //Vehicle
+                .column(Size::Absolute(22.0)) //Class
+                .column(Size::Absolute(20.0)) //Vehicle
                 .column(Size::RemainderMinimum(100.0)) //playername
                 .column(Size::RemainderMinimum(80.0)) //weapon
-                .column(Size::Absolute(25.0)) //headshot
-                .column(Size::Absolute(30.0)) //KD
-                .column(Size::Absolute(80.0)) //Timestamp
-                .header(15.0, |mut header| {
+                .column(Size::Absolute(20.0)) //headshot
+                .column(Size::Absolute(25.0)) //KD
+                .column(Size::Absolute(70.0)) //Timestamp
+                .header(12.0, |mut header| {
                     header.col(|ui| {
                     });
                     header.col(|ui| {

@@ -120,9 +120,7 @@ impl epi::App for TrackerApp {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
-        //let Self { in_character_ui, from_main, char_list, db, lastx, lasty, size_changed} = self;
 
         match self.ws_messages.try_recv() {
             Err(mpsc::error::TryRecvError::Empty) => {},
