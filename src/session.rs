@@ -11,12 +11,14 @@ use egui::*;
 use egui_extras::{TableBuilder, Size};
 use time::OffsetDateTime;
 use time_tz::{OffsetDateTimeExt,Tz};
+use std::collections::BTreeMap;
 
 #[allow(dead_code)]
 pub struct Session {
     character: FullCharacter,
     events: EventList,
-    weapons: WeaponStatsList,
+    weapons_initial: BTreeMap<String, WeaponInitial>,
+    weapons: Vec<WeaponStats>,
     start_time: i64,
     end_time: Option<i64>,
 
@@ -71,7 +73,8 @@ impl Session {
         Session {
             character: character,
             events: EventList::new(),
-            weapons: WeaponStatsList::new(),
+            weapons_initial: BTreeMap::new(),
+            weapons: Vec::<WeaponStats>::new(),
             start_time: start,
             end_time: None,
 
@@ -120,6 +123,7 @@ impl Session {
         let mut init_shot = 0;
         let mut init_hit = 0;
         let mut init_headshots = 0;
+        let mut weapons_initial = BTreeMap::new();
 
         match lookup_full_stats(&character.character_id) {
             Err(whut) => println!("Failed getting lifetime stats data:\n{}", whut),
@@ -128,7 +132,7 @@ impl Session {
                 let stat_history = &details["single_character_by_id_list"][0]["stats"]["stat_history"];
                 let stat_block = details["single_character_by_id_list"][0]["stats"]["stat"].as_array().unwrap(); //TODO: more care to be taken
                 //let stat_by_faction = &details["single_character_by_id_list"][0]["stats"]["stat_by_faction"];
-                //let weapon_stat = &details["single_character_by_id_list"][0]["stats"]["weapon_stat"];
+                let weapon_stat = details["single_character_by_id_list"][0]["stats"]["weapon_stat"].as_array().unwrap();
                 let weapon_stat_by_faction = details["single_character_by_id_list"][0]["stats"]["weapon_stat_by_faction"].as_array().unwrap();
 
                 init_kills = stat_history["kills"]["all_time"].to_string().unquote().parse::<u64>().unwrap();
@@ -155,6 +159,34 @@ impl Session {
                 println!("Found lifetime fired: {}",init_shot);
                 println!("Found lifetime hit: {}",init_hit);
 
+                for stat in weapon_stat {
+                    let weapon_id = stat["item_id"].as_str().unwrap().to_owned();
+                    if weapon_id == "0" {  //skip vehicles? does recursion track roadkills in per weapon stats?
+                        println!("z");
+                        continue
+                    }
+
+                    if ! weapons_initial.contains_key(&weapon_id) {
+                        let wi = WeaponInitial {
+                            fired: 0,
+                            hits:0,
+                            kills: 0,
+                            headshots: 0 };
+                        weapons_initial.insert(weapon_id.clone(), wi);
+                    }
+                    if let Some(ws) = weapons_initial.get_mut(&weapon_id) {
+                        match stat["stat_name"].as_str() {
+                            Some("weapon_hit_count") => {
+                                ws.hits = stat["value"].to_string().unquote().parse::<u64>().unwrap();
+                            },
+                            Some("weapon_fire_count") => {
+                                ws.fired = stat["value"].to_string().unquote().parse::<u64>().unwrap();
+                            },
+                            Some(_) | None => {},
+                        }
+                    }
+                }
+
                 let mut vs_hs = 0;
                 let mut nc_hs = 0;
                 let mut tr_hs = 0;
@@ -166,14 +198,56 @@ impl Session {
                 for stat in weapon_stat_by_faction {
                     match stat["stat_name"].as_str() {
                         Some("weapon_headshots") => {
-                            vs_hs += stat["value_vs"].to_string().unquote().parse::<u64>().unwrap();
-                            nc_hs += stat["value_nc"].to_string().unquote().parse::<u64>().unwrap();
-                            tr_hs += stat["value_tr"].to_string().unquote().parse::<u64>().unwrap();
+                            let vs_val = stat["value_vs"].to_string().unquote().parse::<u64>().unwrap();
+                            let nc_val = stat["value_nc"].to_string().unquote().parse::<u64>().unwrap();
+                            let tr_val = stat["value_tr"].to_string().unquote().parse::<u64>().unwrap();
+
+                            vs_hs += vs_val;
+                            nc_hs += nc_val;
+                            tr_hs += tr_val;
+
+
+                            let weapon_id = stat["item_id"].as_str().unwrap().to_owned();
+                            if weapon_id == "0" {  //skip vehicles? does recursion track roadkills in per weapon stats?
+                                println!("z");
+                                continue
+                            }
+                            if ! weapons_initial.contains_key(&weapon_id) {
+                                let wi = WeaponInitial {
+                                    fired: 0,
+                                    hits:0,
+                                    kills: 0,
+                                    headshots: 0 };
+                                weapons_initial.insert(weapon_id.clone(), wi);
+                            }
+                            if let Some(ws) = weapons_initial.get_mut(&weapon_id) {
+                                ws.kills += vs_val + nc_val + tr_val;
+                            }
                         },
                         Some("weapon_vehicle_kills") => {
                             vs_veh_destroy += stat["value_vs"].to_string().unquote().parse::<u64>().unwrap();
                             nc_veh_destroy += stat["value_nc"].to_string().unquote().parse::<u64>().unwrap();
                             tr_veh_destroy += stat["value_tr"].to_string().unquote().parse::<u64>().unwrap();
+                        },
+                        Some("weapon_kills") => {
+                            let weapon_id = stat["item_id"].as_str().unwrap().to_owned();
+                            if weapon_id == "0" {  //skip vehicles? does recursion track roadkills in per weapon stats?
+                                println!("z");
+                                continue
+                            }
+                            if ! weapons_initial.contains_key(&weapon_id) {
+                                let wi = WeaponInitial {
+                                    fired: 0,
+                                    hits:0,
+                                    kills: 0,
+                                    headshots: 0 };
+                                weapons_initial.insert(weapon_id.clone(), wi);
+                            }
+                            if let Some(ws) = weapons_initial.get_mut(&weapon_id) {
+                                ws.kills += stat["value_vs"].to_string().unquote().parse::<u64>().unwrap();
+                                ws.kills += stat["value_nc"].to_string().unquote().parse::<u64>().unwrap();
+                                ws.kills += stat["value_tr"].to_string().unquote().parse::<u64>().unwrap();
+                            }
                         },
                         _ => {},
                     }
@@ -190,7 +264,8 @@ impl Session {
         Session {
             character: character,
             events: EventList::new(),
-            weapons: WeaponStatsList::new(),
+            weapons_initial,
+            weapons: Vec::<WeaponStats>::new(),
             start_time: start,
             end_time: None,
 
@@ -467,31 +542,107 @@ impl Session {
 
 }
 
+#[derive(Copy,Clone)]
+pub struct WeaponInitial {
+    pub fired: u64,
+    pub hits: u64,
+    pub kills: u64,
+    pub headshots: u64,
+}
 
 
-#[allow(dead_code)]
 pub struct WeaponStats {
     weapon_id: String,
     name: String,
-    kills: u32,
-    headshots: u32,
-    fired: u64,
-    hits: u64,
-    lifetime_accuracy: f32,
-    lifetime_hsr: f32,
-    starting_accuracy: f32,
-    starting_hsr: f32,
+    session_kills: u32,
+    session_headshots: u32,
+    initial: WeaponInitial,
+    latest_hits: u64,
+    latest_fired: u64,
 }
 
-#[allow(dead_code)]
-pub struct WeaponStatsList {
-    weapons: Vec<WeaponStats>,
-}
+impl WeaponStats {
+    pub fn new(name: String, id: String, initial: WeaponInitial) -> Self {
+      WeaponStats {
+        weapon_id: id,
+        name,
+        session_kills: 0,
+        session_headshots: 0,
+        initial,
+        latest_hits: initial.hits,
+        latest_fired: initial.fired,
+      }
+    }
 
-impl WeaponStatsList {
-    pub fn new() -> Self {
-        WeaponStatsList{
-            weapons: Vec::new(),
+    pub fn add_kill(&mut self, is_headshot: bool) {
+       self.session_kills +=1;
+       if is_headshot { self.session_headshots +=1;}
+    }
+
+    pub fn shots_fired(&self) -> u64 {
+        self.latest_fired - self.initial.fired
+    }
+
+    pub fn shots_hit(&self) -> u64 {
+        self.latest_hits - self.initial.hits
+    }
+
+    pub fn update_latest_hits(&mut self, new_lifetime_hits: u64) {
+        self.latest_hits = new_lifetime_hits;
+    }
+
+    pub fn update_latest_fired(&mut self, new_lifetime_fired: u64) {
+        self.latest_fired = new_lifetime_fired;
+    }
+
+    fn session_hsr(&self) -> f32 {
+        if self.session_kills > 0 {
+            self.session_headshots as f32 / self.session_kills as f32
+        } else {
+            f32::NAN
+        }
+    }
+
+    fn initial_hsr(&self) -> f32 {
+        if self.initial.kills > 0 {
+            self.initial.headshots as f32 / self.initial.kills as f32
+        } else {
+            f32::NAN
+        }
+    }
+
+    fn total_hsr(&self) -> f32 {
+        let total_kills = self.session_kills as u64 + self.initial.kills;
+        let total_headshots = self.session_headshots as u64 + self.initial.headshots;
+        if total_kills > 0 {
+            total_headshots  as f32 / total_kills as f32
+        } else {
+            f32::NAN
+        }
+    }
+
+    fn session_accuracy(&self) -> f32 {
+        let fired = self.shots_fired();
+        if fired > 0 {
+            self.shots_hit() as f32 / fired as f32
+        } else {
+            f32::NAN
+        }
+    }
+
+    fn initial_accuracy(&self) -> f32 {
+        if self.initial.fired > 0 {
+            self.initial.hits as f32 / self.initial.fired as f32
+        } else {
+            f32::NAN
+        }
+    }
+
+    fn total_accuracy(&self) -> f32 {
+        if self.latest_fired > 0 {
+            self.latest_hits as f32 / self.latest_fired as f32
+        } else {
+            f32::NAN
         }
     }
 }
