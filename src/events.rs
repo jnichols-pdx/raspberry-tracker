@@ -22,7 +22,52 @@ pub struct Event {
 impl Event {
     pub fn ui(&self, body: &mut egui_extras::TableBody) {
         let img_size = (14.0,14.0);
-        body.row(20.0, |mut row| {
+        let bg_color;
+        let text_color;
+        match self.kind {
+            EventType::Death => {
+                bg_color = Color32::from_rgb(80,0,0);
+                text_color = Color32::from_rgb(255,255,255);
+            },
+            EventType::TeamDeath => {
+                bg_color = Color32::from_rgb(80,80,0);
+                text_color = Color32::from_rgb(255,255,255);
+            },
+            EventType::Kill => {
+                bg_color = Color32::from_rgb(0,80,0);
+                text_color = Color32::from_rgb(255,255,255);
+            },
+            EventType::Suicide => {
+                bg_color = Color32::from_rgb(0,0,80);
+                text_color = Color32::from_rgb(255,255,255);
+            },
+            EventType::TeamKill => {
+                bg_color = Color32::from_rgb(65,80,0);
+                text_color = Color32::from_rgb(255,255,255);
+            },
+            EventType::LoseVehicle => {
+                bg_color = Color32::from_rgb(80,0,0);
+                text_color = Color32::from_rgb(200,200,200);
+            },
+            EventType::LoseVehicleFF => {
+                bg_color = Color32::from_rgb(80,80,0);
+                text_color = Color32::from_rgb(200,200,200);
+            },
+            EventType::DestroyVehicle => {
+                bg_color = Color32::from_rgb(0,80,0);
+                text_color = Color32::from_rgb(200,200,200);
+            },
+            EventType::DestroyVehicleFF=> {
+                bg_color = Color32::from_rgb(0,0,80);
+                text_color = Color32::from_rgb(200,200,200);
+            },
+            _ => {
+                bg_color = Color32::from_rgb(80,80,80);
+                text_color = Color32::from_rgb(255,255,255);
+            },
+        };
+
+        body.row(17.0, Some(bg_color), |mut row| {
             row.col_clip(|ui| { //faction
                 match ui.ctx().texture_by_name(&self.faction.to_string()) {
                     Some(image) => ui.image(image.id(), img_size),
@@ -57,20 +102,10 @@ impl Event {
                 }
             });
             row.col_clip(|ui| { //Player Name
-                let bg_color;
-                match self.kind {
-                    EventType::Death => bg_color = Color32::from_rgb(80,0,0),
-                    EventType::TeamDeath => bg_color = Color32::from_rgb(80,80,0),
-                    EventType::Kill => bg_color = Color32::from_rgb(0,80,0),
-                    EventType::Suicide => bg_color = Color32::from_rgb(0,0,80),
-                    EventType::TeamKill => bg_color = Color32::from_rgb(65,80,0),
-                    EventType::LoseVehicle => bg_color = Color32::from_rgb(80,0,0),
-                    EventType::LoseVehicleFF => bg_color = Color32::from_rgb(80,80,0),
-                    EventType::DestroyVehicle => bg_color = Color32::from_rgb(0,80,0),
-                    EventType::DestroyVehicleFF=> bg_color = Color32::from_rgb(0,0,80),
-                    _ => bg_color = Color32::from_rgb(80,80,80),
-                };
-                ui.label(egui::RichText::new(&self.name).small().background_color(bg_color).color(Color32::from_rgb(255,255,255)));
+                ui.vertical(|ui| {
+                    ui.add_space(1.5);
+                    ui.label(egui::RichText::new(&self.name).small().color(text_color));
+                });
             });
             row.col_clip(|ui| { //Weapon
                 ui.label(egui::RichText::new(&self.weapon).small());
