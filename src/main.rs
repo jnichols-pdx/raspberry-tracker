@@ -333,7 +333,8 @@ async fn parse_messages(
                         vehicle_destroyed = false;
                     }
                     println!("{:?}", json);
-                    let weapon_name = db.get_weapon_name(&json["payload"]["attacker_weapon_id"].to_string().unquote()).await;
+                    let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
+                    let weapon_name = db.get_weapon_name(&weapon_id).await;
                     let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
                     let datetime = OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(local_tz);
                     let formatted_time;
@@ -513,6 +514,7 @@ async fn parse_messages(
                         class: class,
                         name: name,
                         weapon: weapon_name,
+                        weapon_id: weapon_id,
                         headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
                         kdr: ratio,
                         timestamp: timestamp,

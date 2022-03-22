@@ -11,12 +11,12 @@ pub struct Event {
     pub class: Class,
     pub name: String,
     pub weapon: String,
+    pub weapon_id: String,
     pub headshot: bool,
     pub kdr: f32,
     pub timestamp: i64,
     pub vehicle: Option<Vehicle>,
     pub datetime: String,
-
 }
 
 impl Event {
@@ -174,7 +174,6 @@ impl EventList {
         egui::SidePanel::right("events_panel").min_width(387.0).show(ctx, |ui| {
 
             TableBuilder::new(ui)
-                .striped(true)
                 .column(Size::Absolute(20.0)) //Faction
                 .column(Size::Absolute(30.0)) //BR
                 .column(Size::Absolute(22.0)) //Class
