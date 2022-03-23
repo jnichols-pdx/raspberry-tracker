@@ -6,6 +6,7 @@ use tokio::sync::{mpsc};
 use crate::common::*;
 use crate::events::{*, Event};
 use crate::character::*;
+use crate::weapons::*;
 use eframe::{egui, epi};
 use egui::*;
 use egui_extras::{TableBuilder, Size};
@@ -18,7 +19,8 @@ pub struct Session {
     character: FullCharacter,
     events: EventList,
     weapons_initial: BTreeMap<String, WeaponInitial>,
-    weapons: Vec<WeaponStats>,
+    weapons: WeaponSet,
+
     start_time: i64,
     end_time: Option<i64>,
 
@@ -74,7 +76,7 @@ impl Session {
             character: character,
             events: EventList::new(),
             weapons_initial: BTreeMap::new(),
-            weapons: Vec::<WeaponStats>::new(),
+            weapons: WeaponSet::new(),
             start_time: start,
             end_time: None,
 
@@ -250,7 +252,7 @@ impl Session {
             character: character,
             events: EventList::new(),
             weapons_initial,
-            weapons: Vec::<WeaponStats>::new(),
+            weapons:WeaponSet::new(),
             start_time: start,
             end_time: None,
 
@@ -319,15 +321,9 @@ impl Session {
 
                 //Update weapon stats.
                 if event.weapon_id != "0" { //skip suicides
-                    let mut have_weapon = false;
-                    for weapon in &mut self.weapons {
-                        if weapon.matches_id(&event.weapon_id) {
-                            weapon.add_kill(event.headshot);
-                            have_weapon = true;
-                            break;
-                        }
-                    }
-                    if ! have_weapon {
+                    if self.weapons.contains(&event.weapon_id) {
+                       self.weapons.add_kill(&event.weapon_id, event.headshot);
+                    } else {
                         let initial;
                         match self.weapons_initial.remove(&event.weapon_id) {
                             Some(retrieved) => initial = retrieved,
@@ -343,21 +339,14 @@ impl Session {
             EventType::DestroyVehicle => {
                 //Update weapon stats also on vehicle destroys, without upping kill count.
                 if event.weapon_id != "0" { //skip suicides
-                    let mut have_weapon = false;
-                    for weapon in &mut self.weapons {
-                        if weapon.matches_id(&event.weapon_id) {
-                            have_weapon = true;
-                            break;
-                        }
-                    }
-                    if ! have_weapon {
+                    if ! self.weapons.contains(&event.weapon_id){
                         let initial;
                         match self.weapons_initial.remove(&event.weapon_id) {
                             Some(retrieved) => initial = retrieved,
                             None => initial = WeaponInitial::new(),
                         }
 
-                        let mut new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
+                        let new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
                         self.weapons.push(new_stat);
                     }
                 }
@@ -553,6 +542,7 @@ impl Session {
                 Ok(details) => {
                     let stat_history = &details["single_character_by_id_list"][0]["stats"]["stat_history"];
                     let stat_block = details["single_character_by_id_list"][0]["stats"]["stat"].as_array().unwrap(); //TODO: more care to be taken
+                    let weapon_stat = details["single_character_by_id_list"][0]["stats"]["weapon_stat"].as_array().unwrap();
                     let weapon_stat_by_faction = details["single_character_by_id_list"][0]["stats"]["weapon_stat_by_faction"].as_array().unwrap();
 
                     self.latest_api_kills = stat_history["kills"]["all_time"].to_string().unquote().parse::<u64>().unwrap();
@@ -578,6 +568,27 @@ impl Session {
                     let mut vs_hs = 0;
                     let mut nc_hs = 0;
                     let mut tr_hs = 0;
+
+                    for stat in weapon_stat {
+                        let weapon_id = stat["item_id"].as_str().unwrap().to_owned();
+                        if weapon_id == "0" {  //skip vehicles? does recursion track roadkills in per weapon stats?
+                            continue
+                        }
+
+                        if self.weapons.contains(&weapon_id) {
+                            match stat["stat_name"].as_str() {
+                                Some("weapon_hit_count") => {
+                                    let hits = stat["value"].to_string().unquote().parse::<u64>().unwrap();
+                                    self.weapons.update_latest_hits(&weapon_id, hits);
+                                },
+                                Some("weapon_fire_count") => {
+                                    let fired = stat["value"].to_string().unquote().parse::<u64>().unwrap();
+                                    self.weapons.update_latest_fired(&weapon_id, fired);
+                                },
+                                Some(_) | None => {},
+                            }
+                        }
+                    }
 
 
                     for stat in weapon_stat_by_faction {
@@ -607,195 +618,4 @@ impl Session {
         self.end_time = Some(time);
     }
 
-}
-
-#[derive(Copy,Clone)]
-pub struct WeaponInitial {
-    pub fired: u64,
-    pub hits: u64,
-    pub kills: u64,
-    pub headshots: u64,
-}
-
-impl WeaponInitial {
-    pub fn new() -> Self {
-        WeaponInitial {
-        fired: 0,
-        hits: 0,
-        kills: 0,
-        headshots: 0,
-        }
-    }
-}
-
-
-pub struct WeaponStats {
-    weapon_id: String,
-    name: String,
-    session_kills: u32,
-    session_headshots: u32,
-    initial: WeaponInitial,
-    latest_hits: u64,
-    latest_fired: u64,
-}
-
-impl WeaponStats {
-    pub fn new(name: &String, id: &String, initial: WeaponInitial) -> Self {
-      WeaponStats {
-        weapon_id: id.to_owned(),
-        name: name.to_owned(),
-        session_kills: 0,
-        session_headshots: 0,
-        initial,
-        latest_hits: initial.hits,
-        latest_fired: initial.fired,
-      }
-    }
-
-    pub fn matches_id(&self, other_id: &String) -> bool {
-        self.weapon_id == *other_id
-    }
-
-    pub fn add_kill(&mut self, is_headshot: bool) {
-       self.session_kills +=1;
-       if is_headshot { self.session_headshots +=1;}
-    }
-
-    pub fn shots_fired(&self) -> u64 {
-        self.latest_fired - self.initial.fired
-    }
-
-    pub fn shots_hit(&self) -> u64 {
-        self.latest_hits - self.initial.hits
-    }
-
-    pub fn update_latest_hits(&mut self, new_lifetime_hits: u64) {
-        self.latest_hits = new_lifetime_hits;
-    }
-
-    pub fn update_latest_fired(&mut self, new_lifetime_fired: u64) {
-        self.latest_fired = new_lifetime_fired;
-    }
-
-    fn session_hsr(&self) -> f32 {
-        if self.session_kills > 0 {
-            (self.session_headshots as f32 / self.session_kills as f32) * 100.0
-        } else {
-            f32::NAN
-        }
-    }
-
-    fn initial_hsr(&self) -> f32 {
-        if self.initial.kills > 0 {
-            ( self.initial.headshots as f32 / self.initial.kills as f32 ) * 100.0
-        } else {
-            f32::NAN
-        }
-    }
-
-    fn total_hsr(&self) -> f32 {
-        let total_kills = self.session_kills as u64 + self.initial.kills;
-        let total_headshots = self.session_headshots as u64 + self.initial.headshots;
-        if total_kills > 0 {
-            ( total_headshots  as f32 / total_kills as f32 ) * 100.0
-        } else {
-            f32::NAN
-        }
-    }
-
-    fn session_accuracy(&self) -> f32 {
-        let fired = self.shots_fired();
-        if fired > 0 {
-            (self.shots_hit() as f32 / fired as f32) * 100.0
-        } else {
-            f32::NAN
-        }
-    }
-
-    fn initial_accuracy(&self) -> f32 {
-        if self.initial.fired > 0 {
-            (self.initial.hits as f32 / self.initial.fired as f32) * 100.0
-        } else {
-            f32::NAN
-        }
-    }
-
-    fn total_accuracy(&self) -> f32 {
-        if self.latest_fired > 0 {
-            (self.latest_hits as f32 / self.latest_fired as f32) * 100.0
-        } else {
-            f32::NAN
-        }
-    }
-
-    pub fn ui(&self, body: &mut egui_extras::TableBody) {
-        let bg_color = Color32::from_rgb(100,100,100);
-        let text_color = Color32::from_rgb(0,0,0);
-        let red_color = Color32::from_rgb(255,0,0);
-        let green_color = Color32::from_rgb(0,255,0);
-
-        body.row(25.0, Some(bg_color), |mut row| {
-            row.col(|ui| { //name
-                ui.vertical(|ui| {
-                    ui.add_space(3.0);
-                    ui.label(egui::RichText::new(&self.name).small().color(text_color));
-                });
-            });
-            row.col(|ui| { //kills
-                ui.vertical(|ui| {
-                    ui.add_space(3.0);
-                    ui.label(egui::RichText::new(format!("{}",&self.session_kills)).small().color(text_color));
-                });
-            });
-            row.col(|ui| { //HS%
-                ui.vertical(|ui| {
-                    let mut stat_color = text_color;
-                    let total = self.total_hsr();
-                    let delta = total - self.initial_hsr();
-                    if delta < 0.0 {
-                        stat_color = red_color;
-                    } else if delta > 0.0 {
-                        stat_color = green_color;
-                    }
-                    ui.label(egui::RichText::new(format!("{:.3}%",self.session_hsr())).small().color(stat_color));
-                    ui.label(egui::RichText::new(format!("{:.3}% {:+.3}%",total, delta)).small().color(stat_color));
-                });
-            });
-
-            row.col(|ui| { //ACC
-                let mut stat_color = text_color;
-                ui.vertical(|ui| {
-                    let total = self.total_accuracy();
-                    let delta = total - self.initial_accuracy();
-                    if delta < 0.0 {
-                        stat_color = red_color;
-                    } else if delta > 0.0 {
-                        stat_color = green_color;
-                    }
-                    ui.label(egui::RichText::new(format!("{:.3}%",self.session_accuracy())).small().color(stat_color));
-                    ui.label(egui::RichText::new(format!("{:.3}% {:+.3}%",total, delta)).small().color(stat_color));
-                });
-            });
-
-            row.col(|ui| { //HS count
-                ui.vertical(|ui| {
-                    ui.add_space(3.0);
-                    ui.label(egui::RichText::new(format!("{}",&self.session_headshots)).small().color(text_color));
-                });
-            });
-            row.col(|ui| { //Fired
-                ui.vertical(|ui| {
-                    ui.add_space(3.0);
-                    ui.label(egui::RichText::new(format!("{}",self.shots_fired())).small().color(text_color));
-                });
-            });
-            row.col(|ui| { //Hits
-                ui.vertical(|ui| {
-                    ui.add_space(3.0);
-                    ui.label(egui::RichText::new(format!("{}",self.shots_hit())).small().color(text_color));
-                });
-            });
-        });
-
-    }
 }

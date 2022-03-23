@@ -7,6 +7,7 @@ mod db;
 mod character;
 mod events;
 mod character_list;
+mod weapons;
 
 
 //use std::env;
