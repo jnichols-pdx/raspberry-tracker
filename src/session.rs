@@ -432,7 +432,7 @@ impl Session {
                         ui.label("HSR -");
                     }
                     //accuracy needed
-                    ui.label(format!("Accuracy {:.3}%", 0.0));
+                    ui.label(format!("Accuracy {:.3}%", self.weapons.aggregate_accuracy()));
 
             });
 
