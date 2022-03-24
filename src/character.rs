@@ -1,4 +1,3 @@
-
 use crate::common::*;
 use egui::Color32;
 
@@ -19,13 +18,19 @@ pub struct Character {
 }
 
 impl Character {
-
     pub fn from_json(json: &serde_json::Value) -> Result<Character, String> {
-
         let new_char = &json["character_list"][0];
         println!("deets: {:?}", new_char);
-        let faction_num = new_char["faction_id"].to_string().unquote().parse::<i64>().unwrap();
-        let world_num = new_char["world_id"].to_string().unquote().parse::<i64>().unwrap();
+        let faction_num = new_char["faction_id"]
+            .to_string()
+            .unquote()
+            .parse::<i64>()
+            .unwrap();
+        let world_num = new_char["world_id"]
+            .to_string()
+            .unquote()
+            .parse::<i64>()
+            .unwrap();
 
         let mut bob = Character {
             full_name: new_char["name"]["first"].to_string().unquote(),
@@ -47,80 +52,81 @@ impl Character {
             bob.outfit_full = Some(new_char["outfit"]["name"].to_string().unquote());
         }
         Ok(bob)
-
     }
 }
 
 impl View for Character {
-    fn ui(&mut self, _ctx: &egui::Context) {
-    }
-    fn draw(&mut self, ui: &mut egui::Ui){
+    fn ui(&mut self, _ctx: &egui::Context) {}
+    fn draw(&mut self, ui: &mut egui::Ui) {
         egui::Grid::new(format!("characters{}", self.character_id))
             .min_col_width(10.0)
             .show(ui, |ui| {
-            match ui.ctx().texture_by_name(&self.faction.to_string()) {
-                Some(image) => ui.image(image.id(), (28.0,28.0)),
-                None => ui.label(self.faction.to_string()),
-            };
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    if let Some(outfit_alias) = &self.outfit {
-                        if outfit_alias.is_empty() {
-                            if let Some(outfit_name) = &self.outfit_full {
-                                ui.label(format!("[{}] {}", outfit_name, self.full_name));
+                match ui.ctx().texture_by_name(&self.faction.to_string()) {
+                    Some(image) => ui.image(image.id(), (28.0, 28.0)),
+                    None => ui.label(self.faction.to_string()),
+                };
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        if let Some(outfit_alias) = &self.outfit {
+                            if outfit_alias.is_empty() {
+                                if let Some(outfit_name) = &self.outfit_full {
+                                    ui.label(format!("[{}] {}", outfit_name, self.full_name));
+                                } else {
+                                    ui.label(&self.full_name);
+                                }
                             } else {
-                                ui.label(&self.full_name);
+                                ui.label(format!("[{}] {}", outfit_alias, self.full_name));
                             }
                         } else {
-                            ui.label(format!("[{}] {}", outfit_alias, self.full_name));
+                            ui.label(&self.full_name);
                         }
-                    } else {
-                        ui.label(&self.full_name);
-                    }
-                    ui.label(self.server.to_string());
+                        ui.label(self.server.to_string());
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label(&self.character_id);
+                    });
                 });
-                ui.horizontal(|ui| {
-                    ui.label(&self.character_id);
-                });
-            });
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
                         ui.label(""); //hold space open
+                    });
+                    ui.horizontal(|ui| {
+                        if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
+                            self.changed_auto_track = true;
+                        }
+                        if !self.auto_track && ui.button("Start Session").clicked() {
+                            self.to_track = true;
+                        }
+                    });
                 });
-                ui.horizontal(|ui| {
-                    if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
-                        self.changed_auto_track = true;
-                    }
-                    if !self.auto_track &&  ui.button("Start Session").clicked() {
-                        self.to_track = true;
-                    }
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        if self.confirm_visible {
+                            ui.label(
+                                egui::RichText::new("Actually remove this character?".to_owned())
+                                    .color(Color32::from_rgb(200, 0, 0)),
+                            );
+                        } else {
+                            ui.label(""); //hold space open
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        if !self.confirm_visible {
+                            if ui.button("remove").clicked() {
+                                self.confirm_visible = true;
+                            }
+                        } else {
+                            if ui.button(" cancel ").clicked() {
+                                self.confirm_visible = false;
+                            }
+                            if ui.button("confirm").clicked() {
+                                self.to_remove = true;
+                            }
+                        }
+                    });
                 });
+                ui.end_row();
             });
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    if self.confirm_visible {
-                        ui.label(egui::RichText::new("Actually remove this character?".to_owned()).color(Color32::from_rgb(200,0,0)));
-                    } else {
-                        ui.label(""); //hold space open
-                    }
-                });
-                ui.horizontal(|ui| {
-                    if !self.confirm_visible {
-                        if ui.button("remove").clicked() {
-                            self.confirm_visible= true;
-                        }
-                    } else {
-                        if ui.button(" cancel ").clicked() {
-                            self.confirm_visible = false;
-                        }
-                        if ui.button("confirm").clicked() {
-                            self.to_remove = true;
-                        }
-                    }
-                });
-            });
-            ui.end_row();
-        });
     }
 }
 
@@ -163,10 +169,19 @@ impl FullCharacter {
 
     pub fn from_json(json: &serde_json::Value) -> Result<FullCharacter, String> {
         let bob = Character::from_json(json).unwrap();
-        let biff = FullCharacter::new(&bob, 
-                json["character_list"][0]["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap(), 
-                json["character_list"][0]["prestige_level"].to_string().unquote().parse::<u8>().unwrap());
+        let biff = FullCharacter::new(
+            &bob,
+            json["character_list"][0]["battle_rank"]["value"]
+                .to_string()
+                .unquote()
+                .parse::<u8>()
+                .unwrap(),
+            json["character_list"][0]["prestige_level"]
+                .to_string()
+                .unquote()
+                .parse::<u8>()
+                .unwrap(),
+        );
         Ok(biff)
     }
 }
-

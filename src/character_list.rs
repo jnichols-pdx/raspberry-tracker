@@ -1,12 +1,12 @@
 use crate::character::*;
-use crate::session::Session;
-use tokio::sync::{mpsc};
-use tokio_tungstenite::tungstenite::protocol::Message;
-use std::sync::{Arc, RwLock};
-use crate::db::DatabaseSync;
 use crate::common::*;
+use crate::db::DatabaseSync;
+use crate::session::Session;
 use egui::{Color32, ScrollArea};
+use std::sync::{Arc, RwLock};
 use time::OffsetDateTime;
+use tokio::sync::mpsc;
+use tokio_tungstenite::tungstenite::protocol::Message;
 
 pub struct CharacterList {
     pub characters: Vec<Character>,
@@ -17,8 +17,7 @@ pub struct CharacterList {
 }
 
 impl CharacterList {
-    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> Self
-    {
+    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> Self {
         CharacterList {
             characters: Vec::new(),
             new_char_name: "".to_owned(),
@@ -36,20 +35,26 @@ impl CharacterList {
         println!("track check for >{}<", target_id);
         if let Some(target) = self.find_character_by_id(target_id) {
             target.auto_track
-        } else{
+        } else {
             false
         }
     }
 
     pub fn find_character_by_id(&self, target_id: String) -> Option<&Character> {
-        self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))
+        self.characters
+            .iter()
+            .find(|&chara| chara.character_id.eq(&target_id))
     }
 
     pub fn update_entry_from_full(&mut self, newer_char: &FullCharacter) {
-       if let Some(mut target) = self.characters.iter_mut().find(|chara| (**chara).character_id.eq(&newer_char.character_id))  {
-            target.full_name =  newer_char.full_name.to_owned();
-            target.lower_name =  newer_char.lower_name.to_owned();
-            target.server =  newer_char.server;
+        if let Some(mut target) = self
+            .characters
+            .iter_mut()
+            .find(|chara| (**chara).character_id.eq(&newer_char.character_id))
+        {
+            target.full_name = newer_char.full_name.to_owned();
+            target.lower_name = newer_char.lower_name.to_owned();
+            target.server = newer_char.server;
             if let Some(outfit_alias) = &newer_char.outfit {
                 target.outfit = Some(outfit_alias.to_owned());
             } else {
@@ -60,11 +65,10 @@ impl CharacterList {
             } else {
                 target.outfit_full = None;
             }
-            target.character_id =  newer_char.character_id.to_owned();
-            target.faction =  newer_char.faction;
-       }
+            target.character_id = newer_char.character_id.to_owned();
+            target.faction = newer_char.faction;
+        }
     }
-
 }
 
 impl ViewWithDB for CharacterList {
@@ -185,6 +189,5 @@ impl ViewWithDB for CharacterList {
                 });
         });
     }
-    fn draw(&mut self, _ui: &mut egui::Ui) {
-    }
+    fn draw(&mut self, _ui: &mut egui::Ui) {}
 }

@@ -1,9 +1,7 @@
-
 use egui::*;
 use std::collections::BTreeMap;
 
-
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone)]
 pub struct WeaponInitial {
     pub fired: u64,
     pub hits: u64,
@@ -14,10 +12,10 @@ pub struct WeaponInitial {
 impl WeaponInitial {
     pub fn new() -> Self {
         WeaponInitial {
-        fired: 0,
-        hits: 0,
-        kills: 0,
-        headshots: 0,
+            fired: 0,
+            hits: 0,
+            kills: 0,
+            headshots: 0,
         }
     }
 }
@@ -40,15 +38,15 @@ pub struct WeaponStats {
 
 impl WeaponStats {
     pub fn new(name: &str, id: &str, initial: WeaponInitial) -> Self {
-      WeaponStats {
-        weapon_id: id.to_owned(),
-        name: name.to_owned(),
-        session_kills: 0,
-        session_headshots: 0,
-        initial,
-        latest_hits: initial.hits,
-        latest_fired: initial.fired,
-      }
+        WeaponStats {
+            weapon_id: id.to_owned(),
+            name: name.to_owned(),
+            session_kills: 0,
+            session_headshots: 0,
+            initial,
+            latest_hits: initial.hits,
+            latest_fired: initial.fired,
+        }
     }
 
     pub fn matches_id(&self, other_id: &str) -> bool {
@@ -56,8 +54,10 @@ impl WeaponStats {
     }
 
     pub fn add_kill(&mut self, is_headshot: bool) {
-       self.session_kills +=1;
-       if is_headshot { self.session_headshots +=1;}
+        self.session_kills += 1;
+        if is_headshot {
+            self.session_headshots += 1;
+        }
     }
 
     pub fn shots_fired(&self) -> u64 {
@@ -86,7 +86,7 @@ impl WeaponStats {
 
     fn initial_hsr(&self) -> f32 {
         if self.initial.kills > 0 {
-            ( self.initial.headshots as f32 / self.initial.kills as f32 ) * 100.0
+            (self.initial.headshots as f32 / self.initial.kills as f32) * 100.0
         } else {
             f32::NAN
         }
@@ -96,7 +96,7 @@ impl WeaponStats {
         let total_kills = self.session_kills as u64 + self.initial.kills;
         let total_headshots = self.session_headshots as u64 + self.initial.headshots;
         if total_kills > 0 {
-            ( total_headshots  as f32 / total_kills as f32 ) * 100.0
+            (total_headshots as f32 / total_kills as f32) * 100.0
         } else {
             f32::NAN
         }
@@ -128,25 +128,32 @@ impl WeaponStats {
     }
 
     pub fn ui(&self, body: &mut egui_extras::TableBody) {
-        let bg_color = Color32::from_rgb(60,60,60);
-        let text_color = Color32::from_rgb(255,255,255);
-        let red_color = Color32::from_rgb(255,0,0);
-        let green_color = Color32::from_rgb(0,255,0);
+        let bg_color = Color32::from_rgb(60, 60, 60);
+        let text_color = Color32::from_rgb(255, 255, 255);
+        let red_color = Color32::from_rgb(255, 0, 0);
+        let green_color = Color32::from_rgb(0, 255, 0);
 
         body.row(25.0, Some(bg_color), |mut row| {
-            row.col(|ui| { //name
+            row.col(|ui| {
+                //name
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
                     ui.label(egui::RichText::new(&self.name).small().color(text_color));
                 });
             });
-            row.col(|ui| { //kills
+            row.col(|ui| {
+                //kills
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
-                    ui.label(egui::RichText::new(format!("{}",&self.session_kills)).small().color(text_color));
+                    ui.label(
+                        egui::RichText::new(format!("{}", &self.session_kills))
+                            .small()
+                            .color(text_color),
+                    );
                 });
             });
-            row.col(|ui| { //HS%
+            row.col(|ui| {
+                //HS%
                 ui.vertical(|ui| {
                     let mut stat_color = text_color;
                     let total = self.total_hsr();
@@ -156,12 +163,21 @@ impl WeaponStats {
                     } else if delta > 0.0 {
                         stat_color = green_color;
                     }
-                    ui.label(egui::RichText::new(format!("{:.3}%",self.session_hsr())).small().color(stat_color));
-                    ui.label(egui::RichText::new(format!("{:.3}% {:+.3}%",total, delta)).small().color(stat_color));
+                    ui.label(
+                        egui::RichText::new(format!("{:.3}%", self.session_hsr()))
+                            .small()
+                            .color(stat_color),
+                    );
+                    ui.label(
+                        egui::RichText::new(format!("{:.3}% {:+.3}%", total, delta))
+                            .small()
+                            .color(stat_color),
+                    );
                 });
             });
 
-            row.col(|ui| { //ACC
+            row.col(|ui| {
+                //ACC
                 let mut stat_color = text_color;
                 ui.vertical(|ui| {
                     let total = self.total_accuracy();
@@ -171,36 +187,58 @@ impl WeaponStats {
                     } else if delta > 0.0 {
                         stat_color = green_color;
                     }
-                    ui.label(egui::RichText::new(format!("{:.3}%",self.session_accuracy())).small().color(stat_color));
-                    ui.label(egui::RichText::new(format!("{:.3}% {:+.3}%",total, delta)).small().color(stat_color));
+                    ui.label(
+                        egui::RichText::new(format!("{:.3}%", self.session_accuracy()))
+                            .small()
+                            .color(stat_color),
+                    );
+                    ui.label(
+                        egui::RichText::new(format!("{:.3}% {:+.3}%", total, delta))
+                            .small()
+                            .color(stat_color),
+                    );
                 });
             });
 
-            row.col(|ui| { //HS count
+            row.col(|ui| {
+                //HS count
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
-                    ui.label(egui::RichText::new(format!("{}",&self.session_headshots)).small().color(text_color));
+                    ui.label(
+                        egui::RichText::new(format!("{}", &self.session_headshots))
+                            .small()
+                            .color(text_color),
+                    );
                 });
             });
-            row.col(|ui| { //Fired
+            row.col(|ui| {
+                //Fired
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
-                    ui.label(egui::RichText::new(format!("{}",self.shots_fired())).small().color(text_color));
+                    ui.label(
+                        egui::RichText::new(format!("{}", self.shots_fired()))
+                            .small()
+                            .color(text_color),
+                    );
                 });
             });
-            row.col(|ui| { //Hits
+            row.col(|ui| {
+                //Hits
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
-                    ui.label(egui::RichText::new(format!("{}",self.shots_hit())).small().color(text_color));
+                    ui.label(
+                        egui::RichText::new(format!("{}", self.shots_hit()))
+                            .small()
+                            .color(text_color),
+                    );
                 });
             });
         });
-
     }
 }
 
 pub struct WeaponSet {
-    weapons: BTreeMap<String,WeaponStats>,
+    weapons: BTreeMap<String, WeaponStats>,
     ordering: Vec<String>,
 }
 
@@ -212,30 +250,31 @@ impl WeaponSet {
         }
     }
 
-    pub fn push(&mut self, new_stat: WeaponStats) { //Doesn't replace if already present
-        if ! self.weapons.contains_key(&new_stat.weapon_id) {
+    pub fn push(&mut self, new_stat: WeaponStats) {
+        //Doesn't replace if already present
+        if !self.weapons.contains_key(&new_stat.weapon_id) {
             self.ordering.push(new_stat.weapon_id.to_owned());
             self.weapons.insert(new_stat.weapon_id.to_owned(), new_stat);
         }
     }
 
     pub fn iter(&self) -> WeaponSetIter {
-        WeaponSetIter { 
+        WeaponSetIter {
             front_index: 0,
             back_index: self.ordering.len() as isize,
             set: self,
         }
     }
-    
+
     pub fn update_latest_hits(&mut self, target_id: &str, hit_count: u64) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
-                weapon.update_latest_hits(hit_count);
+            weapon.update_latest_hits(hit_count);
         }
     }
 
     pub fn update_latest_fired(&mut self, target_id: &str, fire_count: u64) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
-                weapon.update_latest_fired(fire_count);
+            weapon.update_latest_fired(fire_count);
         }
     }
 
