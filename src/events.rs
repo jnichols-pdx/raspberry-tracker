@@ -99,7 +99,7 @@ impl Event {
                 //Override for orbital strike direct kills (can't track when players die from falling
                 //damage after being thrown airborn by orbital :( )
                 if self.weapon == "Orbital Strike Uplink" {
-                    if let Some(image) = ui.ctx().texture_by_name(&"Orbital") {
+                    if let Some(image) = ui.ctx().texture_by_name("Orbital") {
                         ui.image(image.id(), img_size);
                     };
                 } else if let Some(vehicle) = self.vehicle {
@@ -184,7 +184,7 @@ impl EventList {
                 .column(Size::Absolute(25.0)) //KD
                 .column(Size::Absolute(70.0)) //Timestamp
                 .header(12.0, |mut header| {
-                    header.col(|ui| {
+                    header.col(|_ui| { //No header for first column
                     });
                     header.col(|ui| {
                         ui.label(egui::RichText::new("BR").small());

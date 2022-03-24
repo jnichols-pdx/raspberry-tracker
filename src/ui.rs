@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 use eframe::{egui, epi};
 use egui::*;
 use tokio::sync::{mpsc, oneshot};
@@ -6,13 +5,10 @@ use crate::common::*;
 use crate::session::*;
 use crate::character_list::*;
 use crate::db::*;
-use sqlx::sqlite::SqlitePool;
 use std::sync::{Arc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
-use egui_extras::TableBuilder;
-use time::OffsetDateTime;
 use std::rc::Rc;
 
 pub struct TrackerApp {
@@ -24,7 +20,6 @@ pub struct TrackerApp {
     pub lastx: f32,
     pub lasty: f32,
     pub size_changed: bool,
-    pub ws_messages: mpsc::Receiver<serde_json::Value>,
     pub ws_out: mpsc::Sender<Message>,
     pub frame_cb: Option<oneshot::Sender<epi::Frame>>,
     pub session_count: usize,
@@ -34,22 +29,15 @@ pub struct TrackerApp {
 impl TrackerApp {
 
     fn load_image_bytes(&mut self, image_name: &str, bytes: &[u8], ctx: &egui::Context) {
-        match  ImageReader::with_format(Cursor::new(bytes), image::ImageFormat::Png)
-            .decode() {
-                Ok(image) => {
-                    let size = [image.width() as usize, image.height() as usize];
-                    let image_buffer = image.to_rgba8();
-                    let pixels = image_buffer.as_flat_samples();
-                    match self.images.as_mut() {
-                        Some(list) => {
-                            list.push(ctx.load_texture(image_name, ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
-                            println!("Readied Custom : {}", image_name);
-                        },
-                        None => {},
-                    }
-                },
-                Err(e) => {},
-        }
+        if let Ok(image) = ImageReader::with_format(Cursor::new(bytes), image::ImageFormat::Png).decode() {
+            let size = [image.width() as usize, image.height() as usize];
+            let image_buffer = image.to_rgba8();
+            let pixels = image_buffer.as_flat_samples();
+            if let Some(list) = self.images.as_mut() {
+                    list.push(ctx.load_texture(image_name, ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                    println!("Readied Custom : {}", image_name);
+            }
+        };
     }
 }
 
@@ -65,7 +53,7 @@ impl epi::App for TrackerApp {
         ctx: &egui::Context,
         frame: &epi::Frame,
         _storage: Option<&dyn epi::Storage>,
-        glcx: &Rc<epi::glow::Context>,
+        _glcx: &Rc<epi::glow::Context>,
     ) {
         if let Some(callback) = self.frame_cb.take() {
             let _blah = callback.send(frame.clone());
@@ -80,29 +68,17 @@ impl epi::App for TrackerApp {
         for (name, census_id) in master_images() {
             match self.db.exist_or_download_image_sync(&name, census_id) {
                 true => {
-                        match self.db.get_image_sync(&name) {
-                            Some(image_bytes) => {
-                                match  ImageReader::with_format(Cursor::new(image_bytes), image::ImageFormat::Png)
-                                    .decode() {
-                                        Ok(image) => {
-                                            let size = [image.width() as usize, image.height() as usize];
-                                            let image_buffer = image.to_rgba8();
-                                            let pixels = image_buffer.as_flat_samples();
-                                            match self.images.as_mut() {
-                                                Some(list) => {
-                                                    list.push(ctx.load_texture(name, ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
-                                                    //println!("Readied {}: {}", census_id, name);
-                                                },
-                                                None => {},
-                                            }
-                                        },
-                                        Err(e) => {
-
-                                        },
+                        if let Some(image_bytes) = self.db.get_image_sync(&name) {
+                            if let Ok(image) = ImageReader::with_format(Cursor::new(image_bytes), image::ImageFormat::Png) .decode() {
+                                let size = [image.width() as usize, image.height() as usize];
+                                let image_buffer = image.to_rgba8();
+                                let pixels = image_buffer.as_flat_samples();
+                                if let Some(list) = self.images.as_mut() {
+                                    list.push(ctx.load_texture(name, ColorImage::from_rgba_unmultiplied(size, pixels.as_slice())));
+                                    //println!("Readied {}: {}", census_id, name);
                                 }
-                            },
-                            None => {},
-                        }
+                            };
+                        };
                     },
                 false => println!("Unable to load image {}: {}", census_id, name),
             };
@@ -121,14 +97,6 @@ impl epi::App for TrackerApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
-
-        match self.ws_messages.try_recv() {
-            Err(mpsc::error::TryRecvError::Empty) => {},
-            Err(_) => {println!("x");},
-            Ok(json) => {
-                println!("j");
-                }
-        }
 
         {
             let session_list_ro = self.session_list.read().unwrap();
@@ -195,7 +163,7 @@ impl epi::App for TrackerApp {
         if self.in_character_ui {
             //Mutable write access required because UI code handles adding / removing characters to the list.
             let mut char_list_rw = self.char_list.write().unwrap();
-            char_list_rw.ui(&ctx, &self.db);
+            char_list_rw.ui(ctx, &self.db);
 
         }
         else
@@ -203,7 +171,7 @@ impl epi::App for TrackerApp {
         
             let session_list_ro = self.session_list.read().unwrap();
             if let Some(session) = session_list_ro.last() {
-                session.ui(&ctx);
+                session.ui(ctx);
             }
             
         }
@@ -221,7 +189,7 @@ impl TextureLookup for egui::Context {
             let mut manager_rw = manager.write();
             for (id, meta) in manager_rw.allocated() {
                 if meta.name == name {
-                    new_handle = Some(TextureHandle::new(manager_cloned, id.clone()));
+                    new_handle = Some(TextureHandle::new(manager_cloned, *id));
                     break;
                 }
             }

@@ -1,5 +1,4 @@
-#![allow(unused_variables)]
-#![allow(unused_imports)]
+
 mod common;
 mod session;
 mod ui;
@@ -14,12 +13,9 @@ mod weapons;
 use crate::common::*;
 use crate::session::*;
 use crate::db::*;
-use std::io::{self, stderr, Write, Error};
 use tokio::sync::{mpsc, oneshot};
-//use sqlite::State;
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocketStream};
-use futures_util::{future, pin_mut, StreamExt, SinkExt, stream::SplitSink, stream::SplitStream, TryStreamExt};
-use std::thread;
+use futures_util::{StreamExt, SinkExt};
 use tokio::runtime::Runtime;
 use std::sync::{Arc, RwLock};
 use sqlx::sqlite::SqlitePool;
@@ -41,7 +37,6 @@ fn main() {
 
     let session_list = Arc::new(RwLock::new(Vec::<Session>::new()));
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
-    let (report_to_main, report_from_ws) = mpsc::channel::<serde_json::Value>(64);
     let (tx_frame_to_ws, rx_frame_from_ui) = oneshot::channel::<epi::Frame>();
 
    
@@ -54,28 +49,26 @@ fn main() {
             db_url = format!("sqlite:{}?mode=rwc", db_path.to_string_lossy());
         } else {
             println!("couldn't find/make db directory, using ram instead.");
-            db_url = format!("sqlite::memory:");
+            db_url = "sqlite::memory:".to_owned();
             
         }
-    } else
-    {
+    } else {
         println!("unable to determine platform directories, using ram instead.");
-        db_url = format!("sqlite::memory:");
+        db_url = "sqlite::memory:".to_owned();
     }
 
-    let db_pool;
-    match rt.block_on(SqlitePool::connect(&db_url)) {
-        Ok(pool) => db_pool = pool,
+    let db_pool = match rt.block_on(SqlitePool::connect(&db_url)) {
+        Ok(pool) => pool,
         Err(err) => {println!("DB OPEN ERRROR: {:?}", err);
                     std::process::exit(-2);},
-    }
+    };
 
     let db = DatabaseCore::new(db_pool);
    
 
     let mut sync_db = DatabaseSync{
        dbc: db,
-       rt: rt,
+       rt,
     };
 
     sync_db.init_sync();
@@ -115,11 +108,11 @@ fn main() {
                     let _res = tx_to_websocket.blocking_send(
                         Message::Text(
                         format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
-                        &active_char.character_id).to_owned()));
+                        &active_char.character_id)));
 
                     {
                         let mut session_list_rw = session_list.write().unwrap();
-                        session_list_rw.push(Session::new_from_full(active_char, OffsetDateTime::now_utc().unix_timestamp()));
+                        session_list_rw.push(Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp()));
                     }
                 },
             }
@@ -134,51 +127,45 @@ fn main() {
     println!("setting window as {} x {} ", x_size, y_size);
     native_options.initial_window_size = Some(egui::Vec2{ x: x_size as f32, y: y_size as f32});
 
-    match  ImageReader::with_format(Cursor::new(include_bytes!("../Images/RaspberryTrackerIcon.png")), image::ImageFormat::Png)
+    if let Ok(image) = ImageReader::with_format(Cursor::new(include_bytes!("../Images/RaspberryTrackerIcon.png")), image::ImageFormat::Png)
         .decode() {
-            Ok(image) => {
-                let image_buffer = image.to_rgba8();
-                native_options.icon_data = Some(eframe::epi::IconData {
-                    rgba: image_buffer.into_raw(),
-                    width: image.width(),
-                    height: image.height(),
-                });
-            },
-            Err(e) => {},
-    }
+        let image_buffer = image.to_rgba8();
+        native_options.icon_data = Some(eframe::epi::IconData {
+            rgba: image_buffer.into_raw(),
+            width: image.width(),
+            height: image.height(),
+        });
+    };
 
     sync_db.rt.spawn(websocket_threads(rx_from_app,
                                tx_to_websocket.clone(),
-                               report_to_main,
                                character_list.clone(),
                                session_list.clone(),
                                rx_frame_from_ui,
                                sync_db.dbc.clone(),
                               ));
 
-    let app = ui::TrackerApp{
+    let app_ui = ui::TrackerApp{
         in_character_ui: true,
-        char_list: character_list.clone(),
-        session_list: session_list.clone(),
+        char_list: character_list,
+        session_list,
         db: sync_db,
         lastx: x_size as f32,
         lasty: y_size as f32,
         size_changed: false,
-        ws_messages: report_from_ws,
-        ws_out: tx_to_websocket.clone(),
+        ws_out: tx_to_websocket,
         frame_cb: Some(tx_frame_to_ws),
         session_count: 0,
         images: None,
     };
 
 
-    eframe::run_native(Box::new(app), native_options);
+    eframe::run_native(Box::new(app_ui), native_options);
 }
 
 
 async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
                            ws_out: mpsc::Sender<Message>,
-                           report_to_main: mpsc::Sender<serde_json::Value>,
                            char_list: Arc<RwLock<CharacterList>>,
                            session_list:  Arc<RwLock<Vec<Session>>>,
                            rx_ui_frame: oneshot::Receiver<epi::Frame>,
@@ -191,8 +178,8 @@ async fn websocket_threads(rx_from_app: mpsc::Receiver<Message>,
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
     let ui_frame =  rx_ui_frame.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
-    let in_task = tokio::spawn(ws_incoming(ws_read, ws_out.clone(), report_to_main.clone(), report_to_parser));
-    let parse_task = tokio::spawn(parse_messages(report_to_main, ws_messages,char_list, ws_out.clone(),session_list.clone(), ui_frame.clone(), db.clone()));
+    let in_task = tokio::spawn(ws_incoming(ws_read, report_to_parser));
+    let parse_task = tokio::spawn(parse_messages(ws_messages,char_list, ws_out.clone(),session_list.clone(), ui_frame.clone(), db.clone()));
     let ticker_task = tokio::spawn(ticker(ui_frame));
     let session_long_update_task = tokio::spawn(session_historical_update(session_list.clone()));
 
@@ -225,8 +212,6 @@ async fn ws_outgoing(mut rx_from_app: mpsc::Receiver<Message>,
 }
 
 async fn ws_incoming(ws_in: futures_util::stream::SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>,
-                ws_out: mpsc::Sender<Message>,
-                report_to_main: mpsc::Sender<serde_json::Value>,
                 report_to_parser: mpsc::Sender<serde_json::Value>,
                 ){
          let print_task =    ws_in.for_each(|message| async {
@@ -256,7 +241,6 @@ async fn ws_incoming(ws_in: futures_util::stream::SplitStream<WebSocketStream<to
 }
 
 async fn parse_messages(
-                report_to_main: mpsc::Sender<serde_json::Value>,
                 mut ws_messages: mpsc::Receiver<serde_json::Value>,
                 char_list: Arc<RwLock<CharacterList>>,
                 ws_out: mpsc::Sender<Message>,
@@ -266,14 +250,13 @@ async fn parse_messages(
         ) 
 {
     let mut parsing = true;
-    let local_tz;
     let local_tz_q = time_tz::system::get_timezone();
-    match local_tz_q {
-        Ok(local) => local_tz = local,
+    let local_tz = match local_tz_q {
+        Ok(local) => local,
         Err(e) => {println!("Error finding system timezone: {}", e);
                         std::process::exit(-2);
         },
-    }
+    };
     while parsing {
         match ws_messages.recv().await {
             Some(json) => {
@@ -287,15 +270,12 @@ async fn parse_messages(
                       is_tracked =char_list_ro.has_auto_tracked(json["payload"]["character_id"].to_string().unquote());
                     }
                     if is_tracked { 
-                        match ws_out
-                            .send(
-                                    Message::Text(
-                                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
-                                    json["payload"]["character_id"].to_owned()))).await 
+                        if let Err(e) = ws_out .send( Message::Text(
+                                format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
+                                json["payload"]["character_id"].to_owned()))).await 
                             {
-                                Err(e) => println!("dah {:?}",e),
-                                Ok(_) => {},
-                            }
+                                println!("dah {:?}",e);
+                            };
 
                         match  lookup_new_char_details(&json["payload"]["character_id"].to_string().unquote()) {
                             Err(whut) => println!("{}", whut),
@@ -308,14 +288,13 @@ async fn parse_messages(
                                     //println!("did update");
                                 }
 
-                                //  db_update_char_with_full(&bob, 
+                                db.update_char_with_full(&bob).await;
                                 
-                                //ISSUE: can't hold an sqlite db connection here, it isn't sync/send so not for use with tokio.
 
                                 {
                                     //HERE
                                     let mut session_list_rw = session_list.write().unwrap();
-                                    session_list_rw.push(Session::new_from_full(bob, json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap()));
+                                    session_list_rw.push(Session::new(bob, json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap()));
                                     ui_frame.request_repaint();
                                 }
                             },
@@ -325,34 +304,31 @@ async fn parse_messages(
                         println!("Unknown or not auto-tracked, ignoring.");
                     }
                 } else if json["payload"]["event_name"].eq("Death") || json["payload"]["event_name"].eq("VehicleDestroy") {
-                    let vehicle_destroyed;
-                    if json["payload"]["event_name"].eq("VehicleDestroy") {
+                    let vehicle_destroyed = if json["payload"]["event_name"].eq("VehicleDestroy") {
                         println!("Found a VehicleDestroy");
-                        vehicle_destroyed = true;
+                        true
                     }else {
                         println!("Found a death");
-                        vehicle_destroyed = false;
-                    }
+                        false
+                    };
                     println!("{:?}", json);
                     let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
                     let weapon_name = db.get_weapon_name(&weapon_id).await;
-                    let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                    let timestamp = json["payload"]["timestamp"].to_string().unquote().parse::<i64>().unwrap_or(0);
                     let datetime = OffsetDateTime::from_unix_timestamp(timestamp).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(local_tz);
-                    let formatted_time;
-                    //let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period] [year]-[month]-[day]",).unwrap();
                     let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period]",).unwrap();
-                    if let Ok(tstamp) = datetime.format(&formatter) {
-                        formatted_time = tstamp;
+                    let formatted_time = if let Ok(tstamp) = datetime.format(&formatter) {
+                        tstamp
                     } else {
-                        formatted_time = "?-?-? ?:?:?".to_owned();
-                    }
-                    let vehicle_num =  json["payload"]["attacker_vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {-1});
-                    let vehicle;
-                    if vehicle_num <= 0 {
-                        vehicle = None;
+                        "?-?-? ?:?:?".to_owned()
+                    };
+
+                    let vehicle_num =  json["payload"]["attacker_vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or(-1);
+                    let vehicle = if vehicle_num <= 0 {
+                        None
                     } else {
-                        vehicle = Some( Vehicle::from(vehicle_num));
-                    }
+                        Some( Vehicle::from(vehicle_num))
+                    };
 
                     let mut attacker = false;
                     let mut some_player_char: Option<FullCharacter> = None;
@@ -392,7 +368,7 @@ async fn parse_messages(
                     if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
                         event_type =  EventType::Suicide;
                         if let Some(outfit_alias) = player_char.outfit {
-                            if outfit_alias == "" {
+                            if outfit_alias.is_empty() {
                                 if let Some(outfit_name) = player_char.outfit_full {
                                     name = format!("[{}] {}", outfit_name, player_char.full_name);
                                 } else {
@@ -404,7 +380,7 @@ async fn parse_messages(
                         } else {
                             name = player_char.full_name.to_owned();
                         }
-                        class = Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0}));
+                        class = Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or(0));
                         br = player_char.br;
                         asp = player_char.asp;
                         faction = player_char.faction;
@@ -423,14 +399,14 @@ async fn parse_messages(
                                         println!("YOUR TARGET'S OWNER:");
                                     }
                                     println!("{:?}", details);
-                                    let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                                    let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or(0);
                                     faction = Faction::from(faction_num);
                                     if faction == player_char.faction {
                                         event_type = EventType::TeamKill;
                                     } else {
                                         event_type = EventType::Kill;
                                     }
-                                    class = Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0}));
+                                    class = Class::from(json["payload"]["character_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or(0));
                                     deets = Some(details["character_list"][0].clone());
                                 }
                             }
@@ -445,14 +421,14 @@ async fn parse_messages(
                                         println!("YOUR RIDE'S DESTROYER:");
                                     }
                                     println!("{:?}", details);
-                                    let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0});
+                                    let faction_num = details["character_list"][0]["faction_id"].to_string().unquote().parse::<i64>().unwrap_or(0);
                                     faction = Faction::from(faction_num);
                                     if faction == player_char.faction {
                                         event_type = EventType::TeamDeath;
                                     } else {
                                         event_type = EventType::Death;
                                     }
-                                    class = Class::from(json["payload"]["attacker_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {0}));
+                                    class = Class::from(json["payload"]["attacker_loadout_id"].to_string().unquote().parse::<i64>().unwrap_or(0));
                                     deets = Some(details["character_list"][0].clone());
                                 }
                             }
@@ -464,7 +440,7 @@ async fn parse_messages(
                             if deets["outfit"].is_object() {
                                 let outfit_alias =  deets["outfit"]["alias"].to_string().unquote();
                                 let outfit_name =  deets["outfit"]["name"].to_string().unquote();
-                                if outfit_alias == "" {
+                                if outfit_alias.is_empty() {
                                     name = format!("[{}] {}", outfit_name, player_name);
                                 } else {
                                     name = format!("[{}] {}", outfit_alias, player_name);
@@ -473,10 +449,10 @@ async fn parse_messages(
                             } else {
                                 name = player_name;
                             }
-                            br = deets["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0});
-                            asp = deets["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0});
-                            let kill_count = deets["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
-                            let death_count = deets["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or_else(|_| {1});
+                            br = deets["battle_rank"]["value"].to_string().unquote().parse::<u8>().unwrap_or(0);
+                            asp = deets["prestige_level"].to_string().unquote().parse::<u8>().unwrap_or(0);
+                            let kill_count = deets["kills"]["all_time"].to_string().unquote().parse::<u32>().unwrap_or(1);
+                            let death_count = deets["weapon_deaths"]["value_forever"].to_string().unquote().parse::<u32>().unwrap_or(1);
                             ratio = kill_count as f32/ death_count as f32;
                        } else {
                         println!("no data.");
@@ -484,7 +460,7 @@ async fn parse_messages(
                     }
 
                     if vehicle_destroyed {
-                        let materiel_num =  json["payload"]["vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or_else(|_| {-1});
+                        let materiel_num =  json["payload"]["vehicle_id"].to_string().unquote().parse::<i64>().unwrap_or(-1);
                         let material = Vehicle::from(materiel_num);
                         if material.is_true_vehicle() {
                             if materiel_num > 0 {
@@ -509,17 +485,17 @@ async fn parse_messages(
                     //Assemble it all and save.
                     let event = Event {
                         kind: event_type,
-                        faction: faction,
-                        br: br,
-                        asp: asp,
-                        class: class,
-                        name: name,
+                        faction,
+                        br,
+                        asp,
+                        class,
+                        name,
                         weapon: weapon_name,
-                        weapon_id: weapon_id,
-                        headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or_else(|_| {0}) > 0,
+                        weapon_id,
+                        headshot: json["payload"]["is_headshot"].to_string().unquote().parse::<u8>().unwrap_or(0) > 0,
                         kdr: ratio,
-                        timestamp: timestamp,
-                        vehicle: vehicle,
+                        timestamp,
+                        vehicle,
                         datetime: formatted_time,
                     };
 

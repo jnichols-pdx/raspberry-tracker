@@ -7,7 +7,6 @@ use crate::db::DatabaseSync;
 use crate::common::*;
 use egui::{Color32, ScrollArea};
 use time::OffsetDateTime;
-//use time_tz::{OffsetDateTimeExt,Tz};
 
 pub struct CharacterList {
     pub characters: Vec<Character>,
@@ -35,20 +34,15 @@ impl CharacterList {
 
     pub fn has_auto_tracked(&self, target_id: String) -> bool {
         println!("track check for >{}<", target_id);
-        if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
+        if let Some(target) = self.find_character_by_id(target_id) {
             target.auto_track
         } else{
             false
         }
     }
 
-    #[allow(dead_code)]
     pub fn find_character_by_id(&self, target_id: String) -> Option<&Character> {
-        if let Some(target) = &self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))  {
-            Some(&target)
-        } else{
-            None
-        }
+        self.characters.iter().find(|&chara| chara.character_id.eq(&target_id))
     }
 
     pub fn update_entry_from_full(&mut self, newer_char: &FullCharacter) {
@@ -79,39 +73,36 @@ impl ViewWithDB for CharacterList {
                 ui.horizontal(|ui| {
                         ui.label("Track Character: ");
                         ui.text_edit_singleline(&mut self.new_char_name);
-                        if ui.button("Track").clicked() {
-                            if self.new_char_name != "".to_owned() {
+                        if ui.button("Track").clicked() && !self.new_char_name.is_empty() {
+                            match lookup_character_id(&self.new_char_name) {
+                                Ok(None) => {println!("no results");
+                                        self.message = Some(format!("Character \"{}\" Not Found", self.new_char_name));
+                                },
+                                Err(whut) => {println!("{}", whut);
+                                        self.message = Some("Census Error".to_string());
+                                },
+                                Ok(Some(char_id)) => {
+                                    println!("character_id: {}", char_id);
+                                    match  lookup_new_char_details(&char_id) {
+                                        Err(whut) => println!("{}", whut),
+                                        Ok(details) => {
+                                            println!("RAW: {:?}", details);
+                                            let bob = Character::from_json(&details).unwrap();
 
-                                match lookup_character_id(&self.new_char_name) {
-                                    Ok(None) => {println!("no results");
-                                            self.message = Some(format!("Character \"{}\" Not Found", self.new_char_name));
-                                    },
-                                    Err(whut) => {println!("{}", whut);
-                                            self.message = Some("Census Error".to_string());
-                                    },
-                                    Ok(Some(char_id)) => {
-                                        println!("character_id: {}", char_id);
-                                        match  lookup_new_char_details(&char_id) {
-                                            Err(whut) => println!("{}", whut),
-                                            Ok(details) => {
-                                                println!("RAW: {:?}", details);
-                                                let bob = Character::from_json(&details).unwrap();
+    let _res = self.websocket_out.blocking_send(
+        Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+        bob.character_id)));
 
-        let _res = self.websocket_out.blocking_send(
-            Message::Text(format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
-            bob.character_id).to_owned()));
-
-                                                if db.save_new_char_sync(&bob) {
-                                                    self.characters.push(bob);
-                                                }
-                                            },
-                                        }
-                                        self.message = None;
+                                            if db.save_new_char_sync(&bob) {
+                                                self.characters.push(bob);
+                                            }
+                                        },
                                     }
+                                    self.message = None;
                                 }
-
-                                self.new_char_name = "".to_owned();
                             }
+
+                            self.new_char_name = "".to_owned();
                         }
                 });
 
@@ -160,7 +151,7 @@ impl ViewWithDB for CharacterList {
 
                                         {
                                             let mut session_list_rw = self.session_list.write().unwrap();
-                                            session_list_rw.push(Session::new_from_full(active_char, OffsetDateTime::now_utc().unix_timestamp()));
+                                            session_list_rw.push(Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp()));
                                         }
                                     },
                                 }
@@ -171,7 +162,7 @@ impl ViewWithDB for CharacterList {
                     }
                     if char.changed_auto_track {
 
-                        db.set_char_auto_track_sync(&char);
+                        db.set_char_auto_track_sync(char);
                         char.changed_auto_track = false;
                     }
                 }
@@ -179,7 +170,7 @@ impl ViewWithDB for CharacterList {
                 scroll_chars.show(ui, |ui| {
                         for char in &mut self.characters {
                             if char.to_remove {
-                                db.remove_char_sync(&char);
+                                db.remove_char_sync(char);
         let _res = self.websocket_out.blocking_send(
             Message::Text(format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"characters\":[\"{}\"]}}",
             char.character_id).to_owned()));

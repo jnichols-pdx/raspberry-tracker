@@ -1,11 +1,9 @@
 
-#![allow(dead_code)]
-
 use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio::sync::{mpsc};
 use tokio::runtime::Runtime;
 use sqlx::sqlite::SqlitePool;
-use sqlx::{Pool, Executor, Sqlite, Row};
+use sqlx::{Executor, Row};
 use crate::common::*;
 use crate::character::*;
 use crate::character_list::*;
@@ -30,9 +28,9 @@ impl DatabaseSync {
     pub fn save_new_char_sync(&self, char: &Character) -> bool {
         self.rt.block_on(self.dbc.save_new_char(char))
     }
-    pub fn update_char_sync(&self, char: &Character) {
+    /*pub fn update_char_sync(&self, char: &Character) {
         self.rt.block_on(self.dbc.update_char(char));
-    }
+    }*/
     pub fn update_char_with_full_sync(&self, char: &FullCharacter) {
         self.rt.block_on(self.dbc.update_char_with_full(char));
     }
@@ -58,10 +56,10 @@ impl DatabaseSync {
     pub fn set_window_specs_sync(&self, x: f64, y: f64) {
         self.rt.block_on(self.dbc.set_window_specs(x,y));
     }
-    pub fn exist_or_download_image_sync(&mut self, name: &String, census_id: u32) -> bool {
+    pub fn exist_or_download_image_sync(&mut self, name: &str, census_id: u32) -> bool {
         self.rt.block_on(self.dbc.exist_or_download_image(name, census_id))
     }
-    pub fn get_image_sync(&self, name: &String) -> Option<Vec<u8>> {
+    pub fn get_image_sync(&self, name: &str) -> Option<Vec<u8>> {
         self.rt.block_on(self.dbc.get_image(name))
     }
     pub fn init_sync(&mut self) {
@@ -73,7 +71,7 @@ impl DatabaseSync {
 impl DatabaseCore {
     pub fn new(conn: SqlitePool) -> Self{
         DatabaseCore {
-            conn: conn,
+            conn,
             weapons: BTreeMap::new(),
         }
     }
@@ -95,7 +93,7 @@ impl DatabaseCore {
                 Err(err) => {
                     result = false;
                     if let Some(db_err) = err.as_database_error() {
-                        if db_err.message() != "UNIQUE constraint failed: characters.id".to_string() {
+                        if db_err.message() != "UNIQUE constraint failed: characters.id" {
                             println!("Error saving new character in DB:");
                             println!("{:?}", db_err);
                             std::process::exit(-10);
@@ -106,9 +104,40 @@ impl DatabaseCore {
         result
     }
 
-    pub async fn update_char(&self, char: &Character) {}
+    /*pub async fn update_char(&self, char: &Character) {
+    //characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER)
+        match sqlx::query("UPDATE characters SET name = ?, lower_name = ?, outfit = ?, outfit_full = ? WHERE id IS ?;")
+        .bind(&char.full_name)
+        .bind(&char.lower_name)
+        .bind(&char.outfit)
+        .bind(&char.outfit_full)
+        .bind(&char.character_id)
+            .execute(&self.conn).await {
+                Ok(_) => {},
+                Err(err) => {
+                    println!("Error updating names for character in DB:");
+                    println!("{:?}", err);
+                    std::process::exit(-9);
+                },
+        }
+    }*/
 
-    pub async fn update_char_with_full(&self, char: &FullCharacter) {}
+    pub async fn update_char_with_full(&self, char: &FullCharacter) {
+        match sqlx::query("UPDATE characters SET name = ?, lower_name = ?, outfit = ?, outfit_full = ? WHERE id IS ?;")
+        .bind(&char.full_name)
+        .bind(&char.lower_name)
+        .bind(&char.outfit)
+        .bind(&char.outfit_full)
+        .bind(&char.character_id)
+            .execute(&self.conn).await {
+                Ok(_) => {},
+                Err(err) => {
+                    println!("Error updating names for character in DB:");
+                    println!("{:?}", err);
+                    std::process::exit(-9);
+                },
+        }
+    }
 
     pub async fn set_char_auto_track(&self, char: &Character) {
         match sqlx::query("UPDATE characters SET auto_track = ? WHERE id IS ?;")
@@ -196,7 +225,7 @@ impl DatabaseCore {
         }
     }
     
-    pub async fn get_weapon_name(&mut self, weapon_id: &String) -> String {
+    pub async fn get_weapon_name(&mut self, weapon_id: &str) -> String {
         let mut weapon_name;
         if weapon_id == "0" {
             weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
@@ -274,13 +303,11 @@ impl DatabaseCore {
 
     }
 
-    pub async fn exist_or_download_image(&mut self, name: &String, census_id: u32) -> bool {
+    pub async fn exist_or_download_image(&mut self, name: &str, census_id: u32) -> bool {
         match sqlx::query("SELECT census_id FROM images WHERE name IS ? LIMIT 1;")
             .bind(name)
             .fetch_one(&self.conn).await {
-            Ok(row) => {
-                //x_size = row.get(1);
-                //y_size = row.get(2);
+            Ok(_) => {
                 true
             },
             Err(sqlx::Error::RowNotFound) => {
@@ -320,7 +347,7 @@ impl DatabaseCore {
         }
     }
 
-    pub async fn get_image(&self, name: &String) -> Option<Vec<u8>> {
+    pub async fn get_image(&self, name: &str) -> Option<Vec<u8>> {
         match sqlx::query("SELECT img FROM images WHERE name IS ? LIMIT 1;")
             .bind(name)
             .fetch_one(&self.conn).await {

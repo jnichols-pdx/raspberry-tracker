@@ -1,20 +1,14 @@
-#![allow(unused_variables)]
-use tokio_tungstenite::tungstenite::protocol::Message;
 
-
-use tokio::sync::{mpsc};
 use crate::common::*;
 use crate::events::{*, Event};
 use crate::character::*;
 use crate::weapons::*;
-use eframe::{egui, epi};
-use egui::*;
+use eframe::egui;
 use egui_extras::{TableBuilder, Size};
 use time::OffsetDateTime;
 use time_tz::{OffsetDateTimeExt,Tz};
 use std::collections::BTreeMap;
 
-#[allow(dead_code)]
 pub struct Session {
     character: FullCharacter,
     events: EventList,
@@ -52,71 +46,19 @@ pub struct Session {
     latest_api_headshots: u64,
 }
 
-#[allow(dead_code)]
 impl Session {
-    pub fn match_player_id(&self, to_match: &String) -> bool {
+    pub fn match_player_id(&self, to_match: &str) -> bool {
         to_match.eq(&self.character.character_id)
     }
 
-    pub fn get_player_name(&self) -> String {
-        self.character.full_name.to_owned()
-    }
-
-    pub fn new(character: Character, br: u8, asp: u8, start: i64) -> Self {
+    pub fn new(character: FullCharacter, start: i64) -> Self {
         let local_tz_q = time_tz::system::get_timezone();
-        let local_tz;
-        match local_tz_q {
-            Ok(local) => local_tz = local,
+        let local_tz = match local_tz_q {
+            Ok(local) => local,
             Err(e) => {println!("Error finding system timezone: {}", e);
                             std::process::exit(-2);
             },
-        }
-        let character = FullCharacter::new(&character, br, asp);
-        Session {
-            character: character,
-            events: EventList::new(),
-            weapons_initial: BTreeMap::new(),
-            weapons: WeaponSet::new(),
-            start_time: start,
-            end_time: None,
-
-            kill_count: 0,
-            death_count: 0,
-            headshot_kills: 0,
-            headshot_deaths: 0,
-            vehicles_destroyed: 0,
-            vehicles_lost: 0,
-            vehicle_kills: 0,
-            vehicle_deaths: 0,
-
-            time_zone: local_tz,
-
-            initial_kills_total: 0,
-            initial_actual_deaths_total: 0,
-            initial_revived_deaths_total: 0,
-            initial_vehicles_destroyed: 0,
-            initial_shots_fired: 0,
-            initial_shots_hit: 0,
-            initial_headshot_kills: 0,
-
-            latest_api_kills: 0,
-            latest_api_revived_deaths: 0,
-            latest_api_shots_fired: 0,
-            latest_api_shots_hit: 0,
-            latest_api_headshots: 0,
-        }
-    }
-
-    pub fn new_from_full(character: FullCharacter, start: i64) -> Self {
-        let local_tz_q = time_tz::system::get_timezone();
-        let local_tz;
-        match local_tz_q {
-            Ok(local) => local_tz = local,
-            Err(e) => {println!("Error finding system timezone: {}", e);
-                            std::process::exit(-2);
-            },
-        }
-
+        };
 
         let mut init_kills = 0;
         let mut init_actual_deaths = 0;
@@ -249,7 +191,7 @@ impl Session {
         }
 
         Session {
-            character: character,
+            character,
             events: EventList::new(),
             weapons_initial,
             weapons:WeaponSet::new(),
@@ -287,6 +229,7 @@ impl Session {
         self.character.clone()
     }
 
+    #[allow(dead_code)]
     pub fn get_list_name(&self) -> String {
         if let Some(end_time) = self.end_time {
             format!("{} {}-{}", self.character.full_name, self.start_time, end_time )
@@ -324,11 +267,10 @@ impl Session {
                     if self.weapons.contains(&event.weapon_id) {
                        self.weapons.add_kill(&event.weapon_id, event.headshot);
                     } else {
-                        let initial;
-                        match self.weapons_initial.remove(&event.weapon_id) {
-                            Some(retrieved) => initial = retrieved,
-                            None => initial = WeaponInitial::new(),
-                        }
+                        let initial = match self.weapons_initial.remove(&event.weapon_id) {
+                            Some(retrieved) => retrieved,
+                            None => WeaponInitial::new(),
+                        };
 
                         let mut new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
                         new_stat.add_kill(event.headshot);
@@ -340,11 +282,10 @@ impl Session {
                 //Update weapon stats also on vehicle destroys, without upping kill count.
                 if event.weapon_id != "0" { //skip suicides
                     if ! self.weapons.contains(&event.weapon_id){
-                        let initial;
-                        match self.weapons_initial.remove(&event.weapon_id) {
-                            Some(retrieved) => initial = retrieved,
-                            None => initial = WeaponInitial::new(),
-                        }
+                        let initial = match self.weapons_initial.remove(&event.weapon_id) {
+                            Some(retrieved) => retrieved,
+                            None => WeaponInitial::new(),
+                        };
 
                         let new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
                         self.weapons.push(new_stat);
@@ -361,32 +302,30 @@ impl Session {
     }
 
     pub fn ui(&self, ctx: &egui::Context) {
-        self.events.ui(&ctx);
+        self.events.ui(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel is the region left after adding TopPanel's and SidePanel's
             //ui.heading(format!("{} Stats", new_char_name));
             let formatter = time::format_description::parse("[hour repr:12]:[minute]:[second] [period]",).unwrap();
             let start_time = OffsetDateTime::from_unix_timestamp(self.start_time).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(self.time_zone); //TODO: cleanup
-            let formatted_start_time;
-            if let Ok(tstamp) = start_time.format(&formatter) {
-                formatted_start_time = tstamp;
+            let formatted_start_time = if let Ok(tstamp) = start_time.format(&formatter) {
+                tstamp
             } else {
-                formatted_start_time = "?-?-? ?:?:?".to_owned();
-            }
+                "?-?-? ?:?:?".to_owned()
+            };
 
 
             ui.horizontal(|ui| {
-                ui.heading(format!("{}", self.character.full_name));
+                ui.heading(self.character.full_name.to_owned());
 
                 if let Some(end_time_i) = self.end_time {
                     let end_time= OffsetDateTime::from_unix_timestamp(end_time_i).unwrap_or_else(|_| {OffsetDateTime::now_utc()}).to_timezone(self.time_zone); //TODO: cleanup
-                    let formatted_end_time;
-                    if let Ok(tstamp) = end_time.format(&formatter) {
-                        formatted_end_time= tstamp;
+                    let formatted_end_time = if let Ok(tstamp) = end_time.format(&formatter) {
+                        tstamp
                     } else {
-                        formatted_end_time = "?-?-? ?:?:?".to_owned();
-                    }
+                        "?-?-? ?:?:?".to_owned()
+                    };
 
                     ui.label(format!("  {} - {}", formatted_start_time, formatted_end_time ));
                 } else {
@@ -592,13 +531,10 @@ impl Session {
 
 
                     for stat in weapon_stat_by_faction {
-                        match stat["stat_name"].as_str() {
-                            Some("weapon_headshots") => {
+                        if let Some("weapon_headshots") = stat["stat_name"].as_str() {
                                 vs_hs += stat["value_vs"].to_string().unquote().parse::<u64>().unwrap();
                                 nc_hs += stat["value_nc"].to_string().unquote().parse::<u64>().unwrap();
                                 tr_hs += stat["value_tr"].to_string().unquote().parse::<u64>().unwrap();
-                            },
-                            _ => {},
                         }
                     }
 

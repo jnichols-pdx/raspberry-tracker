@@ -1,23 +1,9 @@
-#![allow(unused_variables)]
-#![allow(dead_code)]
 
-
-//use eframe::{egui, epi};
-
-//use tokio_tungstenite::tungstenite::protocol::Message;
 use num_enum::FromPrimitive;
-use tokio::sync::{mpsc};
-use crate::session::*;
 use crate::db::*;
-use sqlx::sqlite::SqlitePool;
 use std::io::Read;
-//use std::sync::{Arc, RwLock};
 
-/*pub struct Action {
-    pub val: u32,
-}*/
-
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types,clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
 #[repr(i64)]
 pub enum Faction {
@@ -69,7 +55,7 @@ impl std::fmt::Display for World {
     }
 }
 
-pub fn lookup_character_id(new_char: &String) -> Result<Option<String>, ureq::Error> {
+pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error> {
     let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))
                 .call()?
                 .into_json()?;
@@ -89,7 +75,7 @@ pub fn lookup_character_id(new_char: &String) -> Result<Option<String>, ureq::Er
     }
 }
 
-pub fn lookup_new_char_details(new_id: &String) -> Result<serde_json::Value, ureq::Error> {
+pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp = ureq::get(&*format!(
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
         new_id))
@@ -99,14 +85,14 @@ pub fn lookup_new_char_details(new_id: &String) -> Result<serde_json::Value, ure
     Ok(resp)
 }
 
-pub fn lookup_full_stats(new_id: &String) -> Result<serde_json::Value, ureq::Error> {
+pub fn lookup_full_stats(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp = ureq::get(&*format!(
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/single_character_by_id?character_id={}", new_id)).call()?.into_json()?;
 
     Ok(resp)
 }
 
-pub fn lookup_weapon_name(new_id: &String) -> Result<serde_json::Value, ureq::Error> {
+pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp = ureq::get(&*format!(
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/item/?item_id={}", new_id)).call()?.into_json()?;
 
@@ -128,7 +114,7 @@ pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Er
 
 }
 
-pub fn is_online(char_id: &String) -> Result<bool, ureq::Error> {
+pub fn is_online(char_id: &str) -> Result<bool, ureq::Error> {
     let resp = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/characters_online_status/?character_id={}", char_id))
         .call()?;
     if resp.status() == 200 {
@@ -181,6 +167,7 @@ pub enum EventType {
     Unknown,
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
 #[repr(i64)]
 pub enum Vehicle {
@@ -323,8 +310,7 @@ impl std::fmt::Display for Vehicle {
 impl Vehicle {
 
     pub fn is_true_vehicle(&self) -> bool{
-       match self {
-            Vehicle::Flash  |
+       matches!(self, Vehicle::Flash  |
             Vehicle::Javelin  |
             Vehicle::Harasserr  |
             Vehicle::Sunderer  |
@@ -361,14 +347,7 @@ impl Vehicle {
             Vehicle::ReclaimedValkyrie  |
             Vehicle::ReclaimedMagrider  |
             Vehicle::ReclaimedVanguard  |
-            Vehicle::ReclaimedProwler => true,
-
-            _ => false
-
-
-
-       }
-
+            Vehicle::ReclaimedProwler )
     }
 
 }

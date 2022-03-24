@@ -65,7 +65,7 @@ impl View for Character {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     if let Some(outfit_alias) = &self.outfit {
-                        if outfit_alias == "" {
+                        if outfit_alias.is_empty() {
                             if let Some(outfit_name) = &self.outfit_full {
                                 ui.label(format!("[{}] {}", outfit_name, self.full_name));
                             } else {
@@ -91,10 +91,8 @@ impl View for Character {
                     if ui.checkbox(&mut self.auto_track, "Auto Track").clicked() {
                         self.changed_auto_track = true;
                     }
-                    if !self.auto_track {
-                        if ui.button("Start Session").clicked() {
-                            self.to_track = true;
-                        }
+                    if !self.auto_track &&  ui.button("Start Session").clicked() {
+                        self.to_track = true;
                     }
                 });
             });
@@ -149,8 +147,8 @@ impl FullCharacter {
             outfit_full: None,
             character_id: source.character_id.to_owned(),
             faction: source.faction,
-            br: br,
-            asp: asp,
+            br,
+            asp,
         };
 
         if let Some(outfit) = &source.outfit {

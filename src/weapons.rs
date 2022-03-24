@@ -1,6 +1,5 @@
 
 use egui::*;
-use egui_extras::{TableBuilder, Size};
 use std::collections::BTreeMap;
 
 
@@ -23,6 +22,11 @@ impl WeaponInitial {
     }
 }
 
+impl Default for WeaponInitial {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct WeaponStats {
     weapon_id: String,
@@ -35,7 +39,7 @@ pub struct WeaponStats {
 }
 
 impl WeaponStats {
-    pub fn new(name: &String, id: &String, initial: WeaponInitial) -> Self {
+    pub fn new(name: &str, id: &str, initial: WeaponInitial) -> Self {
       WeaponStats {
         weapon_id: id.to_owned(),
         name: name.to_owned(),
@@ -47,7 +51,7 @@ impl WeaponStats {
       }
     }
 
-    pub fn matches_id(&self, other_id: &String) -> bool {
+    pub fn matches_id(&self, other_id: &str) -> bool {
         self.weapon_id == *other_id
     }
 
@@ -223,19 +227,19 @@ impl WeaponSet {
         }
     }
     
-    pub fn update_latest_hits(&mut self, target_id: &String, hit_count: u64) {
+    pub fn update_latest_hits(&mut self, target_id: &str, hit_count: u64) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
                 weapon.update_latest_hits(hit_count);
         }
     }
 
-    pub fn update_latest_fired(&mut self, target_id: &String, fire_count: u64) {
+    pub fn update_latest_fired(&mut self, target_id: &str, fire_count: u64) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
                 weapon.update_latest_fired(fire_count);
         }
     }
 
-    pub fn contains(&self, query_id: &String) -> bool {
+    pub fn contains(&self, query_id: &str) -> bool {
         self.weapons.contains_key(query_id)
     }
 
@@ -247,7 +251,7 @@ impl WeaponSet {
         }
     }
 
-    pub fn add_kill(&mut self, target_id: &String, is_headshot: bool) {
+    pub fn add_kill(&mut self, target_id: &str, is_headshot: bool) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
             weapon.add_kill(is_headshot);
         }
@@ -262,7 +266,13 @@ impl WeaponSet {
             fired_total += weapon.shots_fired();
         }
 
-        (hits_total as f64 / fired_total as f64) * 100.0 as f32
+        (hits_total as f64 / fired_total as f64) as f32 * 100.0
+    }
+}
+
+impl Default for WeaponSet {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
