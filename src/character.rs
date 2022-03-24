@@ -53,6 +53,22 @@ impl Character {
         }
         Ok(bob)
     }
+
+    pub fn name_with_outfit(&self) -> String {
+        if let Some(outfit_alias) = &self.outfit {
+            if outfit_alias.is_empty() {
+                if let Some(outfit_name) = &self.outfit_full {
+                    format!("[{}] {}", outfit_name, self.full_name)
+                } else {
+                    self.full_name.to_owned()
+                }
+            } else {
+                format!("[{}] {}", outfit_alias, self.full_name)
+            }
+        } else {
+            self.full_name.to_owned()
+        }
+    }
 }
 
 impl View for Character {
@@ -67,19 +83,7 @@ impl View for Character {
                 };
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
-                        if let Some(outfit_alias) = &self.outfit {
-                            if outfit_alias.is_empty() {
-                                if let Some(outfit_name) = &self.outfit_full {
-                                    ui.label(format!("[{}] {}", outfit_name, self.full_name));
-                                } else {
-                                    ui.label(&self.full_name);
-                                }
-                            } else {
-                                ui.label(format!("[{}] {}", outfit_alias, self.full_name));
-                            }
-                        } else {
-                            ui.label(&self.full_name);
-                        }
+                        ui.label(self.name_with_outfit());
                         ui.label(self.server.to_string());
                     });
                     ui.horizontal(|ui| {
@@ -183,5 +187,21 @@ impl FullCharacter {
                 .unwrap(),
         );
         Ok(biff)
+    }
+
+    pub fn name_with_outfit(&self) -> String {
+        if let Some(outfit_alias) = &self.outfit {
+            if outfit_alias.is_empty() {
+                if let Some(outfit_name) = &self.outfit_full {
+                    format!("[{}] {}", outfit_name, self.full_name)
+                } else {
+                    self.full_name.to_owned()
+                }
+            } else {
+                format!("[{}] {}", outfit_alias, self.full_name)
+            }
+        } else {
+            self.full_name.to_owned()
+        }
     }
 }

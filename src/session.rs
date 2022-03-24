@@ -396,7 +396,7 @@ impl Session {
             };
 
             ui.horizontal(|ui| {
-                ui.heading(self.character.full_name.to_owned());
+                ui.heading(self.character.name_with_outfit());
 
                 if let Some(end_time_i) = self.end_time {
                     let end_time = OffsetDateTime::from_unix_timestamp(end_time_i)
