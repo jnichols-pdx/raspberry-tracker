@@ -40,6 +40,10 @@ pub struct Session {
     latest_api_shots_fired: u64,
     latest_api_shots_hit: u64,
     latest_api_headshots: u64,
+
+    latest_br: u8,
+    latest_asp: u8,
+    pre_asp_rankups: u8,
 }
 
 impl Session {
@@ -260,6 +264,9 @@ impl Session {
             }
         }
 
+        let latest_br = character.br;
+        let latest_asp = character.asp;
+
         Session {
             character,
             events: EventList::new(),
@@ -292,6 +299,10 @@ impl Session {
             latest_api_shots_fired: init_shot,
             latest_api_shots_hit: init_hit,
             latest_api_headshots: init_headshots,
+
+            latest_br,
+            latest_asp,
+            pre_asp_rankups: 0,
         }
     }
 
@@ -308,6 +319,63 @@ impl Session {
             )
         } else {
             format!("{} {}-Active", self.character.full_name, self.start_time)
+        }
+    }
+
+    fn br_with_change(&self) -> String {
+        let current_rank = if self.latest_asp > 0 {
+            format!("{}~{}", self.latest_br, self.latest_asp)
+        } else {
+            format!("{}", self.latest_br)
+        };
+
+        if self.character.br == self.latest_br && self.character.asp == self.latest_asp {
+            format!("{} (+0)", current_rank)
+        } else {
+            //Taking ASP resets your BR to 1, may only happen during BR 100-120 the first time, and
+            //then again only at BR 100~1.
+            //
+            //As the first ASP be taken in a range of levels we cannot infer from current and
+            //initial BR how many rankups have occurred in the session where the player takes their
+            //first ASP reset. Instead we must track the number of BattleRankUp events we've
+            //received prior to the ASP reset in that session using self.pre_asp_rankups. However
+            //it is possible for a character at low battlerank to rank up multiple times in a
+            //single large XP gain; such as a continent locking with xp boosts on a double XP
+            //weekend for example. As such pre_asp_rankups will STOP incrementing after the ASP
+            //reset is taken (this assumes that a BattleRankUP event is triggered upon taking ASP),
+            //and only use this value in the case of an ASP 0 to ASP transition.
+            //
+            //We can reasonably trust that the pre_asp_rankups value will be accurate in such a
+            //session as it is very unlikely [though not technically impossible] for a player to
+            //rank from BR 1 to 100 and then ASP in a single session.
+            //
+            //In all other cases we determine the change in BR directly, without relying on the
+            //potentially fallible number of BattleRankUp events received.
+
+            if self.latest_asp == 1 && self.character.asp == 0 {
+                //First ASP reset happened during this session
+                let total_rankups = self.pre_asp_rankups + (self.latest_br - 1);
+                format!("{} (+{} [~1])", current_rank, total_rankups)
+            } else if self.latest_asp > self.character.asp {
+                //2nd or later ASP reset happened during this session
+                format!(
+                    "{} (+{} [~{}])",
+                    current_rank,
+                    (self.latest_br - 1) + (100 - self.character.br),
+                    self.latest_asp - self.character.asp
+                )
+            } else {
+                //No ASP reset this session
+                format!("{} (+{})", current_rank, self.latest_br - self.character.br)
+            }
+        }
+    }
+
+    pub fn log_rankup(&mut self, new_br: u8, new_asp: u8) {
+        self.latest_br = new_br;
+        self.latest_asp = new_asp;
+        if new_asp == 0 {
+            self.pre_asp_rankups += 1;
         }
     }
 
@@ -446,6 +514,7 @@ impl Session {
                     ui.end_row();
                     ui.label(format!("Vehicles destroyed {}", self.vehicles_destroyed));
                     ui.label(format!("Vehicles lost {}", self.vehicles_lost));
+                    ui.label(format!("BR {}", self.br_with_change()));
                     ui.end_row();
                     if self.death_count > 0 {
                         ui.label(format!(

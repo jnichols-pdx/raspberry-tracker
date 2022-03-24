@@ -73,6 +73,19 @@ pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error
     }
 }
 
+pub fn lookup_character_asp(char_id: &str) -> Result<u8, ureq::Error> {
+    let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon,battle_rank,name,faction_id,head_id",
+        char_id))
+        .call()?
+        .into_json()?;
+
+    Ok(resp["character_list"][0]["prestige_level"]
+        .to_string()
+        .unquote()
+        .parse::<u8>()
+        .unwrap_or(0))
+}
+
 pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp = ureq::get(&*format!(
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
@@ -91,9 +104,12 @@ pub fn lookup_full_stats(new_id: &str) -> Result<serde_json::Value, ureq::Error>
 }
 
 pub fn subscribe_session_string(character_id: &str) -> String {
-    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
+    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\"]}}",
         character_id)
-    //format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
+}
+
+pub fn clear_subscribe_session_string() -> String {
+    "{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\"]}".to_owned()
 }
 
 pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {

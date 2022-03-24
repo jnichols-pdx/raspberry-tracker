@@ -615,14 +615,30 @@ async fn parse_messages(
                         .unquote()
                         .parse::<i64>()
                         .unwrap();
-                    let _res = ws_out.send(
-                            Message::Text("{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VehicleDestroy\"]}"
-                                .to_string())).await;
+                    let _res = ws_out
+                        .send(Message::Text(clear_subscribe_session_string()))
+                        .await;
                     let mut session_list_rw = session_list.write().unwrap();
                     if let Some(current_session) = session_list_rw.last_mut() {
                         current_session.end(timestamp);
                     }
                     ui_frame.request_repaint();
+                } else if json["payload"]["event_name"].eq("BattleRankUp") {
+                    println!("Found rankup!");
+                    if let Ok(latest_asp) =
+                        lookup_character_asp(&json["payload"]["character_id"].to_string().unquote())
+                    {
+                        let latest_br = json["payload"]["battle_rank"]
+                            .to_string()
+                            .unquote()
+                            .parse::<u8>()
+                            .unwrap_or(0);
+
+                        let mut session_list_rw = session_list.write().unwrap();
+                        if let Some(current_session) = session_list_rw.last_mut() {
+                            current_session.log_rankup(latest_br, latest_asp);
+                        }
+                    }
                 } else {
                     println!("+{}", json);
                 }
