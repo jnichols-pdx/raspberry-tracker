@@ -394,6 +394,14 @@ impl Session {
                 .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
             ui.horizontal(|ui| {
+                match ui
+                    .ctx()
+                    .texture_by_name(&self.character.faction.to_string())
+                {
+                    Some(image) => ui.image(image.id(), (28.0, 28.0)),
+                    None => ui.label(self.character.faction.to_string()),
+                };
+
                 ui.heading(self.character.name_with_outfit());
 
                 if let Some(end_time_i) = self.end_time {
