@@ -765,7 +765,7 @@ checksum = "6907e25393cdcc1f4f3f513d9aac1e840eb1cc341a0fccb01171f7d14d10b946"
 [[package]]
 name = "eframe"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "egui",
  "egui-winit",
@@ -777,7 +777,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "ahash 0.7.6",
  "epaint",
@@ -790,7 +790,7 @@ dependencies = [
 [[package]]
 name = "egui-winit"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "copypasta",
  "dark-light",
@@ -807,16 +807,15 @@ dependencies = [
 [[package]]
 name = "egui_extras"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "egui",
- "parking_lot 0.12.0",
 ]
 
 [[package]]
 name = "egui_glow"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "bytemuck",
  "egui",
@@ -833,7 +832,7 @@ dependencies = [
 [[package]]
 name = "egui_web"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "bytemuck",
  "egui",
@@ -856,7 +855,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "bytemuck",
  "serde",
@@ -864,9 +863,9 @@ dependencies = [
 
 [[package]]
 name = "enumflags2"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a25c90b056b3f84111cf183cbeddef0d3a0bbe9a674f057e1a1533c315f24def"
+checksum = "1b3ab37dc79652c9d85f1f7b6070d77d321d2467f5fe7b00d6b7a86c57b092ae"
 dependencies = [
  "enumflags2_derive",
  "serde",
@@ -874,9 +873,9 @@ dependencies = [
 
 [[package]]
 name = "enumflags2_derive"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "144ec79496cbab6f84fa125dc67be9264aef22eb8a28da8454d9c33f15108da4"
+checksum = "f58dc3c5e468259f19f2d46304a6b28f1c3d034442e14b322d2b850e36f6d5ae"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -886,7 +885,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "ab_glyph",
  "ahash 0.7.6",
@@ -894,13 +893,14 @@ dependencies = [
  "bytemuck",
  "emath",
  "nohash-hasher",
+ "parking_lot 0.12.0",
  "serde",
 ]
 
 [[package]]
 name = "epi"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#b3cab581012e37db84d8f56188683177d4a8eb56"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=dynamic-grid-colored#819991e6330f254a53bb7284043bf22dae1f5a2b"
 dependencies = [
  "directories-next",
  "egui",
@@ -1473,9 +1473,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.14"
+version = "0.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
+checksum = "6389c490849ff5bc16be905ae24bc913a9c8892e19b2341dbc175e14c341c2b8"
 dependencies = [
  "cfg-if 1.0.0",
 ]
@@ -2179,7 +2179,7 @@ dependencies = [
 
 [[package]]
 name = "raspberry-tracker"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "directories-next",
  "eframe",
@@ -2779,9 +2779,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.7"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "004cbc98f30fa233c61a38bc77e96a9106e65c88f2d3bef182ae952027e5753d"
+checksum = "c2702e08a7a860f005826c6815dcac101b19b5eb330c27fe4a5928fec1d20ddd"
 dependencies = [
  "itoa",
  "libc",
@@ -2791,9 +2791,9 @@ dependencies = [
 
 [[package]]
 name = "time-macros"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25eb0ca3468fc0acc11828786797f6ef9aa1555e4a211a60d64cc8e4d1be47d6"
+checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "time-tz"

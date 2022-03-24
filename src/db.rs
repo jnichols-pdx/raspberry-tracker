@@ -52,7 +52,7 @@ impl DatabaseSync {
             }
         }
     }
-    pub fn get_window_specs_sync(&self) -> (f64, f64) {
+    pub fn get_window_specs_sync(&self) -> (f32, f32) {
         //x_y_size {
         self.rt.block_on(self.dbc.get_window_specs())
     }
@@ -204,10 +204,10 @@ impl DatabaseCore {
         Ok(characters)
     }
 
-    pub async fn get_window_specs(&self) -> (f64, f64) {
+    pub async fn get_window_specs(&self) -> (f32, f32) {
         //x_y_size {
-        let x_size: f64;
-        let y_size: f64;
+        let x_size: f32;
+        let y_size: f32;
         {
             match self
                 .conn

@@ -33,7 +33,7 @@ fn main() {
 
     let session_list = Arc::new(RwLock::new(Vec::<Session>::new()));
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
-    let (tx_frame_to_ws, rx_frame_from_ui) = oneshot::channel::<epi::Frame>();
+    let (tx_context_to_ws, rx_context_from_ui) = oneshot::channel::<egui::Context>();
 
     //let mut dbo: Option<sqlite::Connection> = None ;
     let db_url;
@@ -123,8 +123,8 @@ fn main() {
 
     println!("setting window as {} x {} ", x_size, y_size);
     native_options.initial_window_size = Some(egui::Vec2 {
-        x: x_size as f32,
-        y: y_size as f32,
+        x: x_size,
+        y: y_size,
     });
 
     if let Ok(image) = ImageReader::with_format(
@@ -146,25 +146,26 @@ fn main() {
         tx_to_websocket.clone(),
         character_list.clone(),
         session_list.clone(),
-        rx_frame_from_ui,
+        rx_context_from_ui,
         sync_db.dbc.clone(),
     ));
 
-    let app_ui = ui::TrackerApp {
-        in_character_ui: true,
-        char_list: character_list,
-        session_list,
-        db: sync_db,
-        lastx: x_size as f32,
-        lasty: y_size as f32,
-        size_changed: false,
-        ws_out: tx_to_websocket,
-        frame_cb: Some(tx_frame_to_ws),
-        session_count: 0,
-        images: None,
-    };
-
-    eframe::run_native(Box::new(app_ui), native_options);
+    eframe::run_native(
+        "Raspberry Tracker",
+        native_options,
+        Box::new(move |cc| {
+            Box::new(ui::TrackerApp::new(
+                cc,
+                character_list,
+                session_list,
+                sync_db,
+                x_size,
+                y_size,
+                tx_to_websocket,
+                Some(tx_context_to_ws),
+            ))
+        }),
+    );
 }
 
 async fn websocket_threads(
@@ -172,7 +173,7 @@ async fn websocket_threads(
     ws_out: mpsc::Sender<Message>,
     char_list: Arc<RwLock<CharacterList>>,
     session_list: Arc<RwLock<Vec<Session>>>,
-    rx_ui_frame: oneshot::Receiver<epi::Frame>,
+    rx_ui_context: oneshot::Receiver<egui::Context>,
     db: DatabaseCore,
 ) {
     let ws_url = url::Url::parse(
@@ -183,7 +184,7 @@ async fn websocket_threads(
                                                             //println!("{:?}", ws_str);
     let (ws_write, ws_read) = ws_str.split();
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
-    let ui_frame = rx_ui_frame.await.unwrap();
+    let ui_context = rx_ui_context.await.unwrap();
     let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
     let in_task = tokio::spawn(ws_incoming(ws_read, report_to_parser));
     let parse_task = tokio::spawn(parse_messages(
@@ -191,10 +192,10 @@ async fn websocket_threads(
         char_list,
         ws_out.clone(),
         session_list.clone(),
-        ui_frame.clone(),
+        ui_context.clone(),
         db.clone(),
     ));
-    let ticker_task = tokio::spawn(ticker(ui_frame));
+    let ticker_task = tokio::spawn(ticker(ui_context));
     let session_long_update_task = tokio::spawn(session_historical_update(session_list.clone()));
 
     tokio::select! {
@@ -263,7 +264,7 @@ async fn parse_messages(
     char_list: Arc<RwLock<CharacterList>>,
     ws_out: mpsc::Sender<Message>,
     session_list: Arc<RwLock<Vec<Session>>>,
-    ui_frame: epi::Frame,
+    ui_context: egui::Context,
     mut db: DatabaseCore,
 ) {
     let mut parsing = true;
@@ -324,7 +325,7 @@ async fn parse_messages(
                                             .parse::<i64>()
                                             .unwrap(),
                                     ));
-                                    ui_frame.request_repaint();
+                                    ui_context.request_repaint();
                                 }
                             }
                         }
@@ -604,7 +605,7 @@ async fn parse_messages(
                     let mut session_list_rw = session_list.write().unwrap();
                     if let Some(current_session) = session_list_rw.last_mut() {
                         current_session.log_event(event);
-                        ui_frame.request_repaint();
+                        ui_context.request_repaint();
                     }
 
                 /////////////////////
@@ -622,7 +623,7 @@ async fn parse_messages(
                     if let Some(current_session) = session_list_rw.last_mut() {
                         current_session.end(timestamp);
                     }
-                    ui_frame.request_repaint();
+                    ui_context.request_repaint();
                 } else if json["payload"]["event_name"].eq("BattleRankUp") {
                     println!("Found rankup!");
                     if let Ok(latest_asp) =
@@ -651,10 +652,10 @@ async fn parse_messages(
     }
 }
 
-async fn ticker(ui_frame: epi::Frame) {
+async fn ticker(ui_context: egui::Context) {
     loop {
         sleep(Duration::from_millis(100)).await;
-        ui_frame.request_repaint();
+        ui_context.request_repaint();
     }
 }
 

@@ -6,13 +6,12 @@ use eframe::{egui, epi};
 use egui::*;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
-use std::rc::Rc;
+//use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use tokio::sync::{mpsc, oneshot};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 pub struct TrackerApp {
-    //pub from_main: mpsc::Receiver<Action>,
     pub in_character_ui: bool,
     pub char_list: Arc<RwLock<CharacterList>>,
     pub session_list: Arc<RwLock<Vec<Session>>>,
@@ -21,12 +20,100 @@ pub struct TrackerApp {
     pub lasty: f32,
     pub size_changed: bool,
     pub ws_out: mpsc::Sender<Message>,
-    pub frame_cb: Option<oneshot::Sender<epi::Frame>>,
     pub session_count: usize,
     pub images: Option<Vec<TextureHandle>>,
 }
 
 impl TrackerApp {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        char_list: Arc<RwLock<CharacterList>>,
+        session_list: Arc<RwLock<Vec<Session>>>,
+        db: DatabaseSync,
+        lastx: f32,
+        lasty: f32,
+        ws_out: mpsc::Sender<Message>,
+        mut context_cb: Option<oneshot::Sender<egui::Context>>,
+    ) -> Self {
+        let mut app_ui = Self {
+            in_character_ui: true,
+            char_list,
+            session_list,
+            db,
+            lastx,
+            lasty,
+            size_changed: false,
+            ws_out,
+            session_count: 0,
+            images: None,
+        };
+
+        if let Some(callback) = context_cb.take() {
+            let _blah = callback.send(cc.egui_ctx.clone());
+        }
+        cc.egui_ctx.set_visuals(egui::Visuals::dark());
+
+        app_ui.images = Some(Vec::new());
+
+        for (name, census_id) in master_images() {
+            match app_ui.db.exist_or_download_image_sync(&name, census_id) {
+                true => {
+                    if let Some(image_bytes) = app_ui.db.get_image_sync(&name) {
+                        if let Ok(image) = ImageReader::with_format(
+                            Cursor::new(image_bytes),
+                            image::ImageFormat::Png,
+                        )
+                        .decode()
+                        {
+                            let size = [image.width() as usize, image.height() as usize];
+                            let image_buffer = image.to_rgba8();
+                            let pixels = image_buffer.as_flat_samples();
+                            if let Some(list) = app_ui.images.as_mut() {
+                                list.push(cc.egui_ctx.load_texture(
+                                    name,
+                                    ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
+                                ));
+                                //println!("Readied {}: {}", census_id, name);
+                            }
+                        };
+                    };
+                }
+                false => println!("Unable to load image {}: {}", census_id, name),
+            };
+        }
+
+        app_ui.load_image_bytes("Robit", include_bytes!("../Images/NSO.png"), &cc.egui_ctx);
+        app_ui.load_image_bytes(
+            "Headshot",
+            include_bytes!("../Images/Headshot.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes(
+            "Pumpkin",
+            include_bytes!("../Images/Pumpkin.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes(
+            "ManaAVTurret",
+            include_bytes!("../Images/ManaAVTurret.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes("Flail", include_bytes!("../Images/Flail.png"), &cc.egui_ctx);
+        app_ui.load_image_bytes(
+            "Glaive",
+            include_bytes!("../Images/Glaive.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes(
+            "BastionFleetCarrier",
+            include_bytes!("../Images/BastionFleetCarrier.png"),
+            &cc.egui_ctx,
+        );
+
+        app_ui
+    }
+
     fn load_image_bytes(&mut self, image_name: &str, bytes: &[u8], ctx: &egui::Context) {
         if let Ok(image) =
             ImageReader::with_format(Cursor::new(bytes), image::ImageFormat::Png).decode()
@@ -46,69 +133,6 @@ impl TrackerApp {
 }
 
 impl epi::App for TrackerApp {
-    fn name(&self) -> &str {
-        "Raspberry Tracker"
-    }
-
-    /// Called once before UI first renders
-    fn setup(
-        &mut self,
-        ctx: &egui::Context,
-        frame: &epi::Frame,
-        _storage: Option<&dyn epi::Storage>,
-        _glcx: &Rc<epi::glow::Context>,
-    ) {
-        if let Some(callback) = self.frame_cb.take() {
-            let _blah = callback.send(frame.clone());
-        }
-        ctx.set_visuals(egui::Visuals::dark());
-
-        self.images = Some(Vec::new());
-
-        for (name, census_id) in master_images() {
-            match self.db.exist_or_download_image_sync(&name, census_id) {
-                true => {
-                    if let Some(image_bytes) = self.db.get_image_sync(&name) {
-                        if let Ok(image) = ImageReader::with_format(
-                            Cursor::new(image_bytes),
-                            image::ImageFormat::Png,
-                        )
-                        .decode()
-                        {
-                            let size = [image.width() as usize, image.height() as usize];
-                            let image_buffer = image.to_rgba8();
-                            let pixels = image_buffer.as_flat_samples();
-                            if let Some(list) = self.images.as_mut() {
-                                list.push(ctx.load_texture(
-                                    name,
-                                    ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
-                                ));
-                                //println!("Readied {}: {}", census_id, name);
-                            }
-                        };
-                    };
-                }
-                false => println!("Unable to load image {}: {}", census_id, name),
-            };
-        }
-
-        self.load_image_bytes("Robit", include_bytes!("../Images/NSO.png"), ctx);
-        self.load_image_bytes("Headshot", include_bytes!("../Images/Headshot.png"), ctx);
-        self.load_image_bytes("Pumpkin", include_bytes!("../Images/Pumpkin.png"), ctx);
-        self.load_image_bytes(
-            "ManaAVTurret",
-            include_bytes!("../Images/ManaAVTurret.png"),
-            ctx,
-        );
-        self.load_image_bytes("Flail", include_bytes!("../Images/Flail.png"), ctx);
-        self.load_image_bytes("Glaive", include_bytes!("../Images/Glaive.png"), ctx);
-        self.load_image_bytes(
-            "BastionFleetCarrier",
-            include_bytes!("../Images/BastionFleetCarrier.png"),
-            ctx,
-        );
-    }
-
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
         {
