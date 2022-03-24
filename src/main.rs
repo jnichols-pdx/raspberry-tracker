@@ -356,11 +356,9 @@ async fn parse_messages(
                         "[hour repr:12]:[minute]:[second] [period]",
                     )
                     .unwrap();
-                    let formatted_time = if let Ok(tstamp) = datetime.format(&formatter) {
-                        tstamp
-                    } else {
-                        "?-?-? ?:?:?".to_owned()
-                    };
+                    let formatted_time = datetime
+                        .format(&formatter)
+                        .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
                     let vehicle_num = json["payload"]["attacker_vehicle_id"]
                         .to_string()

@@ -389,11 +389,9 @@ impl Session {
             let start_time = OffsetDateTime::from_unix_timestamp(self.start_time)
                 .unwrap_or_else(|_| OffsetDateTime::now_utc())
                 .to_timezone(self.time_zone); //TODO: cleanup
-            let formatted_start_time = if let Ok(tstamp) = start_time.format(&formatter) {
-                tstamp
-            } else {
-                "?-?-? ?:?:?".to_owned()
-            };
+            let formatted_start_time = start_time
+                .format(&formatter)
+                .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
             ui.horizontal(|ui| {
                 ui.heading(self.character.name_with_outfit());
@@ -402,11 +400,9 @@ impl Session {
                     let end_time = OffsetDateTime::from_unix_timestamp(end_time_i)
                         .unwrap_or_else(|_| OffsetDateTime::now_utc())
                         .to_timezone(self.time_zone); //TODO: cleanup
-                    let formatted_end_time = if let Ok(tstamp) = end_time.format(&formatter) {
-                        tstamp
-                    } else {
-                        "?-?-? ?:?:?".to_owned()
-                    };
+                    let formatted_end_time = end_time
+                        .format(&formatter)
+                        .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
                     ui.label(format!(
                         "  {} - {}",
