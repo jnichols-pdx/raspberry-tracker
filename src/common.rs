@@ -90,6 +90,12 @@ pub fn lookup_full_stats(new_id: &str) -> Result<serde_json::Value, ureq::Error>
     Ok(resp)
 }
 
+pub fn subscribe_session_string(character_id: &str) -> String {
+    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
+        character_id)
+    //format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
+}
+
 pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp = ureq::get(&*format!(
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/item/?item_id={}",

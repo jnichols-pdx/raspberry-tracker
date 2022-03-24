@@ -103,11 +103,9 @@ fn main() {
                     sync_db.update_char_with_full_sync(&active_char);
 
                     char_list_rw.update_entry_from_full(&active_char);
-                    let _res = tx_to_websocket.blocking_send(
-                        Message::Text(
-                        format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
-                        &active_char.character_id)));
-
+                    let _res = tx_to_websocket.blocking_send(Message::Text(
+                        subscribe_session_string(&active_char.character_id),
+                    ));
                     {
                         let mut session_list_rw = session_list.write().unwrap();
                         session_list_rw.push(Session::new(
@@ -292,12 +290,14 @@ async fn parse_messages(
                         );
                     }
                     if is_tracked {
-                        if let Err(e) = ws_out .send( Message::Text(
-                                format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\"]}}",
-                                json["payload"]["character_id"].to_owned()))).await 
-                            {
-                                println!("dah {:?}",e);
-                            };
+                        if let Err(e) = ws_out
+                            .send(Message::Text(subscribe_session_string(
+                                &json["payload"]["character_id"].to_string(),
+                            )))
+                            .await
+                        {
+                            println!("dah {:?}", e);
+                        };
 
                         match lookup_new_char_details(
                             &json["payload"]["character_id"].to_string().unquote(),
