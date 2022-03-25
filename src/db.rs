@@ -109,24 +109,6 @@ impl DatabaseCore {
         result
     }
 
-    /*pub async fn update_char(&self, char: &Character) {
-    //characters (name TEXT, lower_name TEXT, outfit TEXT, outfit_full TEXT, id TEXT NOT NULL, auto_track INTEGER, server INTEGER, faction INTEGER)
-        match sqlx::query("UPDATE characters SET name = ?, lower_name = ?, outfit = ?, outfit_full = ? WHERE id IS ?;")
-        .bind(&char.full_name)
-        .bind(&char.lower_name)
-        .bind(&char.outfit)
-        .bind(&char.outfit_full)
-        .bind(&char.character_id)
-            .execute(&self.conn).await {
-                Ok(_) => {},
-                Err(err) => {
-                    println!("Error updating names for character in DB:");
-                    println!("{:?}", err);
-                    std::process::exit(-9);
-                },
-        }
-    }*/
-
     pub async fn update_char_with_full(&self, char: &FullCharacter) {
         match sqlx::query("UPDATE characters SET name = ?, lower_name = ?, outfit = ?, outfit_full = ? WHERE id IS ?;")
         .bind(&char.full_name)
