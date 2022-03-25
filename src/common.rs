@@ -178,17 +178,21 @@ pub trait TextureLookup {
     fn texture_by_name(&self, name: &str) -> Option<egui::TextureHandle>;
 }
 
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
 pub enum EventType {
-    Death,
-    Kill,
-    TeamKill,
-    TeamDeath,
-    Suicide,
-    DestroyVehicle,
-    LoseVehicle,
-    DestroyVehicleFF,
-    LoseVehicleFF,
-    Unknown,
+    Death = 1,
+    Kill = 2,
+    TeamKill = 3,
+    TeamDeath = 4,
+    Suicide = 5,
+    DestroyVehicle = 6,
+    LoseVehicle = 7,
+    DestroyVehicleFF = 8,
+    LoseVehicleFF = 9,
+
+    #[num_enum(default)]
+    Unknown = 0,
 }
 
 #[allow(clippy::enum_variant_names)]
