@@ -1,7 +1,9 @@
 use crate::character::*;
 use crate::character_list::*;
 use crate::common::*;
+use crate::events::Event;
 use crate::session::*;
+use crate::weapons::WeaponStats;
 use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
@@ -367,4 +369,50 @@ impl DatabaseCore {
             }
         }
     }
+
+    pub async fn reserve_session(&mut self) -> u64 {
+        /*match sqlx::query("INSERT INTO characters VALUES (?,?,?,?,?,?,?,?);")
+            .bind(&char.full_name)
+            .bind(&char.lower_name)
+            .bind(&char.outfit)
+            .bind(&char.outfit_full)
+            .bind(&char.character_id)
+            .bind(char.auto_track as i64)
+            .bind(char.server as i64)
+            .bind(char.faction as i64)
+            .execute(&self.conn)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                result = false;
+                if let Some(db_err) = err.as_database_error() {
+                    if db_err.message() != "UNIQUE constraint failed: characters.id" {
+                        println!("Error saving new character in DB:");
+                        println!("{:?}", db_err);
+                        std::process::exit(-10);
+                    }
+                }
+            }
+        }
+        result*/
+        24 as u64
+    }
+
+    pub async fn update_session(&mut self, source: &Session) {
+
+    }
+
+    pub async fn record_event(&mut self, source: &Event, ordering: u32, session: u32) {
+
+    }
+
+    pub async fn record_weaponstats(&mut self, source: &WeaponStats, ordering: u32, session: u32) {
+
+    }
+
+    pub async fn update_weaponstats(&mut self, source: &WeaponStats, session: u32) {
+
+    }
+
 }
