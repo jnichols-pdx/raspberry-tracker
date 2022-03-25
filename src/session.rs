@@ -2,8 +2,10 @@ use crate::character::*;
 use crate::common::*;
 use crate::events::{Event, *};
 use crate::weapons::*;
+use crate::DatabaseCore;
 use eframe::egui;
 use egui_extras::{Size, TableBuilder};
+use sqlx::Row;
 use std::collections::BTreeMap;
 use time::OffsetDateTime;
 use time_tz::{OffsetDateTimeExt, TimeZone, Tz};
@@ -46,6 +48,7 @@ pub struct Session {
     latest_asp: u8,
     pre_asp_rankups: u8,
 
+    db_id: Option<i64>,
     dirty: bool,
 }
 
@@ -310,6 +313,7 @@ impl Session {
             pre_asp_rankups: 0,
 
             dirty: false,
+            db_id: None,
         }
     }
 
@@ -801,6 +805,65 @@ impl Session {
             true
         } else {
             false
+        }
+    }
+
+    pub async fn save_to_db(&mut self, db: &DatabaseCore) {
+        match sqlx::query("INSERT INTO sessions VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id;")
+            .bind(&self.character.full_name)
+            .bind(&self.character.lower_name)
+            .bind(self.character.server as i64)
+            .bind(&self.character.outfit)
+            .bind(&self.character.outfit_full)
+            .bind(&self.character.character_id)
+            .bind(self.character.faction as i64)
+            .bind(self.character.br as i64)
+            .bind(self.character.asp as i64)
+
+            .bind(self.start_time as i64)
+            .bind(self.end_time)
+
+            .bind(self.kill_count as i64)
+            .bind(self.death_count as i64)
+            .bind(self.headshot_kills as i64)
+            .bind(self.headshot_deaths as i64)
+            .bind(self.vehicles_destroyed as i64)
+            .bind(self.vehicles_lost as i64)
+            .bind(self.vehicle_kills as i64)
+            .bind(self.vehicle_deaths as i64)
+            .bind(&self.time_zone.name())
+
+            .bind(self.initial_kills_total as i64)
+            .bind(self.initial_actual_deaths_total as i64)
+            .bind(self.initial_revived_deaths_total as i64)
+            .bind(self.initial_vehicles_destroyed as i64)
+            .bind(self.initial_shots_fired as i64)
+            .bind(self.initial_shots_hit as i64)
+            .bind(self.initial_headshot_kills as i64)
+
+            .bind(self.latest_api_kills as i64)
+            .bind(self.latest_api_revived_deaths as i64)
+            .bind(self.latest_api_shots_fired as i64)
+            .bind(self.latest_api_shots_hit  as i64)
+            .bind(self.latest_api_headshots as i64)
+
+            .bind(self.latest_br as i64)
+            .bind(self.latest_asp as i64)
+            .bind(self.pre_asp_rankups as i64)
+            .fetch_one(&db.conn)
+            .await
+        {
+            Ok(row) => {
+                self.db_id = Some(row.get(0));
+                println!("New session has ID: {}", self.db_id.unwrap());
+            }
+            Err(err) => {
+                if let Some(db_err) = err.as_database_error() {
+                    println!("Error saving new sessionin DB:");
+                    println!("{:?}", db_err);
+                    std::process::exit(-20);
+                }
+            }
         }
     }
 

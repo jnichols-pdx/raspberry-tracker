@@ -151,9 +151,12 @@ impl ViewWithDB for CharacterList {
                                         char.character_id =  active_char.character_id.to_owned();
                                         char.faction =  active_char.faction;
 
+                                        let mut new_session = Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp());
+                                        db.save_new_session_sync(&mut new_session);
+
                                         {
                                             let mut session_list_rw = self.session_list.write().unwrap();
-                                            session_list_rw.push(Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp()));
+                                            session_list_rw.push(new_session);
                                         }
                                     },
                                 }

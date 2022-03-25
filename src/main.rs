@@ -106,12 +106,15 @@ fn main() {
                     let _res = tx_to_websocket.blocking_send(Message::Text(
                         subscribe_session_string(&active_char.character_id),
                     ));
+
+                    let mut new_session =
+                        Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp());
+
+                    sync_db.save_new_session_sync(&mut new_session);
+
                     {
                         let mut session_list_rw = session_list.write().unwrap();
-                        session_list_rw.push(Session::new(
-                            active_char,
-                            OffsetDateTime::now_utc().unix_timestamp(),
-                        ));
+                        session_list_rw.push(new_session);
                     }
                 }
             }
@@ -350,17 +353,20 @@ async fn parse_messages(
 
                             db.update_char_with_full(&bob).await;
 
+                            let mut new_session = Session::new(
+                                bob,
+                                json["payload"]["timestamp"]
+                                    .to_string()
+                                    .unquote()
+                                    .parse::<i64>()
+                                    .unwrap(),
+                            );
+
+                            new_session.save_to_db(&db).await;
+
                             {
-                                //HERE
                                 let mut session_list_rw = session_list.write().unwrap();
-                                session_list_rw.push(Session::new(
-                                    bob,
-                                    json["payload"]["timestamp"]
-                                        .to_string()
-                                        .unquote()
-                                        .parse::<i64>()
-                                        .unwrap(),
-                                ));
+                                session_list_rw.push(new_session);
                                 ui_context.request_repaint();
                             }
                         }
