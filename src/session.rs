@@ -6,7 +6,7 @@ use eframe::egui;
 use egui_extras::{Size, TableBuilder};
 use std::collections::BTreeMap;
 use time::OffsetDateTime;
-use time_tz::{OffsetDateTimeExt, Tz};
+use time_tz::{OffsetDateTimeExt, TimeZone, Tz};
 
 pub struct Session {
     character: FullCharacter,
@@ -60,6 +60,8 @@ impl Session {
                 std::process::exit(-2);
             }
         };
+
+        println!("Session TZ is >{}<", local_tz.name());
 
         let mut init_kills = 0;
         let mut init_actual_deaths = 0;
@@ -475,7 +477,7 @@ impl Session {
                 if let Some(end_time_i) = self.end_time {
                     let end_time = OffsetDateTime::from_unix_timestamp(end_time_i)
                         .unwrap_or_else(|_| OffsetDateTime::now_utc())
-                        .to_timezone(self.time_zone); //TODO: cleanup
+                        .to_timezone(self.time_zone);
                     let formatted_end_time = end_time
                         .format(&formatter)
                         .unwrap_or_else(|_| "?-?-? ?:?:?".into());

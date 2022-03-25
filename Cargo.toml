@@ -22,7 +22,7 @@ futures-util = { version = "0.3", default-features = false, features = ["sink", 
 sqlx = { version = "0.5", features = [ "runtime-tokio-native-tls", "sqlite" ] }
 image = "0.24"
 time = { version = "0.3", features = [ "std", "formatting", "parsing", "macros", "local-offset"] }
-time-tz = { version = "0.4", features = [ "system" ] }
+time-tz = { version = "0.5", features = [ "system" ] }
 egui = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-grid-colored" }
 egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-grid-colored" }
 eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-grid-colored"}

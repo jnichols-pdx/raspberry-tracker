@@ -2797,9 +2797,9 @@ checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
 name = "time-tz"
-version = "0.4.2"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07768bfe85cfe01b250f92deab606b9dba68ce0e7ed773c5de34ba29d2219ec4"
+checksum = "3503b497df9941543c7c5d609ae4136e0be8792054ff0a1856f0f25127192e93"
 dependencies = [
  "cfg-if 1.0.0",
  "parse-zoneinfo",
@@ -2807,6 +2807,7 @@ dependencies = [
  "phf_codegen",
  "serde",
  "serde-xml-rs",
+ "thiserror",
  "time",
  "windows-sys",
 ]
