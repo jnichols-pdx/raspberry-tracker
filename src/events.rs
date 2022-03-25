@@ -2,6 +2,7 @@ use crate::common::*;
 use egui::Color32;
 use egui_extras::{Size, TableBuilder};
 
+#[derive(Clone)]
 pub struct Event {
     pub kind: EventType,
     pub faction: Faction,
@@ -188,6 +189,8 @@ impl Event {
         });
     }
 }
+
+#[derive(Clone)]
 pub struct EventList {
     events: Vec<Event>,
 }

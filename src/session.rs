@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use time::OffsetDateTime;
 use time_tz::{OffsetDateTimeExt, TimeZone, Tz};
 
+#[derive(Clone)]
 pub struct Session {
     character: FullCharacter,
     events: EventList,
@@ -44,6 +45,8 @@ pub struct Session {
     latest_br: u8,
     latest_asp: u8,
     pre_asp_rankups: u8,
+
+    dirty: bool,
 }
 
 impl Session {
@@ -305,6 +308,8 @@ impl Session {
             latest_br,
             latest_asp,
             pre_asp_rankups: 0,
+
+            dirty: false,
         }
     }
 
@@ -787,6 +792,15 @@ impl Session {
             }
         } else {
             println!("Session Not active when wanted to update latest stats from Census API. Ignoring timer trigger.");
+        }
+    }
+
+    pub fn needs_db_update(&mut self) -> bool {
+        if self.dirty {
+            self.dirty = false;
+            true
+        } else {
+            false
         }
     }
 

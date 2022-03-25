@@ -283,7 +283,22 @@ async fn parse_messages(
             Err(mpsc::error::TryRecvError::Empty) => {
                 //Nothing outstanding to process, now is a decent time to save session state to the
                 //database.
-                println!("DB UPDATE NOW");
+                {
+                    let mut session_to_update = None;
+                    {
+                        let mut session_list_rw = session_list.write().unwrap();
+                        if let Some(current_session) = session_list_rw.last_mut() {
+                            if current_session.needs_db_update() {
+                                session_to_update = Some(current_session.clone());
+                            }
+                        }
+                    }
+
+                    if let Some(session) = session_to_update {
+                        db.update_session(&session).await;
+                    }
+                }
+
                 //Wait for next message / string of messages to arrive
                 match ws_messages.recv().await {
                     Some(incoming_json) => json = incoming_json,

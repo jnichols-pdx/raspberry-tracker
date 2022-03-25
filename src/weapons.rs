@@ -26,6 +26,7 @@ impl Default for WeaponInitial {
     }
 }
 
+#[derive(Clone)]
 pub struct WeaponStats {
     weapon_id: String,
     name: String,
@@ -237,6 +238,7 @@ impl WeaponStats {
     }
 }
 
+#[derive(Clone)]
 pub struct WeaponSet {
     weapons: BTreeMap<String, WeaponStats>,
     ordering: Vec<String>,
