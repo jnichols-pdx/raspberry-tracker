@@ -232,13 +232,13 @@ impl DatabaseCore {
             weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
         } else {
             match self.weapons.get(weapon_id) {
-                Some(weapon) => weapon_name = weapon.to_owned(),
+                Some(weapon) => weapon_name = weapon.replace('\\', ""), //Remove escape characters from API
                 None => {
                     println!("Going to Census for {}", weapon_id);
                     match lookup_weapon_name(weapon_id) {
                         Err(whut) => {
                             println!("{}", whut);
-                            weapon_name = "Unknown".to_owned();
+                            weapon_name = format!("Error finding ({})", weapon_id);
                         }
                         Ok(weapon) => {
                             println!("with:");
