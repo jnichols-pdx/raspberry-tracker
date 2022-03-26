@@ -390,7 +390,7 @@ impl Session {
         }
     }
 
-    pub fn log_event(&mut self, event: Event) {
+    pub fn log_event(&mut self, event: Event) -> u32 {
         match event.kind {
             EventType::Death | EventType::TeamDeath | EventType::Suicide => {
                 self.death_count += 1;
@@ -454,6 +454,11 @@ impl Session {
             _ => {}
         };
         self.events.push(event);
+        self.events.len()
+    }
+
+    pub fn get_id(&self) -> Option<i64> {
+        self.db_id
     }
 
     pub fn ui(&self, ctx: &egui::Context) {

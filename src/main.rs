@@ -643,10 +643,19 @@ async fn parse_messages(
                     datetime: formatted_time,
                 };
 
-                let mut session_list_rw = session_list.write().unwrap();
-                if let Some(current_session) = session_list_rw.last_mut() {
-                    current_session.log_event(event);
-                    ui_context.request_repaint();
+                let mut current_session_id = None ;
+                let mut event_ordering = 0;
+                {
+                    let mut session_list_rw = session_list.write().unwrap();
+                    if let Some(current_session) = session_list_rw.last_mut() {
+                        event_ordering = current_session.log_event(event.clone());
+                        ui_context.request_repaint();
+                        current_session_id = current_session.get_id();
+                    }
+                }
+
+                if let Some(sess_id) = current_session_id {
+                    db.record_event(&event, event_ordering, sess_id).await;
                 }
 
             /////////////////////

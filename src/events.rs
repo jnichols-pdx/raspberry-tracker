@@ -204,6 +204,10 @@ impl EventList {
         self.events.push(event);
     }
 
+    pub fn len(&self) -> u32 {
+        self.events.len() as u32
+    }
+
     pub fn ui(&self, ctx: &egui::Context) {
         egui::SidePanel::right("events_panel")
             .min_width(387.0)

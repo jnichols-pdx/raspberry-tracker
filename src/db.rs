@@ -375,9 +375,40 @@ impl DatabaseCore {
 
     pub async fn update_session(&mut self, source: &Session) {}
 
-    pub async fn record_event(&mut self, source: &Event, ordering: u32, session: u32) {}
+    pub async fn record_event(&mut self, source: &Event, ordering: u32, session: i64) {
+        let mut vehicle = None;
+        if let Some(vehicle_enum) = source.vehicle {
+            vehicle = Some(vehicle_enum as i64);
+        }
+        match sqlx::query("INSERT INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);")
+            .bind(session)
+            .bind(ordering as i64)
+            .bind(source.kind as i64)
+            .bind(source.faction as i64)
+            .bind(source.br as i64)
+            .bind(source.asp as i64)
+            .bind(source.class as i64)
+            .bind(&source.name)
+            .bind(&source.weapon)
+            .bind(&source.weapon_id)
+            .bind(source.headshot)
+            .bind(source.kdr)
+            .bind(source.timestamp as i64)
+            .bind(vehicle)
+            .bind(&source.datetime) //text
+            .execute(&self.conn)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Error saving new event in DB:");
+                println!("{:?}", err);
+                std::process::exit(-21);
+            }
+        }
+    }    
 
-    pub async fn record_weaponstats(&mut self, source: &WeaponStats, ordering: u32, session: u32) {}
+    pub async fn record_weaponstats(&mut self, source: &WeaponStats, ordering: u32, session: i64) {}
 
-    pub async fn update_weaponstats(&mut self, source: &WeaponStats, session: u32) {}
+    pub async fn update_weaponstats(&mut self, source: &WeaponStats, session: i64) {}
 }
