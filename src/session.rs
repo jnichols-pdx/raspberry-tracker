@@ -408,7 +408,7 @@ impl Session {
         }
     }
 
-    pub fn log_event(&mut self, event: Event) -> u32 {
+    pub async fn log_event(&mut self, event: Event) -> u32 {
         match event.kind {
             EventType::Death | EventType::TeamDeath | EventType::Suicide => {
                 self.death_count += 1;
@@ -446,6 +446,7 @@ impl Session {
                         let mut new_stat =
                             WeaponStats::new(&event.weapon, &event.weapon_id, initial);
                         new_stat.add_kill(event.headshot);
+                        new_stat.save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc).await;
                         self.weapons.push(new_stat);
                     }
                 }
@@ -461,6 +462,7 @@ impl Session {
                         };
 
                         let new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
+                        new_stat.save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc).await;
                         self.weapons.push(new_stat);
                     }
                 }
@@ -472,6 +474,7 @@ impl Session {
             _ => {}
         };
         self.events.push(event);
+        self.dirty = true;
         self.events.len()
     }
 
@@ -703,7 +706,7 @@ impl Session {
         });
     }
 
-    pub fn update_historical_stats(&mut self) {
+    pub async fn update_historical_stats(&mut self) {
         //println!("At historical update, session end_time is {:?}",self.end_time);
         if self.end_time.is_none() {
             match lookup_full_stats(&self.character.character_id) {
@@ -790,6 +793,8 @@ impl Session {
                         }
                     }
 
+                    self.weapons.update_db_entries(&self.db.dbc, self.db_id.unwrap()).await;
+
                     for stat in weapon_stat_by_faction {
                         if let Some("weapon_headshots") = stat["stat_name"].as_str() {
                             vs_hs += stat["value_vs"]
@@ -815,6 +820,8 @@ impl Session {
                         "Updated headshots: VS {}, NC {}, TR {}, Total: {}",
                         vs_hs, nc_hs, tr_hs, self.latest_api_headshots
                     );
+
+                    self.update_db_entry().await;
                 }
             }
         } else {
@@ -888,6 +895,52 @@ impl Session {
                 }
             }
         }
+    }
+
+    pub async fn update_db_entry(&mut self) {
+        if self.dirty {
+            match sqlx::query("UPDATE sessions set end_time = ?, kill_count = ?, death_count = ?, headshot_kills = ?, headshot_deaths = ?,
+                               vehicles_destroyed = ?, vehicles_lost = ?, vehicle_kills = ?, vehicle_deaths = ?, la_kills = ?,
+                               la_revived_deaths = ?, la_fired = ?, la_shots = ?, la_headshots = ?, l_br = ?, l_asp = ?, pa_rankups = ?
+                               WHERE id IS ?;")
+                .bind(self.end_time)
+
+                .bind(self.kill_count as i64)
+                .bind(self.death_count as i64)
+                .bind(self.headshot_kills as i64)
+                .bind(self.headshot_deaths as i64)
+                .bind(self.vehicles_destroyed as i64)
+                .bind(self.vehicles_lost as i64)
+                .bind(self.vehicle_kills as i64)
+                .bind(self.vehicle_deaths as i64)
+
+                .bind(self.latest_api_kills as i64)
+                .bind(self.latest_api_revived_deaths as i64)
+                .bind(self.latest_api_shots_fired as i64)
+                .bind(self.latest_api_shots_hit  as i64)
+                .bind(self.latest_api_headshots as i64)
+
+                .bind(self.latest_br as i64)
+                .bind(self.latest_asp as i64)
+                .bind(self.pre_asp_rankups as i64)
+                .bind(self.db_id)
+                .execute(&self.db.dbc.conn)
+                .await
+            {
+                Ok(_) => {
+                }
+                Err(err) => {
+                    if let Some(db_err) = err.as_database_error() {
+                        println!("Error updating new sessionin DB:");
+                        println!("{:?}", db_err);
+                        std::process::exit(-21);
+                    }
+                }
+            }
+            self.dirty = false;
+        }
+
+        self.weapons.update_db_entries(&self.db.dbc, self.db_id.unwrap()).await;
     }
 
     pub fn end(&mut self, time: i64) {

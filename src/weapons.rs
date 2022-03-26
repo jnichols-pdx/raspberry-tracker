@@ -1,5 +1,6 @@
 use egui::*;
 use std::collections::BTreeMap;
+use crate::db::DatabaseCore;
 
 #[derive(Copy, Clone)]
 pub struct WeaponInitial {
@@ -35,6 +36,7 @@ pub struct WeaponStats {
     initial: WeaponInitial,
     latest_hits: u64,
     latest_fired: u64,
+    dirty: bool,
 }
 
 impl WeaponStats {
@@ -47,6 +49,7 @@ impl WeaponStats {
             initial,
             latest_hits: initial.hits,
             latest_fired: initial.fired,
+            dirty: true,
         }
     }
 
@@ -59,6 +62,7 @@ impl WeaponStats {
         if is_headshot {
             self.session_headshots += 1;
         }
+        self.dirty = true;
     }
 
     pub fn shots_fired(&self) -> u64 {
@@ -71,10 +75,12 @@ impl WeaponStats {
 
     pub fn update_latest_hits(&mut self, new_lifetime_hits: u64) {
         self.latest_hits = new_lifetime_hits;
+        self.dirty = true;
     }
 
     pub fn update_latest_fired(&mut self, new_lifetime_fired: u64) {
         self.latest_fired = new_lifetime_fired;
+        self.dirty = true;
     }
 
     fn session_hsr(&self) -> f32 {
@@ -236,6 +242,60 @@ impl WeaponStats {
             });
         });
     }
+
+    pub async fn save_to_db(&self, ordering: u32, session: i64, db: &DatabaseCore) {
+        match sqlx::query("INSERT INTO weaponstats VALUES (?,?,?,?,?,?,?,?,?,?,?,?);")
+            .bind(session)
+            .bind(ordering as i64)
+            .bind(&self.weapon_id)
+            .bind(&self.name)
+
+            .bind(self.session_kills as i64)
+            .bind(self.session_headshots as i64)
+            .bind(self.latest_hits as i64)
+            .bind(self.latest_fired as i64)
+
+            .bind(self.initial.fired as i64)
+            .bind(self.initial.hits as i64)
+            .bind(self.initial.kills as i64)
+            .bind(self.initial.headshots as i64)
+            .execute(&db.conn)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Error saving new weaponstats in DB:");
+                println!("{:?}", err);
+                std::process::exit(-30);
+            }
+        }
+    }
+
+    pub async fn update_db_entry(&mut self, session: i64, db: &DatabaseCore) {
+        if self.dirty {
+            match sqlx::query("UPDATE weaponstats SET kills = ?, headshots = ?, hits = ?, fired = ? WHERE session IS ? AND weapon_id IS ?;")
+                .bind(self.session_kills as i64)
+                .bind(self.session_headshots as i64)
+                .bind(self.latest_hits as i64)
+                .bind(self.latest_fired as i64)
+
+                .bind(session)
+                .bind(&self.weapon_id)
+                .execute(&db.conn)
+                .await
+            {
+                Ok(_) => {}
+                Err(err) => {
+                    println!("Error saving new weaponstats in DB:");
+                    println!("{:?}", err);
+                    std::process::exit(-30);
+                }
+            }
+        }
+        self.dirty = false;
+    }
+
+
 }
 
 #[derive(Clone)]
@@ -308,6 +368,17 @@ impl WeaponSet {
         }
 
         (hits_total as f64 / fired_total as f64) as f32 * 100.0
+    }
+
+    pub fn len(&self) -> u32 {
+        self.ordering.len() as u32
+    }
+
+    pub async fn update_db_entries(&mut self, db: &DatabaseCore, session: i64) {
+        for (_, weapon) in self.weapons.iter_mut() {
+            weapon.update_db_entry(session, db).await;
+        }
+
     }
 }
 

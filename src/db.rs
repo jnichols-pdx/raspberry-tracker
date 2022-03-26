@@ -3,7 +3,6 @@ use crate::character_list::*;
 use crate::common::*;
 use crate::events::Event;
 use crate::session::*;
-use crate::weapons::WeaponStats;
 use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
@@ -29,9 +28,6 @@ impl DatabaseSync {
     pub fn save_new_char_sync(&self, char: &Character) -> bool {
         self.rt.block_on(self.dbc.save_new_char(char))
     }
-    /*pub fn update_char_sync(&self, char: &Character) {
-        self.rt.block_on(self.dbc.update_char(char));
-    }*/
     pub fn update_char_with_full_sync(&self, char: &FullCharacter) {
         self.rt.block_on(self.dbc.update_char_with_full(char));
     }
@@ -54,9 +50,6 @@ impl DatabaseSync {
                 std::process::exit(-5);
             }
         }
-    }
-    pub fn save_new_session_sync(&self, new_session: &mut Session) {
-        self.rt.block_on(new_session.save_to_db());
     }
     pub fn get_window_specs_sync(&self) -> (f32, f32) {
         //x_y_size {
@@ -374,8 +367,6 @@ impl DatabaseCore {
         }
     }
 
-    pub async fn update_session(&mut self, source: &Session) {}
-
     pub async fn record_event(&mut self, source: &Event, ordering: u32, session: i64) {
         let mut vehicle = None;
         if let Some(vehicle_enum) = source.vehicle {
@@ -409,7 +400,4 @@ impl DatabaseCore {
         }
     }    
 
-    pub async fn record_weaponstats(&mut self, source: &WeaponStats, ordering: u32, session: i64) {}
-
-    pub async fn update_weaponstats(&mut self, source: &WeaponStats, session: i64) {}
 }

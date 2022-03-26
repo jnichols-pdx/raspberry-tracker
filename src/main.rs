@@ -289,18 +289,9 @@ async fn parse_messages(
                 //Nothing outstanding to process, now is a decent time to save session state to the
                 //database.
                 {
-                    let mut session_to_update = None;
-                    {
-                        let mut session_list_rw = session_list.write().await;
-                        if let Some(current_session) = session_list_rw.last_mut() {
-                            if current_session.needs_db_update() {
-                                session_to_update = Some(current_session.clone());
-                            }
-                        }
-                    }
-
-                    if let Some(session) = session_to_update {
-                        db.dbc.update_session(&session).await;
+                    let mut session_list_rw = session_list.write().await;
+                    if let Some(current_session) = session_list_rw.last_mut() {
+                        current_session.update_db_entry().await;
                     }
                 }
 
@@ -647,7 +638,7 @@ async fn parse_messages(
                 {
                     let mut session_list_rw = session_list.write().await;
                     if let Some(current_session) = session_list_rw.last_mut() {
-                        event_ordering = current_session.log_event(event.clone());
+                        event_ordering = current_session.log_event(event.clone()).await;
                         ui_context.request_repaint();
                         current_session_id = current_session.get_id();
                     }
@@ -708,7 +699,7 @@ async fn session_historical_update(session_list: Arc<RwLock<Vec<Session>>>) {
         sleep(Duration::from_secs(300)).await;
         let mut session_list_rw = session_list.write().await;
         if let Some(current_session) = session_list_rw.last_mut() {
-            current_session.update_historical_stats();
+            current_session.update_historical_stats().await;
         }
     }
 }
