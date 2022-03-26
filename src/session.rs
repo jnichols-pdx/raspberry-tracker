@@ -943,7 +943,9 @@ impl Session {
         self.weapons.update_db_entries(&self.db.dbc, self.db_id.unwrap()).await;
     }
 
-    pub fn end(&mut self, time: i64) {
+    pub async fn end(&mut self, time: i64) {
         self.end_time = Some(time);
+        self.dirty = true;
+        self.update_db_entry().await;
     }
 }

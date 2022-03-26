@@ -661,7 +661,7 @@ async fn parse_messages(
                     .await;
                 let mut session_list_rw = session_list.write().await;
                 if let Some(current_session) = session_list_rw.last_mut() {
-                    current_session.end(timestamp);
+                    current_session.end(timestamp).await;
                 }
                 ui_context.request_repaint();
             } else if json["payload"]["event_name"].eq("BattleRankUp") {
