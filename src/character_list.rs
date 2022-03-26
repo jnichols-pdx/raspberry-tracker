@@ -3,9 +3,9 @@ use crate::common::*;
 use crate::db::DatabaseSync;
 use crate::session::Session;
 use egui::{Color32, ScrollArea};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use time::OffsetDateTime;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 pub struct CharacterList {
@@ -151,12 +151,15 @@ impl ViewWithDB for CharacterList {
                                         char.character_id =  active_char.character_id.to_owned();
                                         char.faction =  active_char.faction;
 
-                                        let mut new_session = Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp());
-                                        db.save_new_session_sync(&mut new_session);
-
                                         {
-                                            let mut session_list_rw = self.session_list.write().unwrap();
-                                            session_list_rw.push(new_session);
+                                            let mut session_list_rw = self.session_list.blocking_write();
+                                            session_list_rw.push(
+                                                Session::new(
+                                                    active_char,
+                                                    OffsetDateTime::now_utc().unix_timestamp(),
+                                                    db.clone()
+                                                )
+                                            );
                                         }
                                     },
                                 }

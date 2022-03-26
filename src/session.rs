@@ -2,13 +2,14 @@ use crate::character::*;
 use crate::common::*;
 use crate::events::{Event, *};
 use crate::weapons::*;
-use crate::DatabaseCore;
+use crate::db::*;
 use eframe::egui;
 use egui_extras::{Size, TableBuilder};
 use sqlx::Row;
 use std::collections::BTreeMap;
 use time::OffsetDateTime;
 use time_tz::{OffsetDateTimeExt, TimeZone, Tz};
+use tokio::runtime::Handle;
 
 #[derive(Clone)]
 pub struct Session {
@@ -50,6 +51,7 @@ pub struct Session {
 
     db_id: Option<i64>,
     dirty: bool,
+    db: DatabaseSync,
 }
 
 impl Session {
@@ -57,7 +59,7 @@ impl Session {
         to_match.eq(&self.character.character_id)
     }
 
-    pub fn new(character: FullCharacter, start: i64) -> Self {
+    pub fn new(character: FullCharacter, start: i64, db: DatabaseSync) -> Self {
         let local_tz_q = time_tz::system::get_timezone();
         let local_tz = match local_tz_q {
             Ok(local) => local,
@@ -275,7 +277,9 @@ impl Session {
         let latest_br = character.br;
         let latest_asp = character.asp;
 
-        Session {
+        let rt = db.rt.clone();
+
+        let mut new_session = Session {
             character,
             events: EventList::new(),
             weapons_initial,
@@ -314,7 +318,21 @@ impl Session {
 
             dirty: false,
             db_id: None,
+            db,
+        };
+        match Handle::try_current() {
+            Err(_) => {
+                rt.block_on(new_session.save_to_db());
+            }
+            _ => {},
         }
+        new_session
+    }
+
+    pub async fn new_async(character: FullCharacter, start: i64, db: DatabaseSync) -> Self {
+        let mut new_session = Session::new(character, start, db);
+        new_session.save_to_db().await;
+        new_session
     }
 
     pub fn current_character(&self) -> FullCharacter {
@@ -813,7 +831,7 @@ impl Session {
         }
     }
 
-    pub async fn save_to_db(&mut self, db: &DatabaseCore) {
+    pub async fn save_to_db(&mut self) {
         match sqlx::query("INSERT INTO sessions VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id;")
             .bind(&self.character.full_name)
             .bind(&self.character.lower_name)
@@ -855,7 +873,7 @@ impl Session {
             .bind(self.latest_br as i64)
             .bind(self.latest_asp as i64)
             .bind(self.pre_asp_rankups as i64)
-            .fetch_one(&db.conn)
+            .fetch_one(&self.db.dbc.conn)
             .await
         {
             Ok(row) => {

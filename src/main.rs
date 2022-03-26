@@ -18,11 +18,11 @@ use futures_util::{SinkExt, StreamExt};
 use image::io::Reader as ImageReader;
 use sqlx::sqlite::SqlitePool;
 use std::io::Cursor;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use time::OffsetDateTime;
 use time_tz::OffsetDateTimeExt;
 use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, RwLock};
 use tokio::time::{sleep, Duration};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocketStream};
 
@@ -30,6 +30,7 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocket
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     let rt = Runtime::new().unwrap();
+    let rth = rt.handle();
 
     let session_list = Arc::new(RwLock::new(Vec::<Session>::new()));
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
@@ -63,7 +64,7 @@ fn main() {
 
     let db = DatabaseCore::new(db_pool);
 
-    let mut sync_db = DatabaseSync { dbc: db, rt };
+    let mut sync_db = DatabaseSync { dbc: db, rt: rth.clone() };
 
     sync_db.init_sync();
 
@@ -72,7 +73,7 @@ fn main() {
         sync_db.get_character_list_sync(tx_to_websocket.clone(), session_list.clone()),
     ));
     {
-        let mut char_list_rw = character_list.write().unwrap();
+        let mut char_list_rw = character_list.blocking_write();
         for achar in &char_list_rw.characters {
             let _res = tx_to_websocket.blocking_send(
                 Message::Text(
@@ -107,14 +108,15 @@ fn main() {
                         subscribe_session_string(&active_char.character_id),
                     ));
 
-                    let mut new_session =
-                        Session::new(active_char, OffsetDateTime::now_utc().unix_timestamp());
-
-                    sync_db.save_new_session_sync(&mut new_session);
-
                     {
-                        let mut session_list_rw = session_list.write().unwrap();
-                        session_list_rw.push(new_session);
+                        let mut session_list_rw = session_list.blocking_write();
+                        session_list_rw.push(
+                            Session::new(
+                                active_char,
+                                OffsetDateTime::now_utc().unix_timestamp(),
+                                sync_db.clone()
+                            )
+                        );
                     }
                 }
             }
@@ -150,7 +152,7 @@ fn main() {
         character_list.clone(),
         session_list.clone(),
         rx_context_from_ui,
-        sync_db.dbc.clone(),
+        sync_db.clone(),
     ));
 
     eframe::run_native(
@@ -177,7 +179,7 @@ async fn websocket_threads(
     char_list: Arc<RwLock<CharacterList>>,
     session_list: Arc<RwLock<Vec<Session>>>,
     rx_ui_context: oneshot::Receiver<egui::Context>,
-    db: DatabaseCore,
+    db: DatabaseSync,
 ) {
     let ws_url = url::Url::parse(
         "wss://push.planetside2.com/streaming?environment=ps2&service-id=s:raspberrytracker",
@@ -268,7 +270,7 @@ async fn parse_messages(
     ws_out: mpsc::Sender<Message>,
     session_list: Arc<RwLock<Vec<Session>>>,
     ui_context: egui::Context,
-    mut db: DatabaseCore,
+    mut db: DatabaseSync,
 ) {
     let mut parsing = true;
     let local_tz_q = time_tz::system::get_timezone();
@@ -289,7 +291,7 @@ async fn parse_messages(
                 {
                     let mut session_to_update = None;
                     {
-                        let mut session_list_rw = session_list.write().unwrap();
+                        let mut session_list_rw = session_list.write().await;
                         if let Some(current_session) = session_list_rw.last_mut() {
                             if current_session.needs_db_update() {
                                 session_to_update = Some(current_session.clone());
@@ -298,7 +300,7 @@ async fn parse_messages(
                     }
 
                     if let Some(session) = session_to_update {
-                        db.update_session(&session).await;
+                        db.dbc.update_session(&session).await;
                     }
                 }
 
@@ -325,7 +327,7 @@ async fn parse_messages(
                 println!("online!");
                 let is_tracked;
                 {
-                    let char_list_ro = char_list.read().unwrap();
+                    let char_list_ro = char_list.read().await;
                     is_tracked = char_list_ro
                         .has_auto_tracked(json["payload"]["character_id"].to_string().unquote());
                 }
@@ -346,27 +348,24 @@ async fn parse_messages(
                         Ok(details) => {
                             let bob = FullCharacter::from_json(&details).unwrap();
                             {
-                                let mut char_list_rw = char_list.write().unwrap();
+                                let mut char_list_rw = char_list.write().await;
                                 char_list_rw.update_entry_from_full(&bob);
                                 //println!("did update");
                             }
 
-                            db.update_char_with_full(&bob).await;
-
-                            let mut new_session = Session::new(
-                                bob,
-                                json["payload"]["timestamp"]
-                                    .to_string()
-                                    .unquote()
-                                    .parse::<i64>()
-                                    .unwrap(),
-                            );
-
-                            new_session.save_to_db(&db).await;
+                            db.dbc.update_char_with_full(&bob).await;
 
                             {
-                                let mut session_list_rw = session_list.write().unwrap();
-                                session_list_rw.push(new_session);
+                                let mut session_list_rw = session_list.write().await;
+                                session_list_rw.push(Session::new_async(
+                                    bob,
+                                    json["payload"]["timestamp"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<i64>()
+                                        .unwrap(),
+                                    db.clone(),
+                                ).await);
                                 ui_context.request_repaint();
                             }
                         }
@@ -386,7 +385,7 @@ async fn parse_messages(
                 };
                 println!("{:?}", json);
                 let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
-                let weapon_name = db.get_weapon_name(&weapon_id).await;
+                let weapon_name = db.dbc.get_weapon_name(&weapon_id).await;
                 let timestamp = json["payload"]["timestamp"]
                     .to_string()
                     .unquote()
@@ -416,7 +415,7 @@ async fn parse_messages(
                 let mut attacker = false;
                 let mut some_player_char: Option<FullCharacter> = None;
                 {
-                    let session_list_ro = session_list.read().unwrap();
+                    let session_list_ro = session_list.read().await;
                     if let Some(current_session) = session_list_ro.last() {
                         if current_session.match_player_id(
                             &json["payload"]["attacker_character_id"]
@@ -646,7 +645,7 @@ async fn parse_messages(
                 let mut current_session_id = None ;
                 let mut event_ordering = 0;
                 {
-                    let mut session_list_rw = session_list.write().unwrap();
+                    let mut session_list_rw = session_list.write().await;
                     if let Some(current_session) = session_list_rw.last_mut() {
                         event_ordering = current_session.log_event(event.clone());
                         ui_context.request_repaint();
@@ -655,7 +654,7 @@ async fn parse_messages(
                 }
 
                 if let Some(sess_id) = current_session_id {
-                    db.record_event(&event, event_ordering, sess_id).await;
+                    db.dbc.record_event(&event, event_ordering, sess_id).await;
                 }
 
             /////////////////////
@@ -669,7 +668,7 @@ async fn parse_messages(
                 let _res = ws_out
                     .send(Message::Text(clear_subscribe_session_string()))
                     .await;
-                let mut session_list_rw = session_list.write().unwrap();
+                let mut session_list_rw = session_list.write().await;
                 if let Some(current_session) = session_list_rw.last_mut() {
                     current_session.end(timestamp);
                 }
@@ -685,7 +684,7 @@ async fn parse_messages(
                         .parse::<u8>()
                         .unwrap_or(0);
 
-                    let mut session_list_rw = session_list.write().unwrap();
+                    let mut session_list_rw = session_list.write().await;
                     if let Some(current_session) = session_list_rw.last_mut() {
                         current_session.log_rankup(latest_br, latest_asp);
                     }
@@ -707,7 +706,7 @@ async fn ticker(ui_context: egui::Context) {
 async fn session_historical_update(session_list: Arc<RwLock<Vec<Session>>>) {
     loop {
         sleep(Duration::from_secs(300)).await;
-        let mut session_list_rw = session_list.write().unwrap();
+        let mut session_list_rw = session_list.write().await;
         if let Some(current_session) = session_list_rw.last_mut() {
             current_session.update_historical_stats();
         }

@@ -8,9 +8,9 @@ use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
 use std::collections::BTreeMap;
-use std::sync::{Arc, RwLock};
-use tokio::runtime::Runtime;
-use tokio::sync::mpsc;
+use std::sync::Arc;
+use tokio::runtime::Handle;
+use tokio::sync::{mpsc,RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 #[derive(Clone)]
@@ -19,9 +19,10 @@ pub struct DatabaseCore {
     weapons: BTreeMap<String, String>,
 }
 
+#[derive(Clone)]
 pub struct DatabaseSync {
     pub dbc: DatabaseCore,
-    pub rt: Runtime,
+    pub rt: Handle,
 }
 
 impl DatabaseSync {
@@ -55,7 +56,7 @@ impl DatabaseSync {
         }
     }
     pub fn save_new_session_sync(&self, new_session: &mut Session) {
-        self.rt.block_on(new_session.save_to_db(&self.dbc));
+        self.rt.block_on(new_session.save_to_db());
     }
     pub fn get_window_specs_sync(&self) -> (f32, f32) {
         //x_y_size {

@@ -7,8 +7,8 @@ use egui::*;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
 //use std::rc::Rc;
-use std::sync::{Arc, RwLock};
-use tokio::sync::{mpsc, oneshot};
+use std::sync::Arc;
+use tokio::sync::{mpsc, oneshot, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 pub struct TrackerApp {
@@ -136,7 +136,7 @@ impl epi::App for TrackerApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
         {
-            let session_list_ro = self.session_list.read().unwrap();
+            let session_list_ro = self.session_list.blocking_read();
             if self.session_count < session_list_ro.len() {
                 self.in_character_ui = false;
                 self.session_count = session_list_ro.len();
@@ -187,7 +187,7 @@ impl epi::App for TrackerApp {
             ui.heading("Sessions");
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 if ui.button("characters").clicked() {
-                    let mut char_list_rw = self.char_list.write().unwrap();
+                    let mut char_list_rw = self.char_list.blocking_write();
                     char_list_rw.message = None;
                     self.in_character_ui = !self.in_character_ui;
                 }
@@ -196,10 +196,10 @@ impl epi::App for TrackerApp {
 
         if self.in_character_ui {
             //Mutable write access required because UI code handles adding / removing characters to the list.
-            let mut char_list_rw = self.char_list.write().unwrap();
+            let mut char_list_rw = self.char_list.blocking_write();
             char_list_rw.ui(ctx, &self.db);
         } else {
-            let session_list_ro = self.session_list.read().unwrap();
+            let session_list_ro = self.session_list.blocking_read();
             if let Some(session) = session_list_ro.last() {
                 session.ui(ctx);
             }
@@ -213,7 +213,7 @@ impl TextureLookup for egui::Context {
         let manager = self.tex_manager();
         let manager_cloned = manager.clone();
         {
-            let mut manager_rw = manager.write();
+            let mut manager_rw = manager.write(); //uses egui::RwLock
             for (id, meta) in manager_rw.allocated() {
                 if meta.name == name {
                     new_handle = Some(TextureHandle::new(manager_cloned, *id));
