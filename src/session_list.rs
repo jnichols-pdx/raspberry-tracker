@@ -63,33 +63,45 @@ impl SessionList {
     pub fn current_mut(&mut self) -> Option<&mut Session> {
         self.sessions.last_mut()
     }
-    
-    pub fn ui(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) {
 
-            ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
-        let text_style = TextStyle::Body;
-        let row_height = ui.text_style_height(&text_style);
-        ScrollArea::vertical().show_rows( //is an stick_to_bottom, but no stick_to_top ...
-                    ui,
-                    row_height,
-                    self.sessions.len(),
-                    |ui, row_range| {
-                        let rev = self.sessions.iter().rev();
-                        let length = row_range.end - row_range.start;
-                        let mut shown = 0;
-                        for session in  rev.skip(row_range.start) {
-                            ui.label(format!("{} {}", session.current_character().name_with_outfit(), session.duration_string()));
-                            shown += 1;
-                            if shown > length {
-                                break;
-                            }
-                        }
+    pub fn ui(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) -> bool{
+        let selected_before = self.selected;
+        ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
+            let text_style = TextStyle::Body;
+            let row_height = ui.text_style_height(&text_style);
+            ScrollArea::vertical().show_rows(
+                ui,
+                row_height,
+                self.sessions.len(),
+                |ui, row_range|
+            {
+                let rev = self.sessions.iter().rev();
+                let visible_length = row_range.end - row_range.start;
+                let mut shown = 0;
+                let count_sessions = self.sessions.len();
+                let selected_index = self.selected.unwrap_or(usize::MAX);
+                for session in rev.skip(row_range.start) {
+                    let session_index = count_sessions - row_range.start - shown - 1;
+                    let this_text = if session_index == selected_index {
+                       format!("{} {}▶", session.current_character().name_with_outfit(), session.duration_string())
+                    } else {
+                       format!("{} {}", session.current_character().name_with_outfit(), session.duration_string())
+                    };
 
-
+                    if ui.add(Label::new(this_text)
+                        .sense(Sense::click()))
+                        .clicked()
+                    {
+                        self.selected = Some(session_index);
                     }
-        );   
+                    shown += 1;
+                    if shown > visible_length {
+                        break;
+                    }
+                }
             });
-        
+        });
+        selected_before != self.selected
     }
 }
 

@@ -190,6 +190,7 @@ impl epi::App for TrackerApp {
 
         egui::SidePanel::left("picker_panel").show(ctx, |ui| {
             ui.heading("Sessions");
+            ui.separator();
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
                 if ui.button("characters").clicked() {
                     let mut char_list_rw = self.char_list.blocking_write();
@@ -197,7 +198,9 @@ impl epi::App for TrackerApp {
                     self.in_character_ui = !self.in_character_ui;
                 }
                 let mut session_list_rw = self.session_list.blocking_write();
-                session_list_rw.ui(ctx, ui);
+                if session_list_rw.ui(ctx, ui) { //returns true when the user clicks on a session in the list
+                    self.in_character_ui = false;
+                }
             });
         });
 
