@@ -540,6 +540,10 @@ impl Session {
         self.db_id
     }
 
+    pub fn is_active(&self) -> bool {
+        self.end_time.is_none()
+    }
+
     pub fn ui(&self, ctx: &egui::Context) {
         self.events.ui(ctx);
 
