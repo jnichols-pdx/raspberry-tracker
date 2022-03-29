@@ -208,6 +208,14 @@ impl EventList {
         self.events.len() as u32
     }
 
+    pub fn last_event_time(&self) -> Option<i64> {
+        if self.events.is_empty() {
+            None
+        } else {
+            Some(self.events.last().unwrap().timestamp)
+        }
+    }
+
     pub fn ui(&self, ctx: &egui::Context) {
         egui::SidePanel::right("events_panel")
             .min_width(387.0)
