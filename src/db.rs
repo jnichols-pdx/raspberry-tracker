@@ -16,7 +16,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 #[derive(Clone)]
 pub struct DatabaseCore {
     pub conn: SqlitePool,
-    weapons: BTreeMap<String, String>,
+    weapons: Arc<RwLock<BTreeMap<String, String>>>,
 }
 
 #[derive(Clone)]
@@ -78,7 +78,7 @@ impl DatabaseCore {
     pub fn new(conn: SqlitePool) -> Self {
         DatabaseCore {
             conn,
-            weapons: BTreeMap::new(),
+            weapons: Arc::new(RwLock::new(BTreeMap::new())),
         }
     }
 
@@ -234,7 +234,8 @@ impl DatabaseCore {
         if weapon_id == "0" {
             weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
         } else {
-            match self.weapons.get(weapon_id) {
+            let mut weapons_rw = self.weapons.write().await;
+            match weapons_rw.get(weapon_id) {
                 Some(weapon) => weapon_name = weapon.replace('\\', ""), //Remove escape characters from API
                 None => {
                     println!("Going to Census for {}", weapon_id);
@@ -255,7 +256,7 @@ impl DatabaseCore {
                                 // Known ids that trigger this: 6011526, 6011563, 6011564.
                                 weapon_name = format!("Missing ({})", weapon_id);
                             } else {
-                                self.weapons
+                                weapons_rw
                                     .insert(weapon_id.to_owned(), weapon_name.to_owned());
                                 match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
                                     .bind(weapon_id)
@@ -304,13 +305,14 @@ impl DatabaseCore {
         }
 
         let mut cursor = self.conn.fetch("SELECT * FROM weapons;");
+        let mut weapons_rw = self.weapons.write().await;
         while let Some(row) = cursor.try_next().await.unwrap() {
             println!(
                 "Loading weapon: >{}< - >{}<",
                 row.get::<String, usize>(0),
                 row.get::<String, usize>(1)
             );
-            self.weapons.insert(row.get(0), row.get(1));
+            weapons_rw.insert(row.get(0), row.get(1));
         }
     }
 
