@@ -4,6 +4,7 @@ use crate::common::*;
 use crate::events::*;
 use crate::session::*;
 use crate::weapons::*;
+use crate::session_list::*;
 use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
@@ -41,7 +42,7 @@ impl DatabaseSync {
     pub fn get_character_list_sync(
         &self,
         ws_out: mpsc::Sender<Message>,
-        sl: Arc<RwLock<Vec<Session>>>,
+        sl: Arc<RwLock<SessionList>>,
     ) -> CharacterList {
         match self.rt.block_on(self.dbc.get_character_list(ws_out, sl)) {
             Ok(c) => c,
@@ -66,7 +67,7 @@ impl DatabaseSync {
     pub fn get_image_sync(&self, name: &str) -> Option<Vec<u8>> {
         self.rt.block_on(self.dbc.get_image(name))
     }
-    pub fn get_sessions_sync(&self) -> Vec<Session> {
+    pub fn get_sessions_sync(&self) -> SessionList {
         self.rt.block_on(self.dbc.get_sessions(self.rt.clone())).unwrap()
     }
     pub fn init_sync(&mut self) {
@@ -163,7 +164,7 @@ impl DatabaseCore {
     pub async fn get_character_list(
         &self,
         ws_out: mpsc::Sender<Message>,
-        sl: Arc<RwLock<Vec<Session>>>,
+        sl: Arc<RwLock<SessionList>>,
     ) -> Result<CharacterList, sqlx::Error> {
         let mut characters = CharacterList::new(ws_out, sl);
 
@@ -471,7 +472,7 @@ impl DatabaseCore {
         Ok(weapon_set)
     }
 
-    pub async fn get_sessions(&self, rt: Handle) -> Result::<Vec<Session>, sqlx::Error> {
+    pub async fn get_sessions(&self, rt: Handle) -> Result::<SessionList, sqlx::Error> {
         let new_sync_db = DatabaseSync {
             dbc: self.clone(),
             rt,
@@ -482,6 +483,6 @@ impl DatabaseCore {
             let session = Session::from_db_row(row, new_sync_db.clone()).await;
             sessions.push(session);
         }
-        Ok(sessions)
+        Ok(SessionList::new_from_vec(sessions))
     }
 }

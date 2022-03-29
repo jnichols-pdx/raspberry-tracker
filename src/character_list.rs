@@ -2,6 +2,7 @@ use crate::character::*;
 use crate::common::*;
 use crate::db::DatabaseSync;
 use crate::session::Session;
+use crate::session_list::SessionList;
 use egui::{Color32, ScrollArea};
 use std::sync::Arc;
 use time::OffsetDateTime;
@@ -13,11 +14,11 @@ pub struct CharacterList {
     pub new_char_name: String,
     pub message: Option<String>,
     pub websocket_out: mpsc::Sender<Message>,
-    pub session_list: Arc<RwLock<Vec<Session>>>,
+    pub session_list: Arc<RwLock<SessionList>>,
 }
 
 impl CharacterList {
-    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<Vec<Session>>>) -> Self {
+    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<SessionList>>) -> Self {
         CharacterList {
             characters: Vec::new(),
             new_char_name: "".to_owned(),

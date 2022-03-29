@@ -1,12 +1,11 @@
 use crate::character_list::*;
 use crate::common::*;
 use crate::db::*;
-use crate::session::*;
+use crate::session_list::*;
 use eframe::{egui, epi};
 use egui::*;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
-//use std::rc::Rc;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
@@ -14,7 +13,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 pub struct TrackerApp {
     pub in_character_ui: bool,
     pub char_list: Arc<RwLock<CharacterList>>,
-    pub session_list: Arc<RwLock<Vec<Session>>>,
+    pub session_list: Arc<RwLock<SessionList>>,
     pub db: DatabaseSync,
     pub lastx: f32,
     pub lasty: f32,
@@ -29,13 +28,19 @@ impl TrackerApp {
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         char_list: Arc<RwLock<CharacterList>>,
-        session_list: Arc<RwLock<Vec<Session>>>,
+        session_list: Arc<RwLock<SessionList>>,
         db: DatabaseSync,
         lastx: f32,
         lasty: f32,
         ws_out: mpsc::Sender<Message>,
         mut context_cb: Option<oneshot::Sender<egui::Context>>,
     ) -> Self {
+        let initial_count;
+        {
+            let session_list_rw = session_list.blocking_read();
+            initial_count = session_list_rw.len();
+        }
+
         let mut app_ui = Self {
             in_character_ui: true,
             char_list,
@@ -45,7 +50,7 @@ impl TrackerApp {
             lasty,
             size_changed: false,
             ws_out,
-            session_count: 0,
+            session_count: initial_count,
             images: None,
         };
 
@@ -191,6 +196,8 @@ impl epi::App for TrackerApp {
                     char_list_rw.message = None;
                     self.in_character_ui = !self.in_character_ui;
                 }
+                let mut session_list_rw = self.session_list.blocking_write();
+                session_list_rw.ui(ctx, ui);
             });
         });
 
@@ -200,7 +207,7 @@ impl epi::App for TrackerApp {
             char_list_rw.ui(ctx, &self.db);
         } else {
             let session_list_ro = self.session_list.blocking_read();
-            if let Some(session) = session_list_ro.last() {
+            if let Some(session) = session_list_ro.selected() {
                 session.ui(ctx);
             }
         }

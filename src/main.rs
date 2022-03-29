@@ -4,6 +4,7 @@ mod common;
 mod db;
 mod events;
 mod session;
+mod session_list;
 mod ui;
 mod weapons;
 
@@ -14,6 +15,7 @@ use crate::common::*;
 use crate::db::*;
 use crate::events::*;
 use crate::session::*;
+use crate::session_list::*;
 use futures_util::{SinkExt, StreamExt};
 use image::io::Reader as ImageReader;
 use sqlx::sqlite::SqlitePool;
@@ -32,11 +34,9 @@ fn main() {
     let rt = Runtime::new().unwrap();
     let rth = rt.handle();
 
-    let session_list = Arc::new(RwLock::new(Vec::<Session>::new()));
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
     let (tx_context_to_ws, rx_context_from_ui) = oneshot::channel::<egui::Context>();
 
-    //let mut dbo: Option<sqlite::Connection> = None ;
     let db_url;
     if let Some(dir_gen) =
         directories_next::ProjectDirs::from("com", "JTNBrickWorks", "Raspberry Tracker")
@@ -67,6 +67,8 @@ fn main() {
     let mut sync_db = DatabaseSync { dbc: db, rt: rth.clone() };
 
     sync_db.init_sync();
+
+    let session_list = Arc::new(RwLock::new(sync_db.get_sessions_sync()));
 
     let mut char_to_track = None;
     let character_list = Arc::new(RwLock::new(
@@ -177,7 +179,7 @@ async fn websocket_threads(
     rx_from_app: mpsc::Receiver<Message>,
     ws_out: mpsc::Sender<Message>,
     char_list: Arc<RwLock<CharacterList>>,
-    session_list: Arc<RwLock<Vec<Session>>>,
+    session_list: Arc<RwLock<SessionList>>,
     rx_ui_context: oneshot::Receiver<egui::Context>,
     db: DatabaseSync,
 ) {
@@ -268,7 +270,7 @@ async fn parse_messages(
     mut ws_messages: mpsc::Receiver<serde_json::Value>,
     char_list: Arc<RwLock<CharacterList>>,
     ws_out: mpsc::Sender<Message>,
-    session_list: Arc<RwLock<Vec<Session>>>,
+    session_list: Arc<RwLock<SessionList>>,
     ui_context: egui::Context,
     mut db: DatabaseSync,
 ) {
@@ -290,7 +292,7 @@ async fn parse_messages(
                 //database.
                 {
                     let mut session_list_rw = session_list.write().await;
-                    if let Some(current_session) = session_list_rw.last_mut() {
+                    if let Some(current_session) = session_list_rw.active_session_mut() {
                         current_session.update_db_entry().await;
                     }
                 }
@@ -407,7 +409,7 @@ async fn parse_messages(
                 let mut some_player_char: Option<FullCharacter> = None;
                 {
                     let session_list_ro = session_list.read().await;
-                    if let Some(current_session) = session_list_ro.last() {
+                    if let Some(current_session) = session_list_ro.active_session() {
                         if current_session.match_player_id(
                             &json["payload"]["attacker_character_id"]
                                 .to_string()
@@ -637,7 +639,7 @@ async fn parse_messages(
                 let mut event_ordering = 0;
                 {
                     let mut session_list_rw = session_list.write().await;
-                    if let Some(current_session) = session_list_rw.last_mut() {
+                    if let Some(current_session) = session_list_rw.active_session_mut() {
                         event_ordering = current_session.log_event(event.clone()).await;
                         ui_context.request_repaint();
                         current_session_id = current_session.get_id();
@@ -660,7 +662,7 @@ async fn parse_messages(
                     .send(Message::Text(clear_subscribe_session_string()))
                     .await;
                 let mut session_list_rw = session_list.write().await;
-                if let Some(current_session) = session_list_rw.last_mut() {
+                if let Some(current_session) = session_list_rw.active_session_mut() {
                     current_session.end(timestamp).await;
                 }
                 ui_context.request_repaint();
@@ -676,7 +678,7 @@ async fn parse_messages(
                         .unwrap_or(0);
 
                     let mut session_list_rw = session_list.write().await;
-                    if let Some(current_session) = session_list_rw.last_mut() {
+                    if let Some(current_session) = session_list_rw.active_session_mut() {
                         current_session.log_rankup(latest_br, latest_asp);
                     }
                 }
@@ -694,11 +696,11 @@ async fn ticker(ui_context: egui::Context) {
     }
 }
 
-async fn session_historical_update(session_list: Arc<RwLock<Vec<Session>>>) {
+async fn session_historical_update(session_list: Arc<RwLock<SessionList>>) {
     loop {
         sleep(Duration::from_secs(300)).await;
         let mut session_list_rw = session_list.write().await;
-        if let Some(current_session) = session_list_rw.last_mut() {
+        if let Some(current_session) = session_list_rw.active_session_mut() {
             current_session.update_historical_stats().await;
         }
     }
