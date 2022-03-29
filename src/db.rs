@@ -66,6 +66,9 @@ impl DatabaseSync {
     pub fn get_image_sync(&self, name: &str) -> Option<Vec<u8>> {
         self.rt.block_on(self.dbc.get_image(name))
     }
+    pub fn get_sessions_sync(&self) -> Vec<Session> {
+        self.rt.block_on(self.dbc.get_sessions(self.rt.clone())).unwrap()
+    }
     pub fn init_sync(&mut self) {
         self.rt.block_on(self.dbc.init());
     }
@@ -464,5 +467,19 @@ impl DatabaseCore {
             weapon_set.push(new_weaponstat);
         }
         Ok(weapon_set)
+    }
+
+    pub async fn get_sessions(&self, rt: Handle) -> Result::<Vec<Session>, sqlx::Error> {
+        let new_sync_db = DatabaseSync {
+            dbc: self.clone(),
+            rt,
+        };
+        let mut sessions = Vec::<Session>::new();
+        let mut cursor = self.conn.fetch("SELECT * FROM sessions ORDER BY id ASC;");
+        while let Some(row) = cursor.try_next().await? {
+            let session = Session::from_db_row(row, new_sync_db.clone()).await;
+            sessions.push(session);
+        }
+        Ok(sessions)
     }
 }

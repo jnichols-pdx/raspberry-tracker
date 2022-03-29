@@ -329,6 +329,65 @@ impl Session {
         new_session
     }
 
+    pub async fn from_db_row(row: sqlx::sqlite::SqliteRow, db: DatabaseSync) -> Self {
+        let db_id = row.get(0);
+        let character = FullCharacter {
+            full_name: row.get(1),
+            lower_name: row.get(2),
+            server: row.get::<i64, usize>(3).into(),
+            outfit: row.get::<Option<String>, usize>(4),
+            outfit_full: row.get::<Option<String>, usize>(5),
+            character_id: row.get(6),
+            faction: row.get::<i64, usize>(7).into(),
+            br: row.get::<u8, usize>(8),
+            asp: row.get::<u8, usize>(9),
+        };
+
+        let events = db.dbc.get_events_for_session(db_id).await.unwrap();
+        let weapons = db.dbc.get_weaponstats_for_session(db_id).await.unwrap();
+        Session {
+            character,
+            events,
+            weapons_initial: BTreeMap::new(),
+            weapons,
+
+            start_time: row.get::<i64, usize>(10),
+            end_time: row.get::<Option<i64>, usize>(11),
+
+            kill_count: row.get::<u32, usize>(12),
+            death_count: row.get::<u32, usize>(13),
+            headshot_kills: row.get::<u32, usize>(14),
+            headshot_deaths: row.get::<u32, usize>(15),
+            vehicles_destroyed: row.get::<u32, usize>(16),
+            vehicles_lost: row.get::<u32, usize>(17),
+            vehicle_kills: row.get::<u32, usize>(18),
+            vehicle_deaths: row.get::<u32, usize>(19),
+            time_zone: time_tz::timezones::get_by_name(row.get(20)).unwrap(),
+
+            initial_kills_total: row.get::<i64, usize>(21) as u64,
+            initial_actual_deaths_total: row.get::<i64, usize>(22) as u64,
+            initial_revived_deaths_total: row.get::<i64, usize>(23) as u64,
+            initial_vehicles_destroyed: row.get::<i64, usize>(24) as u64,
+            initial_shots_fired: row.get::<i64, usize>(25) as u64,
+            initial_shots_hit: row.get::<i64, usize>(26) as u64,
+            initial_headshot_kills: row.get::<i64, usize>(27) as u64,
+
+            latest_api_kills: row.get::<i64, usize>(28) as u64,
+            latest_api_revived_deaths: row.get::<i64, usize>(29) as u64,
+            latest_api_shots_fired: row.get::<i64, usize>(30) as u64,
+            latest_api_shots_hit: row.get::<i64, usize>(31) as u64,
+            latest_api_headshots: row.get::<i64, usize>(32) as u64,
+
+            latest_br: row.get::<u8, usize>(33),
+            latest_asp: row.get::<u8, usize>(34),
+            pre_asp_rankups: row.get::<u8, usize>(35),
+
+            db_id: Some(db_id),
+            dirty: false,
+            db,
+        }
+    }
+
     pub async fn new_async(character: FullCharacter, start: i64, db: DatabaseSync) -> Self {
         let mut new_session = Session::new(character, start, db);
         new_session.save_to_db().await;
@@ -339,7 +398,6 @@ impl Session {
         self.character.clone()
     }
 
-    #[allow(dead_code)]
     pub fn get_list_name(&self) -> String {
         if let Some(end_time) = self.end_time {
             format!(
