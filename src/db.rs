@@ -404,7 +404,7 @@ impl DatabaseCore {
     pub async fn get_events_for_session(&self, session_id: i64) -> Result<EventList, sqlx::Error> {
         let mut events = EventList::new();
 
-        let mut cursor =  sqlx::query("SELECT * FROM events WHERE session IS ? ORDER BY ordering;")
+        let mut cursor =  sqlx::query("SELECT * FROM events WHERE session IS ? ORDER BY ordering ASC;")
             .bind(session_id)
             .fetch(&self.conn);
 
@@ -412,8 +412,8 @@ impl DatabaseCore {
             let new_event = Event {
                 kind: row.get::<i64, usize>(2).into(),
                 faction: row.get::<i64, usize>(3).into(),
-                br: row.get::<u8, usize>(4).into(),
-                asp: row.get::<u8, usize>(5).into(),
+                br: row.get::<u8, usize>(4),
+                asp: row.get::<u8, usize>(5),
                 class: row.get::<i64, usize>(6).into(),
                 name: row.get(7),
                 weapon: row.get(8),
@@ -432,7 +432,7 @@ impl DatabaseCore {
     pub async fn get_weaponstats_for_session(&self, session_id: i64) -> Result<WeaponSet, sqlx::Error> {
         let mut weapon_set = WeaponSet::new();
 
-        let mut cursor = sqlx::query("SELECT * FROM weaponstats WHERE session IS ? ORDER BY ordering;")
+        let mut cursor = sqlx::query("SELECT * FROM weaponstats WHERE session IS ? ORDER BY ordering ASC;")
             .bind(session_id)
             .fetch(&self.conn);
 
@@ -455,8 +455,8 @@ impl DatabaseCore {
                 row.get(3), //name
                 row.get(2), //weapon_id
                 new_initial,
-                row.get::<u32, usize>(4).into(), //kills
-                row.get::<u32, usize>(5).into(), //headshots
+                row.get::<u32, usize>(4), //kills
+                row.get::<u32, usize>(5), //headshots
                 row.get::<i64, usize>(6) as u64, //hits
                 row.get::<i64, usize>(7) as u64, //shots fired
             );
