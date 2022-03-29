@@ -92,3 +92,11 @@ impl SessionList {
         
     }
 }
+
+impl Default for SessionList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+  

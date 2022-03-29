@@ -271,3 +271,9 @@ impl EventList {
             });
     }
 }
+
+impl Default for EventList {
+    fn default() -> Self {
+        Self::new()
+    }
+}

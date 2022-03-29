@@ -320,11 +320,8 @@ impl Session {
             db_id: None,
             db,
         };
-        match Handle::try_current() {
-            Err(_) => {
-                rt.block_on(new_session.save_to_db());
-            }
-            _ => {},
+        if Handle::try_current().is_err() {
+            rt.block_on(new_session.save_to_db());
         }
         new_session
     }

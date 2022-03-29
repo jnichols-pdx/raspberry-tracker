@@ -424,10 +424,10 @@ impl DatabaseCore {
                 name: row.get(7),
                 weapon: row.get(8),
                 weapon_id: row.get(9),
-                headshot: row.get::<bool, usize>(10).into(),
-                kdr: row.get::<f32, usize>(11).into(),
-                timestamp: row.get::<i64, usize>(12).into(),
-                vehicle: row.get::<Option<i64>, usize>(13).map_or(None, |v| Some(v.into())),
+                headshot: row.get::<bool, usize>(10),
+                kdr: row.get::<f32, usize>(11),
+                timestamp: row.get::<i64, usize>(12),
+                vehicle: row.get::<Option<i64>, usize>(13).map(|v| v.into()),
                 datetime: row.get(14),
             };
             events.push(new_event);
