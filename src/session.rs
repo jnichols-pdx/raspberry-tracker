@@ -345,7 +345,7 @@ impl Session {
 
         let events = db.dbc.get_events_for_session(db_id).await.unwrap();
         let weapons = db.dbc.get_weaponstats_for_session(db_id).await.unwrap();
-        Session {
+        let mut new_session = Session {
             character,
             events,
             weapons_initial: BTreeMap::new(),
@@ -385,7 +385,20 @@ impl Session {
             db_id: Some(db_id),
             dirty: false,
             db,
+        };
+
+        //Sessions retrieved from DB are, by definition, not active. Correct the lack of end time
+        //caused by quitting / crashing with an in-progress session.
+        if new_session.is_active() {
+            if let Some(estimated_timestamp) = new_session.events.last_event_time() {
+                new_session.end_time = Some(estimated_timestamp);
+            } else {
+                new_session.end_time = Some(new_session.start_time);
+            }
+            new_session.dirty = true;
+            new_session.update_db_entry().await;
         }
+        new_session
     }
 
     pub async fn new_async(character: FullCharacter, start: i64, db: DatabaseSync) -> Self {
