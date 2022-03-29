@@ -1,7 +1,7 @@
 use crate::character::*;
 use crate::character_list::*;
 use crate::common::*;
-use crate::events::Event;
+use crate::events::*;
 use crate::session::*;
 use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
@@ -400,4 +400,31 @@ impl DatabaseCore {
         }
     }    
 
+    pub async fn get_events_for_session(&self, session_id: i64) -> Result<EventList, sqlx::Error> {
+        let mut events = EventList::new();
+
+        let mut cursor =  sqlx::query("SELECT * FROM events WHERE session IS ? ORDER BY ordering;")
+            .bind(session_id)
+            .fetch(&self.conn);
+
+        while let Some(row) = cursor.try_next().await? {
+            let new_event = Event {
+                kind: row.get::<i64, usize>(2).into(),
+                faction: row.get::<i64, usize>(3).into(),
+                br: row.get::<u8, usize>(4).into(),
+                asp: row.get::<u8, usize>(5).into(),
+                class: row.get::<i64, usize>(6).into(),
+                name: row.get(7),
+                weapon: row.get(8),
+                weapon_id: row.get(9),
+                headshot: row.get::<bool, usize>(10).into(),
+                kdr: row.get::<f32, usize>(11).into(),
+                timestamp: row.get::<i64, usize>(12).into(),
+                vehicle: row.get::<Option<i64>, usize>(13).map_or(None, |v| Some(v.into())),
+                datetime: row.get(14),
+            };
+            events.push(new_event);
+        }
+        Ok(events)
+    }
 }
