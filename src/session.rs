@@ -422,6 +422,23 @@ impl Session {
         }
     }
 
+    pub fn duration_string(&self) -> String {
+        if self.end_time.is_none() {
+            "Active".to_owned()
+        } else {
+            let start_time = OffsetDateTime::from_unix_timestamp(self.start_time)
+                .unwrap_or_else(|_| OffsetDateTime::now_utc())
+                .to_timezone(self.time_zone); //TODO: cleanup
+            let end_time = OffsetDateTime::from_unix_timestamp(self.end_time.unwrap())
+                .unwrap_or_else(|_| OffsetDateTime::now_utc())
+                .to_timezone(self.time_zone); //TODO: cleanup
+            let session_duration = end_time - start_time;
+            let hours = session_duration.whole_hours();
+            let minutes = session_duration.whole_minutes() % 60;
+            format!("{:02}:{:02}", hours, minutes)
+        }
+    }
+
     fn br_with_change(&self) -> String {
         let current_rank = if self.latest_asp > 0 {
             format!("{}~{}", self.latest_br, self.latest_asp)
