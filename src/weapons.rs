@@ -53,6 +53,28 @@ impl WeaponStats {
         }
     }
 
+    pub fn new_historical(
+        name: &str,
+        id: &str,
+        initial: WeaponInitial,
+        kills: u32,
+        headshots: u32,
+        hits: u64,
+        fired: u64,
+    ) -> Self
+    {
+        WeaponStats {
+            weapon_id: id.to_owned(),
+            name: name.to_owned(),
+            session_kills: kills,
+            session_headshots: headshots,
+            initial,
+            latest_hits: hits,
+            latest_fired: fired,
+            dirty: false,
+        }
+    }
+
     pub fn matches_id(&self, other_id: &str) -> bool {
         self.weapon_id == *other_id
     }

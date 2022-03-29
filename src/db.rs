@@ -3,6 +3,7 @@ use crate::character_list::*;
 use crate::common::*;
 use crate::events::*;
 use crate::session::*;
+use crate::weapons::*;
 use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
@@ -426,5 +427,42 @@ impl DatabaseCore {
             events.push(new_event);
         }
         Ok(events)
+    }
+
+    pub async fn get_weaponstats_for_session(&self, session_id: i64) -> Result<WeaponSet, sqlx::Error> {
+        let mut weapon_set = WeaponSet::new();
+
+        let mut cursor = sqlx::query("SELECT * FROM weaponstats WHERE session IS ? ORDER BY ordering;")
+            .bind(session_id)
+            .fetch(&self.conn);
+
+        while let Some(row) = cursor.try_next().await? {
+            //SQLITE driver in sqlx doesn't support u64 - sqlite internally considers all Numeric
+            //to be signed. While we choose u64 for our internal representations of counts that
+            //make no sense to be negative this exceeds the available precision in sqlite. How
+            //does the Census API internally represent these counts?
+            //
+            //POTENTIAL REFACTOR: it is doubtful that even the oldest active accounts will
+            //accumulate more then i64::MAX shots fired. Consider using i64 internally?
+            let new_initial = WeaponInitial {
+                fired: row.get::<i64, usize>(8) as u64,
+                hits: row.get::<i64, usize>(9) as u64,
+                kills: row.get::<i64, usize>(10) as u64,
+                headshots: row.get::<i64, usize>(11) as u64,
+            };
+
+            let new_weaponstat = WeaponStats::new_historical(
+                row.get(3), //name
+                row.get(2), //weapon_id
+                new_initial,
+                row.get::<u32, usize>(4).into(), //kills
+                row.get::<u32, usize>(5).into(), //headshots
+                row.get::<i64, usize>(6) as u64, //hits
+                row.get::<i64, usize>(7) as u64, //shots fired
+            );
+
+            weapon_set.push(new_weaponstat);
+        }
+        Ok(weapon_set)
     }
 }
