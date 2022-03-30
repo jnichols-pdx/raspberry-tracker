@@ -3,15 +3,15 @@ use crate::character_list::*;
 use crate::common::*;
 use crate::events::*;
 use crate::session::*;
-use crate::weapons::*;
 use crate::session_list::*;
+use crate::weapons::*;
 use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio::runtime::Handle;
-use tokio::sync::{mpsc,RwLock};
+use tokio::sync::{mpsc, RwLock};
 use tokio_tungstenite::tungstenite::protocol::Message;
 
 #[derive(Clone)]
@@ -68,7 +68,9 @@ impl DatabaseSync {
         self.rt.block_on(self.dbc.get_image(name))
     }
     pub fn get_sessions_sync(&self) -> SessionList {
-        self.rt.block_on(self.dbc.get_sessions(self.rt.clone())).unwrap()
+        self.rt
+            .block_on(self.dbc.get_sessions(self.rt.clone()))
+            .unwrap()
     }
     pub fn init_sync(&mut self) {
         self.rt.block_on(self.dbc.init());
@@ -257,8 +259,7 @@ impl DatabaseCore {
                                 // Known ids that trigger this: 6011526, 6011563, 6011564.
                                 weapon_name = format!("Missing ({})", weapon_id);
                             } else {
-                                weapons_rw
-                                    .insert(weapon_id.to_owned(), weapon_name.to_owned());
+                                weapons_rw.insert(weapon_id.to_owned(), weapon_name.to_owned());
                                 match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
                                     .bind(weapon_id)
                                     .bind(weapon_name.to_owned())
@@ -405,14 +406,15 @@ impl DatabaseCore {
                 std::process::exit(-21);
             }
         }
-    }    
+    }
 
     pub async fn get_events_for_session(&self, session_id: i64) -> Result<EventList, sqlx::Error> {
         let mut events = EventList::new();
 
-        let mut cursor =  sqlx::query("SELECT * FROM events WHERE session IS ? ORDER BY ordering ASC;")
-            .bind(session_id)
-            .fetch(&self.conn);
+        let mut cursor =
+            sqlx::query("SELECT * FROM events WHERE session IS ? ORDER BY ordering ASC;")
+                .bind(session_id)
+                .fetch(&self.conn);
 
         while let Some(row) = cursor.try_next().await? {
             let new_event = Event {
@@ -435,12 +437,16 @@ impl DatabaseCore {
         Ok(events)
     }
 
-    pub async fn get_weaponstats_for_session(&self, session_id: i64) -> Result<WeaponSet, sqlx::Error> {
+    pub async fn get_weaponstats_for_session(
+        &self,
+        session_id: i64,
+    ) -> Result<WeaponSet, sqlx::Error> {
         let mut weapon_set = WeaponSet::new();
 
-        let mut cursor = sqlx::query("SELECT * FROM weaponstats WHERE session IS ? ORDER BY ordering ASC;")
-            .bind(session_id)
-            .fetch(&self.conn);
+        let mut cursor =
+            sqlx::query("SELECT * FROM weaponstats WHERE session IS ? ORDER BY ordering ASC;")
+                .bind(session_id)
+                .fetch(&self.conn);
 
         while let Some(row) = cursor.try_next().await? {
             //SQLITE driver in sqlx doesn't support u64 - sqlite internally considers all Numeric
@@ -461,8 +467,8 @@ impl DatabaseCore {
                 row.get(3), //name
                 row.get(2), //weapon_id
                 new_initial,
-                row.get::<u32, usize>(4), //kills
-                row.get::<u32, usize>(5), //headshots
+                row.get::<u32, usize>(4),        //kills
+                row.get::<u32, usize>(5),        //headshots
                 row.get::<i64, usize>(6) as u64, //hits
                 row.get::<i64, usize>(7) as u64, //shots fired
             );
@@ -472,7 +478,7 @@ impl DatabaseCore {
         Ok(weapon_set)
     }
 
-    pub async fn get_sessions(&self, rt: Handle) -> Result::<SessionList, sqlx::Error> {
+    pub async fn get_sessions(&self, rt: Handle) -> Result<SessionList, sqlx::Error> {
         let new_sync_db = DatabaseSync {
             dbc: self.clone(),
             rt,

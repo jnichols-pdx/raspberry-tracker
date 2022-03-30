@@ -538,7 +538,9 @@ impl Session {
                         let mut new_stat =
                             WeaponStats::new(&event.weapon, &event.weapon_id, initial);
                         new_stat.add_kill(event.headshot);
-                        new_stat.save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc).await;
+                        new_stat
+                            .save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc)
+                            .await;
                         self.weapons.push(new_stat);
                     }
                 }
@@ -554,7 +556,9 @@ impl Session {
                         };
 
                         let new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
-                        new_stat.save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc).await;
+                        new_stat
+                            .save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc)
+                            .await;
                         self.weapons.push(new_stat);
                     }
                 }
@@ -889,7 +893,9 @@ impl Session {
                         }
                     }
 
-                    self.weapons.update_db_entries(&self.db.dbc, self.db_id.unwrap()).await;
+                    self.weapons
+                        .update_db_entries(&self.db.dbc, self.db_id.unwrap())
+                        .await;
 
                     for stat in weapon_stat_by_faction {
                         if let Some("weapon_headshots") = stat["stat_name"].as_str() {
@@ -1036,7 +1042,9 @@ impl Session {
             self.dirty = false;
         }
 
-        self.weapons.update_db_entries(&self.db.dbc, self.db_id.unwrap()).await;
+        self.weapons
+            .update_db_entries(&self.db.dbc, self.db_id.unwrap())
+            .await;
     }
 
     pub async fn end(&mut self, time: i64) {

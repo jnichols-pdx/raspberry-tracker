@@ -64,7 +64,10 @@ fn main() {
 
     let db = DatabaseCore::new(db_pool);
 
-    let mut sync_db = DatabaseSync { dbc: db, rt: rth.clone() };
+    let mut sync_db = DatabaseSync {
+        dbc: db,
+        rt: rth.clone(),
+    };
 
     sync_db.init_sync();
 
@@ -112,13 +115,11 @@ fn main() {
 
                     {
                         let mut session_list_rw = session_list.blocking_write();
-                        session_list_rw.push(
-                            Session::new(
-                                active_char,
-                                OffsetDateTime::now_utc().unix_timestamp(),
-                                sync_db.clone()
-                            )
-                        );
+                        session_list_rw.push(Session::new(
+                            active_char,
+                            OffsetDateTime::now_utc().unix_timestamp(),
+                            sync_db.clone(),
+                        ));
                     }
                 }
             }
@@ -350,15 +351,18 @@ async fn parse_messages(
 
                             {
                                 let mut session_list_rw = session_list.write().await;
-                                session_list_rw.push(Session::new_async(
-                                    bob,
-                                    json["payload"]["timestamp"]
-                                        .to_string()
-                                        .unquote()
-                                        .parse::<i64>()
-                                        .unwrap(),
-                                    db.clone(),
-                                ).await);
+                                session_list_rw.push(
+                                    Session::new_async(
+                                        bob,
+                                        json["payload"]["timestamp"]
+                                            .to_string()
+                                            .unquote()
+                                            .parse::<i64>()
+                                            .unwrap(),
+                                        db.clone(),
+                                    )
+                                    .await,
+                                );
                                 ui_context.request_repaint();
                             }
                         }
@@ -635,7 +639,7 @@ async fn parse_messages(
                     datetime: formatted_time,
                 };
 
-                let mut current_session_id = None ;
+                let mut current_session_id = None;
                 let mut event_ordering = 0;
                 {
                     let mut session_list_rw = session_list.write().await;

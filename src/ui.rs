@@ -198,7 +198,9 @@ impl epi::App for TrackerApp {
                     self.in_character_ui = !self.in_character_ui;
                 }
                 let mut session_list_rw = self.session_list.blocking_write();
-                if session_list_rw.ui(ctx, ui) { //returns true when the user clicks on a session in the list
+
+                //returns true when the user clicks on a session in the list
+                if session_list_rw.ui(ctx, ui) {
                     self.in_character_ui = false;
                 }
             });

@@ -1,6 +1,6 @@
+use crate::db::DatabaseCore;
 use egui::*;
 use std::collections::BTreeMap;
-use crate::db::DatabaseCore;
 
 #[derive(Copy, Clone)]
 pub struct WeaponInitial {
@@ -61,8 +61,7 @@ impl WeaponStats {
         headshots: u32,
         hits: u64,
         fired: u64,
-    ) -> Self
-    {
+    ) -> Self {
         WeaponStats {
             weapon_id: id.to_owned(),
             name: name.to_owned(),
@@ -271,12 +270,10 @@ impl WeaponStats {
             .bind(ordering as i64)
             .bind(&self.weapon_id)
             .bind(&self.name)
-
             .bind(self.session_kills as i64)
             .bind(self.session_headshots as i64)
             .bind(self.latest_hits as i64)
             .bind(self.latest_fired as i64)
-
             .bind(self.initial.fired as i64)
             .bind(self.initial.hits as i64)
             .bind(self.initial.kills as i64)
@@ -316,8 +313,6 @@ impl WeaponStats {
         }
         self.dirty = false;
     }
-
-
 }
 
 #[derive(Clone)]
@@ -400,7 +395,6 @@ impl WeaponSet {
         for (_, weapon) in self.weapons.iter_mut() {
             weapon.update_db_entry(session, db).await;
         }
-
     }
 }
 
