@@ -1,13 +1,13 @@
 use crate::character::*;
 use crate::common::*;
+use crate::db::*;
 use crate::events::{Event, *};
 use crate::weapons::*;
-use crate::db::*;
 use eframe::egui;
 use egui_extras::{Size, TableBuilder};
 use sqlx::Row;
 use std::collections::BTreeMap;
-use time::OffsetDateTime;
+use time::{Date, OffsetDateTime};
 use time_tz::{OffsetDateTimeExt, TimeZone, Tz};
 use tokio::runtime::Handle;
 
@@ -434,6 +434,13 @@ impl Session {
             let minutes = session_duration.whole_minutes() % 60;
             format!("{:02}:{:02}", hours, minutes)
         }
+    }
+
+    pub fn local_start_date(&self) -> Date {
+        OffsetDateTime::from_unix_timestamp(self.start_time)
+            .unwrap_or_else(|_| OffsetDateTime::now_utc())
+            .to_timezone(self.time_zone)
+            .date()
     }
 
     fn br_with_change(&self) -> String {
