@@ -1,9 +1,20 @@
+use crate::common::{relative_date_string, small_date_format};
 use crate::session::*;
 use egui::*;
+use time::{Date, OffsetDateTime};
+use time_tz::{OffsetDateTimeExt, Tz};
 
 pub struct SessionList {
     sessions: Vec<Session>,
     selected: Option<usize>,
+    display_sequence: Vec<RowType>,
+    latest_session_date: Option<Date>,
+    time_zone: &'static Tz,
+}
+
+enum RowType {
+    Date(Date),
+    Session(usize),
 }
 
 impl SessionList {
@@ -11,17 +22,61 @@ impl SessionList {
         SessionList {
             sessions: Vec::<Session>::new(),
             selected: None,
+            display_sequence: Vec::<RowType>::new(),
+            latest_session_date: None,
+            time_zone: time_tz::system::get_timezone().unwrap(),
         }
     }
+
     pub fn new_from_vec(sessions: Vec<Session>) -> Self {
+        let mut display_sequence = Vec::<RowType>::new();
+        let mut last_date_seen = None;
+        let mut counter = 0;
+        for session in sessions.iter() {
+            let session_date = session.local_start_date();
+            if last_date_seen.is_none() {
+                last_date_seen = Some(session_date);
+            } else if session_date != last_date_seen.unwrap() {
+                display_sequence.push(RowType::Date(last_date_seen.unwrap()));
+                last_date_seen = Some(session_date);
+            }
+            display_sequence.push(RowType::Session(counter));
+            counter += 1;
+        }
+        if counter > 0 {
+            display_sequence.push(RowType::Date(last_date_seen.unwrap()));
+        }
+        println!("{} distinct dates", display_sequence.len() - sessions.len());
         SessionList {
             sessions,
             selected: None,
+            display_sequence,
+            latest_session_date: last_date_seen,
+            time_zone: time_tz::system::get_timezone().unwrap(),
         }
     }
+
     pub fn push(&mut self, new_session: Session) {
+        if self.latest_session_date.is_none() {
+            self.latest_session_date = Some(new_session.local_start_date());
+        } else {
+            let new_date = new_session.local_start_date();
+            if new_date != self.latest_session_date.unwrap() {
+                self.latest_session_date = Some(new_date);
+                self.display_sequence
+                    .push(RowType::Session(self.sessions.len()));
+                self.display_sequence.push(RowType::Date(new_date));
+            } else {
+                //Adding to the same day - need to ensure the 'date' stays in front of all sessions
+                //from this day.
+                let date_to_keep = self.display_sequence.pop().unwrap();
+                self.display_sequence
+                    .push(RowType::Session(self.sessions.len()));
+                self.display_sequence.push(date_to_keep);
+            }
+        }
+        self.selected = Some(self.sessions.len());
         self.sessions.push(new_session);
-        self.selected = Some(self.sessions.len() - 1);
     }
 
     pub fn selected(&self) -> Option<&Session> {
@@ -64,44 +119,63 @@ impl SessionList {
         self.sessions.last_mut()
     }
 
-    pub fn ui(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) -> bool{
-        let selected_before = self.selected;
+    pub fn ui(&mut self, _ctx: &egui::Context, ui: &mut egui::Ui) -> bool {
+        let mut user_clicked_a_session = false;
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
             let text_style = TextStyle::Body;
             let row_height = ui.text_style_height(&text_style);
             ScrollArea::vertical().show_rows(
                 ui,
                 row_height,
-                self.sessions.len(),
-                |ui, row_range|
-            {
-                let rev = self.sessions.iter().rev();
-                let visible_length = row_range.end - row_range.start;
-                let mut shown = 0;
-                let count_sessions = self.sessions.len();
-                let selected_index = self.selected.unwrap_or(usize::MAX);
-                for session in rev.skip(row_range.start) {
-                    let session_index = count_sessions - row_range.start - shown - 1;
-                    let this_text = if session_index == selected_index {
-                       format!("{} {}▶", session.current_character().name_with_outfit(), session.duration_string())
-                    } else {
-                       format!("{} {}", session.current_character().name_with_outfit(), session.duration_string())
-                    };
+                self.display_sequence.len(),
+                |ui, row_range| {
+                    let visible_length = row_range.end - row_range.start;
+                    let now_date = OffsetDateTime::now_utc().to_timezone(self.time_zone).date();
+                    let selected_index = self.selected.unwrap_or(usize::MAX);
+                    let sequence = self.display_sequence.iter().rev();
+                    let mut shown = 0;
 
-                    if ui.add(Label::new(this_text)
-                        .sense(Sense::click()))
-                        .clicked()
-                    {
-                        self.selected = Some(session_index);
+                    for row in sequence.skip(row_range.start) {
+                        match row {
+                            RowType::Date(date) => {
+                                ui.label(relative_date_string(date, &now_date))
+                                    .on_hover_text(small_date_format(date));
+                            }
+                            RowType::Session(index) => {
+                                let session = &self.sessions[*index];
+                                let this_text = if *index == selected_index {
+                                    format!(
+                                        "{} {}▶",
+                                        session.current_character().name_with_outfit(),
+                                        session.duration_string()
+                                    )
+                                } else {
+                                    format!(
+                                        "{} {}",
+                                        session.current_character().name_with_outfit(),
+                                        session.duration_string()
+                                    )
+                                };
+
+                                if ui
+                                    .add(Label::new(this_text).sense(Sense::click()))
+                                    .clicked()
+                                {
+                                    self.selected = Some(*index);
+                                    user_clicked_a_session = true;
+                                }
+                            }
+                        }
+                        shown += 1;
+                        if shown > visible_length {
+                            break;
+                        }
                     }
-                    shown += 1;
-                    if shown > visible_length {
-                        break;
-                    }
-                }
-            });
+                },
+            );
         });
-        selected_before != self.selected
+
+        user_clicked_a_session
     }
 }
 
@@ -110,5 +184,3 @@ impl Default for SessionList {
         Self::new()
     }
 }
-
-  
