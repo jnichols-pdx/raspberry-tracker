@@ -237,7 +237,7 @@ impl DatabaseCore {
         } else {
             let mut weapons_rw = self.weapons.write().await;
             match weapons_rw.get(weapon_id) {
-                Some(weapon) => weapon_name = weapon.replace('\\', ""), //Remove escape characters from API
+                Some(weapon) => weapon_name = weapon.to_owned(),
                 None => {
                     println!("Going to Census for {}", weapon_id);
                     match lookup_weapon_name(weapon_id) {
@@ -279,7 +279,7 @@ impl DatabaseCore {
             }
         }
 
-        weapon_name
+        weapon_name.replace('\\', "") //Remove escape characters from API
     }
 
     pub async fn init(&mut self) {

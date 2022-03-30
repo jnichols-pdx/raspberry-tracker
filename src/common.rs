@@ -1,6 +1,8 @@
 use crate::db::*;
 use num_enum::FromPrimitive;
 use std::io::Read;
+use std::ops::Sub;
+use time::{Date, Duration};
 
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
@@ -152,6 +154,24 @@ pub fn is_online(char_id: &str) -> Result<bool, ureq::Error> {
     } else {
         Ok(false)
     }
+}
+
+pub fn relative_date_string(then: &Date, today: &Date) -> String {
+    let week_ago = today.sub(Duration::days(7));
+    if today == then {
+        "Today".to_owned()
+    } else if today.previous_day().unwrap() == *then {
+        "Yesterday".to_owned()
+    } else if *then > week_ago {
+        then.weekday().to_string()
+    } else {
+        small_date_format(then)
+    }
+}
+
+pub fn small_date_format(then: &Date) -> String {
+    let format = time::format_description::parse("[year]-[month]-[day]").unwrap();
+    then.format(&format).unwrap()
 }
 
 pub trait ViewWithDB {
