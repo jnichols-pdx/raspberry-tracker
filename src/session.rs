@@ -408,6 +408,12 @@ impl Session {
         self.character.clone()
     }
 
+    pub fn current_true_kdr(&self) -> f32 {
+        let kills_current = self.initial_kills_total + self.kill_count as u64;
+        let deaths_current = self.initial_actual_deaths_total + self.death_count as u64;
+        (kills_current as f64 / deaths_current as f64) as f32
+    }
+
     pub fn get_list_name(&self) -> String {
         if let Some(end_time) = self.end_time {
             format!(
@@ -717,9 +723,9 @@ impl Session {
                         self.latest_api_revived_deaths
                     ));
                     if self.initial_revived_deaths_total > 0 {
-                        let current_kdr =
+                        let current_r_kdr =
                             self.latest_api_kills as f64 / self.latest_api_revived_deaths as f64;
-                        let init_kdr = if self.initial_revived_deaths_total > 0 {
+                        let init_r_kdr = if self.initial_revived_deaths_total > 0 {
                             self.initial_kills_total as f64
                                 / self.initial_revived_deaths_total as f64
                         } else {
@@ -727,8 +733,8 @@ impl Session {
                         };
                         ui.label(format!(
                             "KDR (rezzed) {:.3} ({:+.3})",
-                            current_kdr,
-                            current_kdr - init_kdr
+                            current_r_kdr,
+                            current_r_kdr - init_r_kdr
                         ));
                     } else {
                         ui.label("KDR (rezzed) -");

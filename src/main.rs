@@ -438,7 +438,6 @@ async fn parse_messages(
                     }
                 }
                 let player_char = some_player_char.unwrap();
-                //////////////////////
 
                 let mut event_type = EventType::Unknown;
                 let mut br = 0;
@@ -474,7 +473,13 @@ async fn parse_messages(
                     br = player_char.br;
                     asp = player_char.asp;
                     faction = player_char.faction;
-                    ratio = 0.5; //TODO - get from current player details.
+
+                    let session_list_ro = session_list.read().await;
+                    if let Some(session) = session_list_ro.active_session() {
+                        ratio = session.current_true_kdr();
+                    } else {
+                        ratio = -1.0;
+                    }
                 } else {
                     let mut deets = None;
                     if attacker {
@@ -653,8 +658,6 @@ async fn parse_messages(
                 if let Some(sess_id) = current_session_id {
                     db.dbc.record_event(&event, event_ordering, sess_id).await;
                 }
-
-            /////////////////////
             } else if json["payload"]["event_name"].eq("PlayerLogout") {
                 println!("offline!");
                 let timestamp = json["payload"]["timestamp"]
