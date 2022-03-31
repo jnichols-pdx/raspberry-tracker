@@ -17,7 +17,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 #[derive(Clone)]
 pub struct DatabaseCore {
     pub conn: SqlitePool,
-    weapons: Arc<RwLock<BTreeMap<String, String>>>,
+    weapons: Arc<RwLock<BTreeMap<String, Weapon>>>,
 }
 
 #[derive(Clone)]
@@ -239,7 +239,7 @@ impl DatabaseCore {
         } else {
             let mut weapons_rw = self.weapons.write().await;
             match weapons_rw.get(weapon_id) {
-                Some(weapon) => weapon_name = weapon.to_owned(),
+                Some(weapon) => weapon_name = weapon.name.to_owned(),
                 None => {
                     println!("Going to Census for {}", weapon_id);
                     match lookup_weapon_name(weapon_id) {
@@ -247,11 +247,12 @@ impl DatabaseCore {
                             println!("{}", whut);
                             weapon_name = format!("Error finding ({})", weapon_id);
                         }
-                        Ok(weapon) => {
+                        Ok(weapon_details) => {
                             println!("with:");
-                            println!("{:?}", weapon);
-                            weapon_name =
-                                weapon["item_list"][0]["name"]["en"].to_string().unquote();
+                            println!("{:?}", weapon_details);
+                            weapon_name = weapon_details["item_list"][0]["name"]["en"]
+                                .to_string()
+                                .unquote();
                             if weapon_name == "ul" {
                                 //"null" with the n and l removed by unquote.
                                 //Census didn't actually return anything. Might be a new NSO
@@ -259,10 +260,22 @@ impl DatabaseCore {
                                 // Known ids that trigger this: 6011526, 6011563, 6011564.
                                 weapon_name = format!("Missing ({})", weapon_id);
                             } else {
-                                weapons_rw.insert(weapon_id.to_owned(), weapon_name.to_owned());
-                                match sqlx::query("INSERT INTO weapons VALUES (?, ?)")
+                                let weapon_category = WeaponType::from(
+                                    weapon_details["item_list"][0]["item_category_id"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<i64>()
+                                        .unwrap_or(0),
+                                );
+                                let weapon_entry = Weapon {
+                                    name: weapon_name.to_owned(),
+                                    category: weapon_category,
+                                };
+                                weapons_rw.insert(weapon_id.to_owned(), weapon_entry);
+                                match sqlx::query("INSERT INTO weapons VALUES (?, ?, ?)")
                                     .bind(weapon_id)
                                     .bind(weapon_name.to_owned())
+                                    .bind(weapon_category as i64)
                                     .execute(&self.conn)
                                     .await
                                 {
@@ -309,12 +322,52 @@ impl DatabaseCore {
         let mut cursor = self.conn.fetch("SELECT * FROM weapons;");
         let mut weapons_rw = self.weapons.write().await;
         while let Some(row) = cursor.try_next().await.unwrap() {
+            let weapon_id = row.get::<String, usize>(0);
+            let mut category_id = row.get::<i64, usize>(2);
+
             println!(
-                "Loading weapon: >{}< - >{}<",
-                row.get::<String, usize>(0),
-                row.get::<String, usize>(1)
+                "Loading weapon: >{}< - >{}<: >{}<",
+                weapon_id,
+                row.get::<String, usize>(1),
+                category_id
             );
-            weapons_rw.insert(row.get(0), row.get(1));
+
+            if category_id == 0 {
+                println!("Going to Census for {} category", weapon_id);
+                match lookup_weapon_name(&weapon_id) {
+                    Err(whut) => {
+                        println!("{}", whut);
+                    }
+                    Ok(weapon_details) => {
+                        category_id = weapon_details["item_list"][0]["item_category_id"]
+                            .to_string()
+                            .unquote()
+                            .parse::<i64>()
+                            .unwrap_or(0);
+                        println!("Setting category to {}", category_id);
+                        match sqlx::query("UPDATE weapons SET category = ? WHERE id =  ?;")
+                            .bind(category_id)
+                            .bind(weapon_id)
+                            .execute(&self.conn)
+                            .await
+                        {
+                            Ok(_) => {}
+                            Err(err) => {
+                                println!("Error updating weapon category in DB:");
+                                println!("{:?}", err);
+                                std::process::exit(-52);
+                            }
+                        }
+                    }
+                }
+            }
+
+            let weapon_entry = Weapon {
+                name: row.get(1),
+                category: WeaponType::from(category_id),
+            };
+
+            weapons_rw.insert(row.get(0), weapon_entry);
         }
     }
 

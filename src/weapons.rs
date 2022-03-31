@@ -1,6 +1,12 @@
+use crate::common::WeaponType;
 use crate::db::DatabaseCore;
 use egui::*;
 use std::collections::BTreeMap;
+
+pub struct Weapon {
+    pub name: String,
+    pub category: WeaponType,
+}
 
 #[derive(Copy, Clone)]
 pub struct WeaponInitial {
