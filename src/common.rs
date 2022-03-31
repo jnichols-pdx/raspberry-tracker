@@ -106,12 +106,12 @@ pub fn lookup_full_stats(new_id: &str) -> Result<serde_json::Value, ureq::Error>
 }
 
 pub fn subscribe_session_string(character_id: &str) -> String {
-    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\"]}}",
+    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\",\"GainExperience\"]}}",
         character_id)
 }
 
 pub fn clear_subscribe_session_string() -> String {
-    "{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\"]}".to_owned()
+    "{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\",\"GainExperience\"]}".to_owned()
 }
 
 pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
