@@ -1776,3 +1776,71 @@ pub enum ExperienceType {
     #[num_enum(default)]
     Unknown = 0,
 }
+
+#[allow(dead_code)]
+impl ExperienceType {
+    pub fn is_repair(&self) -> bool {
+        matches!(
+            self,
+            ExperienceType::MAX_Repair
+                | ExperienceType::Squad_Repair_Flash
+                | ExperienceType::Vehicle_Repair_Flash
+                | ExperienceType::Secondary_Facility_Object_Repair
+                | ExperienceType::Vehicle_Repair_Engi_Turret
+                | ExperienceType::Vehicle_Repair_Phalanx
+                | ExperienceType::Vehicle_Repair_Drop_Pod
+                | ExperienceType::Vehicle_Repair_Galaxy
+                | ExperienceType::Vehicle_Repair_Liberator
+                | ExperienceType::Vehicle_Repair_Lightning
+                | ExperienceType::Vehicle_Repair_Magrider
+                | ExperienceType::Vehicle_Repair_Mosquito
+                | ExperienceType::Vehicle_Repair_Prowler
+                | ExperienceType::Vehicle_Repair_Reaver
+                | ExperienceType::Vehicle_Repair_Scythe
+                | ExperienceType::Vehicle_Repair_Sunderer
+                | ExperienceType::Vehicle_Repair_Vanguard
+                | ExperienceType::Squad_Repair_Engi_Turret
+                | ExperienceType::Squad_Repair_Phalanx
+                | ExperienceType::Squad_Repair_Drop_Pod
+                | ExperienceType::Squad_Repair_Galaxy
+                | ExperienceType::Squad_Repair_Liberator
+                | ExperienceType::Squad_Repair_Lightning
+                | ExperienceType::Squad_Repair_Magrider
+                | ExperienceType::Squad_Repair_Mosquito
+                | ExperienceType::Squad_Repair_Prowler
+                | ExperienceType::Squad_Repair_Reaver
+                | ExperienceType::Squad_Repair_Scythe
+                | ExperienceType::Squad_Repair_Sunderer
+                | ExperienceType::Squad_Repair_Vanguard
+                | ExperienceType::Terminal_Repair
+                | ExperienceType::Squad_MAX_Repair
+                | ExperienceType::Squad_Repair_Harasser
+                | ExperienceType::Vehicle_Repair_Harasser
+                | ExperienceType::Squad_Repair_R_Drone
+                | ExperienceType::Vehicle_Repair_R_Drone
+                | ExperienceType::Shield_Repair
+                | ExperienceType::Squad_Shield_Repair
+                | ExperienceType::Vehicle_Repair_Valkyrie
+                | ExperienceType::Squad_Repair_Valkyrie
+                | ExperienceType::Vehicle_Repair_Spitfire_Turret
+                | ExperienceType::Squad_Repair_Spitfire_Turret
+                | ExperienceType::Squad_Repair_Construction_Med
+                | ExperienceType::Repair_Construction_Med
+                | ExperienceType::Squad_Repair_Construction_Small
+                | ExperienceType::Repair_Construction_Small
+                | ExperienceType::Squad_Repair_Construction_Large
+                | ExperienceType::Repair_Construction_Large
+                | ExperienceType::Squad_Repair_Construction_Core
+                | ExperienceType::Repair_Construction_Core
+                | ExperienceType::Vehicle_Repair_ANT
+                | ExperienceType::Squad_Repair_ANT
+                | ExperienceType::Vehicle_Repair_Colossus
+                | ExperienceType::Squad_Repair_Colossus
+                | ExperienceType::Vehicle_Repair_Javelin
+                | ExperienceType::Squad_Repair_Javelin
+                | ExperienceType::Door_Lock_Repair
+                | ExperienceType::Containment_Site_Gate_Shield_Gen_Repair
+        )
+    }
+}
+
