@@ -24,6 +24,7 @@ impl Event {
         let img_size = (14.0, 14.0);
         let bg_color;
         let text_color;
+        let mut minimal = false;
         match self.kind {
             EventType::Death => {
                 bg_color = Color32::from_rgb(80, 0, 0);
@@ -61,6 +62,16 @@ impl Event {
                 bg_color = Color32::from_rgb(0, 0, 80);
                 text_color = Color32::from_rgb(200, 200, 200);
             }
+            EventType::ExperienceTick => {
+                bg_color = Color32::from_rgb(0, 80, 80);
+                text_color = Color32::from_rgb(255, 255, 255);
+                minimal = true;
+            }
+            EventType::Achievement => {
+                bg_color = Color32::from_rgb(80, 0, 80);
+                text_color = Color32::from_rgb(255, 255, 255);
+                minimal = true;
+            }
             _ => {
                 bg_color = Color32::from_rgb(80, 80, 80);
                 text_color = Color32::from_rgb(255, 255, 255);
@@ -68,72 +79,79 @@ impl Event {
         };
 
         body.row(17.0, Some(bg_color), |mut row| {
-            row.col_clip(|ui| {
-                //faction
-                match ui.ctx().texture_by_name(&self.faction.to_string()) {
-                    Some(image) => {
-                        ui.image(image.id(), img_size);
-                    }
-                    None => {
-                        ui.vertical(|ui| {
-                            ui.add_space(1.5);
-                            ui.label(
-                                egui::RichText::new(self.faction.to_string())
-                                    .small()
-                                    .color(text_color),
-                            );
-                        });
-                    }
-                };
-            });
-            row.col_clip(|ui| {
-                //BR
-                ui.vertical(|ui| {
-                    ui.add_space(1.5);
-                    if self.asp > 0 {
-                        ui.label(
-                            egui::RichText::new(format!("{}~{}", self.br, self.asp))
-                                .small()
-                                .color(text_color),
-                        );
-                    } else {
-                        ui.label(
-                            egui::RichText::new(format!("{}", self.br))
-                                .small()
-                                .color(text_color),
-                        );
-                    }
-                });
-            });
-            row.col_clip(|ui| {
-                //Class
-                match ui.ctx().texture_by_name(&self.class.to_string()) {
-                    Some(image) => ui.image(image.id(), img_size),
-                    None => ui.label(""), // ui.label(egui::RichText::new(self.class.to_string()).small()),
-                };
-            });
-            row.col_clip(|ui| {
-                //Vehicle
-                //Override for orbital strike direct kills (can't track when players die from falling
-                //damage after being thrown airborn by orbital :( )
-                if self.weapon == "Orbital Strike Uplink" {
-                    if let Some(image) = ui.ctx().texture_by_name("Orbital") {
-                        ui.image(image.id(), img_size);
-                    };
-                } else if let Some(vehicle) = self.vehicle {
-                    match ui.ctx().texture_by_name(&vehicle.to_string()) {
+            if minimal {
+                row.col_clip(|_ui| {});
+                row.col_clip(|_ui| {});
+                row.col_clip(|_ui| {});
+                row.col_clip(|_ui| {});
+            } else {
+                row.col_clip(|ui| {
+                    //faction
+                    match ui.ctx().texture_by_name(&self.faction.to_string()) {
                         Some(image) => {
                             ui.image(image.id(), img_size);
                         }
                         None => {
                             ui.vertical(|ui| {
                                 ui.add_space(1.5);
-                                ui.label(egui::RichText::new(vehicle.to_string()).small());
+                                ui.label(
+                                    egui::RichText::new(self.faction.to_string())
+                                        .small()
+                                        .color(text_color),
+                                );
                             });
                         }
                     };
-                }
-            });
+                });
+                row.col_clip(|ui| {
+                    //BR
+                    ui.vertical(|ui| {
+                        ui.add_space(1.5);
+                        if self.asp > 0 {
+                            ui.label(
+                                egui::RichText::new(format!("{}~{}", self.br, self.asp))
+                                    .small()
+                                    .color(text_color),
+                            );
+                        } else {
+                            ui.label(
+                                egui::RichText::new(format!("{}", self.br))
+                                    .small()
+                                    .color(text_color),
+                            );
+                        }
+                    });
+                });
+                row.col_clip(|ui| {
+                    //Class
+                    match ui.ctx().texture_by_name(&self.class.to_string()) {
+                        Some(image) => ui.image(image.id(), img_size),
+                        None => ui.label(""), // ui.label(egui::RichText::new(self.class.to_string()).small()),
+                    };
+                });
+                row.col_clip(|ui| {
+                    //Vehicle
+                    //Override for orbital strike direct kills (can't track when players die from falling
+                    //damage after being thrown airborn by orbital :( )
+                    if self.weapon == "Orbital Strike Uplink" {
+                        if let Some(image) = ui.ctx().texture_by_name("Orbital") {
+                            ui.image(image.id(), img_size);
+                        };
+                    } else if let Some(vehicle) = self.vehicle {
+                        match ui.ctx().texture_by_name(&vehicle.to_string()) {
+                            Some(image) => {
+                                ui.image(image.id(), img_size);
+                            }
+                            None => {
+                                ui.vertical(|ui| {
+                                    ui.add_space(1.5);
+                                    ui.label(egui::RichText::new(vehicle.to_string()).small());
+                                });
+                            }
+                        };
+                    }
+                });
+            }
             row.col_clip(|ui| {
                 //Player Name
                 ui.vertical(|ui| {
@@ -148,33 +166,38 @@ impl Event {
                     ui.label(egui::RichText::new(&self.weapon).small().color(text_color));
                 });
             });
-            row.col(|ui| {
-                //Headshot
-                if self.headshot {
-                    match ui.ctx().texture_by_name("Headshot") {
-                        Some(image) => {
-                            ui.image(image.id(), img_size);
-                        }
-                        None => {
-                            ui.vertical(|ui| {
-                                ui.add_space(1.5);
-                                ui.label(egui::RichText::new("HS!").small().color(text_color));
-                            });
-                        }
-                    };
-                }
-            });
-            row.col_clip(|ui| {
-                //KD ratio
-                ui.vertical(|ui| {
-                    ui.add_space(1.5);
-                    ui.label(
-                        egui::RichText::new(format!("{:.2}", self.kdr))
-                            .small()
-                            .color(text_color),
-                    );
+            if minimal {
+                row.col_clip(|_ui| {});
+                row.col_clip(|_ui| {});
+            } else {
+                row.col(|ui| {
+                    //Headshot
+                    if self.headshot {
+                        match ui.ctx().texture_by_name("Headshot") {
+                            Some(image) => {
+                                ui.image(image.id(), img_size);
+                            }
+                            None => {
+                                ui.vertical(|ui| {
+                                    ui.add_space(1.5);
+                                    ui.label(egui::RichText::new("HS!").small().color(text_color));
+                                });
+                            }
+                        };
+                    }
                 });
-            });
+                row.col_clip(|ui| {
+                    //KD ratio
+                    ui.vertical(|ui| {
+                        ui.add_space(1.5);
+                        ui.label(
+                            egui::RichText::new(format!("{:.2}", self.kdr))
+                                .small()
+                                .color(text_color),
+                        );
+                    });
+                });
+            }
             row.col_clip(|ui| {
                 //Timestamp
                 ui.vertical(|ui| {

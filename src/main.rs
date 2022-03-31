@@ -689,6 +689,67 @@ async fn parse_messages(
                         current_session.log_rankup(latest_br, latest_asp);
                     }
                 }
+            } else if json["payload"]["event_name"].eq("GainExperience") {
+                let xp_id = json["payload"]["experience_id"]
+                    .to_string()
+                    .unquote()
+                    .parse::<i64>()
+                    .unwrap_or(0);
+                let xp_type = ExperienceType::from(xp_id);
+                println!("+{}", json);
+
+                let player_id;
+                {
+                    let session_list_ro = session_list.read().await;
+                    if let Some(current_session) = session_list_ro.active_session() {
+                       player_id = current_session.current_character().character_id;
+                    } else {
+                        continue;
+                    }
+                }
+
+                if !json["payload"]["character_id"].to_string().unquote().eq(&player_id) {
+                    println!("XP {} - {} - OTHER GUYS, SKIP", xp_id, xp_type);
+                    continue;
+                }
+                println!("XP {} - {}", xp_id, xp_type);
+
+                let xp_amount = json["payload"]["amount"].to_string().unquote();
+
+                let timestamp = json["payload"]["timestamp"]
+                    .to_string()
+                    .unquote()
+                    .parse::<i64>()
+                    .unwrap_or(0);
+                let datetime = OffsetDateTime::from_unix_timestamp(timestamp)
+                    .unwrap_or_else(|_| OffsetDateTime::now_utc())
+                    .to_timezone(local_tz);
+                let formatter =
+                    time::format_description::parse("[hour repr:12]:[minute]:[second] [period]")
+                        .unwrap();
+                let formatted_time = datetime
+                    .format(&formatter)
+                    .unwrap_or_else(|_| "?-?-? ?:?:?".into());
+
+                let exp_event = Event {
+                    kind: EventType::ExperienceTick,
+                    faction: Faction::from(0),
+                    br: 0,
+                    asp: 0,
+                    class: Class::from(0),
+                    name: xp_type.to_string(),
+                    weapon: format!("+{}",xp_amount),
+                    weapon_id: "0".to_owned(),
+                    headshot: false,
+                    kdr: 0.0,
+                    timestamp,
+                    vehicle: None,
+                    datetime: formatted_time,
+                };
+                let mut session_list_rw = session_list.write().await;
+                if let Some(current_session) = session_list_rw.active_session_mut() {
+                    current_session.log_event(exp_event).await;
+                }
             } else {
                 println!("+{}", json);
             }

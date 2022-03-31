@@ -211,6 +211,9 @@ pub enum EventType {
     DestroyVehicleFF = 8,
     LoseVehicleFF = 9,
 
+    ExperienceTick = 10,
+    Achievement = 11,
+
     #[num_enum(default)]
     Unknown = 0,
 }
