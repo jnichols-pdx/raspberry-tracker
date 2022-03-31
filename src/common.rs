@@ -509,6 +509,78 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 31> {
     .into_iter()
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
+pub enum WeaponType {
+    Knife = 2,
+    Pistol = 3,
+    Shotgun = 4,
+    SMG = 5,
+    LMG = 6,
+    AR = 7,
+    Carbine = 8,
+    AV_MAX_L = 9,
+    AI_MAX_L = 10,
+    Sniper_Rifle = 11,
+    Scout_Rifle = 12,
+    Rocket_Launcher = 13,
+    Heavy_Weapon = 14,
+    MAX_Flamethrower = 15,
+    MAX_Flak = 16,
+    Grenade = 17,
+    Explosive = 18,
+    Battle_Rifle = 19,
+    AA_MAX_R = 20,
+    AV_MAX_R = 21,
+    AI_MAX_R = 22,
+    AA_MAX_L = 23,
+    Crossbow = 24,
+    Flash_Primary = 109,
+    Galaxy_L = 110,
+    Galaxzxy_Tail = 111,
+    Galaxy_R = 112,
+    Galaxy_Top = 113,
+    Harasser_Top = 114,
+    Liberator_Belly = 115,
+    Liberator_Nose = 116,
+    Liberator_Tail = 117,
+    Lightning_Primary = 118,
+    Magrider_Top = 119,
+    Magrider_Primary = 120,
+    Mosquito_Nose = 121,
+    Mosquito_Wingmount = 122,
+    Prowler_Top = 123,
+    Prowler_Primary = 124,
+    Reaver_Nose = 125,
+    Reaver_Wingmoutn = 126,
+    Scythe_Nose = 127,
+    Scythe_Wingmount = 128,
+    Sunderer_Front = 129,
+    Sunderer_Rear = 130,
+    Vanguard_Top = 131,
+    Vanguard_Primary = 132,
+    Valkyrie_Nose = 138,
+    Ant_Top = 144,
+    Rocklet_Rifle = 147,
+
+    //Kuwa Only - hybrid in that it can be used by Engineers, Medics AND heavy assaults.
+    Hybrid_Rifle = 157,
+
+    Bastion_AA_Turret = 208,
+    Bastion_Pilot_Bombard = 209,
+    Bastion_Missiles = 210,
+    Colossus_Primary = 211,
+    ColossuS_FR = 212,
+    ColossuS_FL = 213,
+    ColossuS_RR = 214,
+    ColossuS_RL = 215,
+
+    //Not available in Census: Dervish, Chimera, Javelin specific weapon Category IDs.
+    #[num_enum(default)]
+    Unknown = 0,
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
 #[repr(i64)]
