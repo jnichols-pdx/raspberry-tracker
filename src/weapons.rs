@@ -3,6 +3,7 @@ use crate::db::DatabaseCore;
 use egui::*;
 use std::collections::BTreeMap;
 
+#[derive(Clone)]
 pub struct Weapon {
     pub name: String,
     pub category: WeaponType,

@@ -232,68 +232,100 @@ impl DatabaseCore {
         }
     }
 
+    pub async fn get_weapon_category(&mut self, weapon_id: &str) -> WeaponType {
+        let weapon_cat;
+        if weapon_id == "0" {
+            weapon_cat = WeaponType::Unknown;
+        } else {
+            let weapons_rw = self.weapons.write().await;
+            match weapons_rw.get(weapon_id) {
+                Some(weapon) => weapon_cat = weapon.category,
+                None => {
+                    weapon_cat =
+                        DatabaseCore::retrieve_and_store_weapon(weapon_id, weapons_rw, &self.conn)
+                            .await
+                            .category
+                }
+            }
+        }
+
+        weapon_cat
+    }
+
     pub async fn get_weapon_name(&mut self, weapon_id: &str) -> String {
-        let mut weapon_name;
+        let weapon_name;
         if weapon_id == "0" {
             weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
         } else {
-            let mut weapons_rw = self.weapons.write().await;
+            let weapons_rw = self.weapons.write().await;
             match weapons_rw.get(weapon_id) {
                 Some(weapon) => weapon_name = weapon.name.to_owned(),
                 None => {
-                    println!("Going to Census for {}", weapon_id);
-                    match lookup_weapon_name(weapon_id) {
-                        Err(whut) => {
-                            println!("{}", whut);
-                            weapon_name = format!("Error finding ({})", weapon_id);
-                        }
-                        Ok(weapon_details) => {
-                            println!("with:");
-                            println!("{:?}", weapon_details);
-                            weapon_name = weapon_details["item_list"][0]["name"]["en"]
-                                .to_string()
-                                .unquote();
-                            if weapon_name == "ul" {
-                                //"null" with the n and l removed by unquote.
-                                //Census didn't actually return anything. Might be a new NSO
-                                //weapon that isn't reporting correctly.
-                                // Known ids that trigger this: 6011526, 6011563, 6011564.
-                                weapon_name = format!("Missing ({})", weapon_id);
-                            } else {
-                                let weapon_category = WeaponType::from(
-                                    weapon_details["item_list"][0]["item_category_id"]
-                                        .to_string()
-                                        .unquote()
-                                        .parse::<i64>()
-                                        .unwrap_or(0),
-                                );
-                                let weapon_entry = Weapon {
-                                    name: weapon_name.to_owned(),
-                                    category: weapon_category,
-                                };
-                                weapons_rw.insert(weapon_id.to_owned(), weapon_entry);
-                                match sqlx::query("INSERT INTO weapons VALUES (?, ?, ?)")
-                                    .bind(weapon_id)
-                                    .bind(weapon_name.to_owned())
-                                    .bind(weapon_category as i64)
-                                    .execute(&self.conn)
-                                    .await
-                                {
-                                    Ok(_) => {}
-                                    Err(err) => {
-                                        println!("Error saving new weapon in DB:");
-                                        println!("{:?}", err);
-                                        std::process::exit(-10);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    weapon_name =
+                        DatabaseCore::retrieve_and_store_weapon(weapon_id, weapons_rw, &self.conn)
+                            .await
+                            .name
                 }
             }
         }
 
         weapon_name.replace('\\', "") //Remove escape characters from API
+    }
+
+    async fn retrieve_and_store_weapon(
+        weapon_id: &str,
+        mut weapons_rw: tokio::sync::RwLockWriteGuard<'_, BTreeMap<String, Weapon>>,
+        conn: &SqlitePool,
+    ) -> Weapon {
+        println!("Going to Census for {}", weapon_id);
+        let mut weapon = Weapon {
+            name: "".to_owned(),
+            category: WeaponType::Unknown,
+        };
+        match lookup_weapon_name(weapon_id) {
+            Err(whut) => {
+                println!("{}", whut);
+                weapon.name = format!("Error finding ({})", weapon_id);
+            }
+            Ok(weapon_details) => {
+                println!("with:");
+                println!("{:?}", weapon_details);
+                weapon.name = weapon_details["item_list"][0]["name"]["en"]
+                    .to_string()
+                    .unquote();
+                if weapon.name == "ul" {
+                    //"null" with the n and l removed by unquote.
+                    //Census didn't actually return anything. Might be a new NSO
+                    //weapon that isn't reporting correctly.
+                    // Known ids that trigger this: 6011526, 6011563, 6011564.
+                    weapon.name = format!("Missing ({})", weapon_id);
+                } else {
+                    weapon.category = WeaponType::from(
+                        weapon_details["item_list"][0]["item_category_id"]
+                            .to_string()
+                            .unquote()
+                            .parse::<i64>()
+                            .unwrap_or(0),
+                    );
+                    weapons_rw.insert(weapon_id.to_owned(), weapon.clone());
+                    match sqlx::query("INSERT INTO weapons VALUES (?, ?, ?)")
+                        .bind(weapon_id)
+                        .bind(weapon.name.to_owned())
+                        .bind(weapon.category as i64)
+                        .execute(conn)
+                        .await
+                    {
+                        Ok(_) => {}
+                        Err(err) => {
+                            println!("Error saving new weapon in DB:");
+                            println!("{:?}", err);
+                            std::process::exit(-10);
+                        }
+                    }
+                }
+            }
+        }
+        weapon
     }
 
     pub async fn init(&mut self) {
