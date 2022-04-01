@@ -72,6 +72,12 @@ impl DatabaseSync {
             .block_on(self.dbc.get_sessions(self.rt.clone()))
             .unwrap()
     }
+    pub fn get_event_modes_sync(&self) -> EventViewMode {
+        self.rt.block_on(self.dbc.get_event_modes())
+    }
+    pub fn set_event_modes_sync(&mut self, new_mode: EventViewMode) {
+        self.rt.block_on(self.dbc.set_event_modes(new_mode));
+    }
     pub fn init_sync(&mut self) {
         self.rt.block_on(self.dbc.init());
     }
@@ -575,5 +581,45 @@ impl DatabaseCore {
             sessions.push(session);
         }
         Ok(SessionList::new_from_vec(sessions))
+    }
+
+    pub async fn get_event_modes(&self) -> EventViewMode {
+        match self
+            .conn
+            .fetch_one("SELECT * FROM raspberrytracker LIMIT 1;")
+            .await
+        {
+            Ok(row) => EventViewMode {
+                kills_deaths: row.get::<bool, usize>(1),
+                experience: row.get::<bool, usize>(2),
+                revives: row.get::<bool, usize>(3),
+                vehicles: row.get::<bool, usize>(4),
+                achievements: row.get::<bool, usize>(5),
+            },
+            Err(e) => {
+                println!("Error loading Event List View Modes:");
+                println!("{:?}", e);
+                std::process::exit(-55);
+            }
+        }
+    }
+
+    pub async fn set_event_modes(&mut self, new_mode: EventViewMode) {
+        match sqlx::query("UPDATE raspberrytracker SET event_kills_death = ?, event_experience = ?, event_revives = ?, event_vehicles = ?, event_achievements = ?;")
+            .bind(new_mode.kills_deaths)
+            .bind(new_mode.experience)
+            .bind(new_mode.revives)
+            .bind(new_mode.vehicles)
+            .bind(new_mode.achievements)
+            .execute(&self.conn)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Error updating Event List View Modes in DB:");
+                println!("{:?}", err);
+                std::process::exit(-56);
+            }
+        }
     }
 }
