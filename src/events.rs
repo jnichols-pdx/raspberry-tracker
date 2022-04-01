@@ -243,7 +243,7 @@ impl EventList {
         }
     }
 
-    pub fn ui(&self, ctx: &egui::Context) {
+    pub fn ui(&self, ctx: &egui::Context, event_mode: EventViewMode) {
         egui::SidePanel::right("events_panel")
             .min_width(387.0)
             .show(ctx, |ui| {
@@ -287,7 +287,24 @@ impl EventList {
                     })
                     .body(|mut body| {
                         for event in self.events.iter().rev() {
-                            event.ui(&mut body);
+                            let shown = match event.kind {
+                                EventType::Death
+                                | EventType::Kill
+                                | EventType::TeamKill
+                                | EventType::TeamDeath
+                                | EventType::Suicide => event_mode.kills_deaths,
+                                EventType::DestroyVehicle
+                                | EventType::LoseVehicle
+                                | EventType::DestroyVehicleFF
+                                | EventType::LoseVehicleFF => event_mode.vehicles,
+                                EventType::ExperienceTick => event_mode.experience,
+                                EventType::Achievement => event_mode.achievements,
+                                EventType::Revived => event_mode.revives,
+                                EventType::Unknown => true,
+                            };
+                            if shown {
+                                event.ui(&mut body);
+                            }
                         }
                     });
 

@@ -588,7 +588,7 @@ pub enum WeaponType {
 
 pub fn big_print_num(number: &str) {
 
-    println!("");
+    println!();
     for slice in 0..=7 {
         for numeral in number.chars() {
             match numeral {
@@ -607,9 +607,9 @@ pub fn big_print_num(number: &str) {
                 _ => print!(" █████ ")
             }
         }
-        println!("");
+        println!();
     }
-    println!("");
+    println!();
 
     fn print_0(slice: usize) {
         match slice {
@@ -764,4 +764,13 @@ pub fn big_print_num(number: &str) {
             _ => {},
         }
     }
+}
+
+#[derive(Copy, Clone)]
+pub struct EventViewMode {
+    pub kills_deaths: bool,
+    pub experience: bool,
+    pub revives: bool,
+    pub vehicles: bool,
+    pub achievements: bool,
 }

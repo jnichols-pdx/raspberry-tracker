@@ -21,6 +21,7 @@ pub struct TrackerApp {
     pub ws_out: mpsc::Sender<Message>,
     pub session_count: usize,
     pub images: Option<Vec<TextureHandle>>,
+    pub event_list_mode: EventViewMode,
 }
 
 impl TrackerApp {
@@ -41,6 +42,8 @@ impl TrackerApp {
             initial_count = session_list_rw.len();
         }
 
+        let event_list_mode = db.get_event_modes_sync();
+
         let mut app_ui = Self {
             in_character_ui: true,
             char_list,
@@ -52,6 +55,7 @@ impl TrackerApp {
             ws_out,
             session_count: initial_count,
             images: None,
+            event_list_mode,
         };
 
         if let Some(callback) = context_cb.take() {
@@ -175,6 +179,57 @@ impl epi::App for TrackerApp {
                         frame.quit();
                     }
                 });
+                ui.menu_button("View", |ui| {
+                    if self.event_list_mode.kills_deaths {
+                        if ui.button("Hide Kills/Death Events").clicked() {
+                            self.event_list_mode.kills_deaths = false;
+                            self.db.set_event_modes_sync(self.event_list_mode);
+                        }
+                    } else if ui.button("Show Kills/Death Events").clicked() {
+                        self.event_list_mode.kills_deaths = true;
+                        self.db.set_event_modes_sync(self.event_list_mode);
+                    }
+
+                    if self.event_list_mode.experience {
+                        if ui.button("Hide Experience Gain Events").clicked() {
+                            self.event_list_mode.experience = false;
+                            self.db.set_event_modes_sync(self.event_list_mode);
+                        }
+                    } else if ui.button("Show Experience Gain Events").clicked() {
+                        self.event_list_mode.experience = true;
+                        self.db.set_event_modes_sync(self.event_list_mode);
+                    }
+
+                    if self.event_list_mode.revives {
+                        if ui.button("Hide Revive Events").clicked() {
+                            self.event_list_mode.revives = false;
+                            self.db.set_event_modes_sync(self.event_list_mode);
+                        }
+                    } else if ui.button("Show Revive Events").clicked() {
+                        self.event_list_mode.revives = true;
+                        self.db.set_event_modes_sync(self.event_list_mode);
+                    }
+
+                    if self.event_list_mode.vehicles {
+                        if ui.button("Hide Vehicle Destroyed Events").clicked() {
+                            self.event_list_mode.vehicles = false;
+                            self.db.set_event_modes_sync(self.event_list_mode);
+                        }
+                    } else if ui.button("Show Vehicle Destroyed Events").clicked() {
+                        self.event_list_mode.vehicles = true;
+                        self.db.set_event_modes_sync(self.event_list_mode);
+                    }
+
+                    if self.event_list_mode.achievements {
+                        if ui.button("Hide Achievements Events").clicked() {
+                            self.event_list_mode.achievements = false;
+                            self.db.set_event_modes_sync(self.event_list_mode);
+                        }
+                    } else if ui.button("Show Achievements Events").clicked() {
+                        self.event_list_mode.achievements = true;
+                        self.db.set_event_modes_sync(self.event_list_mode);
+                    }
+                });
             });
         });
 
@@ -213,7 +268,7 @@ impl epi::App for TrackerApp {
         } else {
             let session_list_ro = self.session_list.blocking_read();
             if let Some(session) = session_list_ro.selected() {
-                session.ui(ctx);
+                session.ui(ctx, self.event_list_mode);
             }
         }
     }
