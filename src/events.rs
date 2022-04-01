@@ -72,6 +72,10 @@ impl Event {
                 text_color = Color32::from_rgb(255, 255, 255);
                 minimal = true;
             }
+            EventType::Revived => {
+                bg_color = Color32::from_rgb(200, 200, 200);
+                text_color = Color32::from_rgb(0, 0, 0);
+            }
             _ => {
                 bg_color = Color32::from_rgb(80, 80, 80);
                 text_color = Color32::from_rgb(255, 255, 255);

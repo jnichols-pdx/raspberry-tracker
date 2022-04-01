@@ -709,15 +709,6 @@ async fn parse_messages(
                         continue;
                     }
                 }
-
-                if !json["payload"]["character_id"].to_string().unquote().eq(&player_id) {
-                    println!("XP {} - {} - OTHER GUYS, SKIP", xp_id, xp_type);
-                    continue;
-                }
-                println!("XP {} - {}", xp_id, xp_type);
-
-                let xp_amount = json["payload"]["amount"].to_string().unquote();
-
                 let timestamp = json["payload"]["timestamp"]
                     .to_string()
                     .unquote()
@@ -733,24 +724,139 @@ async fn parse_messages(
                     .format(&formatter)
                     .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
-                let exp_event = Event {
-                    kind: EventType::ExperienceTick,
-                    faction: Faction::from(0),
-                    br: 0,
-                    asp: 0,
-                    class: Class::from(0),
-                    name: xp_type.to_string(),
-                    weapon: format!("+{}",xp_amount),
-                    weapon_id: "0".to_owned(),
-                    headshot: false,
-                    kdr: 0.0,
-                    timestamp,
-                    vehicle: None,
-                    datetime: formatted_time,
-                };
+                let new_event;
+
+                if !json["payload"]["character_id"].to_string().unquote().eq(&player_id) {
+                    //Some events we do care about have our player as the target in 'other_id'
+                    //rather than as the reveiver of the XP itself. Check for things like being
+                    //revived.
+                    if json["payload"]["other_id"].to_string().unquote().eq(&player_id) {
+                        if xp_type == ExperienceType::Revive {
+                            //WE have been revived. Log a Revived event instead.
+                            let mut name =
+                                format!("Unknown ({})", json["payload"]["character_id"]
+                                    .to_string()
+                                    .unquote()
+                                );
+                            let mut br = 0;
+                            let mut asp = 0;
+                            let mut kdr = 0.0;
+                            let mut faction = Faction::Unknown;
+                            let mut class = Class::Unknown;
+                            match lookup_new_char_details(
+                                &json["payload"]["character_id"].to_string().unquote(),
+                            ) {
+                                Err(whut) => println!("{}", whut),
+                                Ok(details) => {
+                                    println!("YOUR LIFE SAVER:");
+                                    println!("{:?}", details);
+                                    let faction_num = details["character_list"][0]["faction_id"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<i64>()
+                                        .unwrap_or(0);
+                                    faction = Faction::from(faction_num);
+                                    class = Class::from(
+                                        json["payload"]["character_loadout_id"]
+                                            .to_string()
+                                            .unquote()
+                                            .parse::<i64>()
+                                            .unwrap_or(0),
+                                    );
+                                    let player_name = details["character_list"][0]["name"]["first"].to_string().unquote();
+                                    if details["character_list"][0]["outfit"].is_object() {
+                                        let outfit_alias = details["character_list"][0]["outfit"]["alias"].to_string().unquote();
+                                        let outfit_name = details["character_list"][0]["outfit"]["name"].to_string().unquote();
+                                        if outfit_alias.is_empty() {
+                                            name = format!("[{}] {}", outfit_name, player_name);
+                                        } else {
+                                            name = format!("[{}] {}", outfit_alias, player_name);
+                                        }
+                                    } else {
+                                        name = player_name;
+                                    }
+                                    br = details["character_list"][0]["battle_rank"]["value"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<u8>()
+                                        .unwrap_or(0);
+                                    asp = details["character_list"][0]["prestige_level"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<u8>()
+                                        .unwrap_or(0);
+                                    let kill_count = details["character_list"][0]["kills"]["all_time"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<u32>()
+                                        .unwrap_or(1);
+                                    let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"]
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<u32>()
+                                        .unwrap_or(1);
+                                    kdr = kill_count as f32 / death_count as f32;
+                                }
+                            }
+
+                            new_event = Event {
+                                kind: EventType::Revived,
+                                faction,
+                                br,
+                                asp,
+                                class,
+                                name,
+                                weapon: "Revived You".to_owned(),
+                                weapon_id: "0".to_owned(),
+                                headshot: false,
+                                kdr,
+                                timestamp,
+                                vehicle: None,
+                                datetime: formatted_time,
+                            };
+                        } else {
+                            //Was someone else's XP pertaining to us, but of a type we don't care
+                            //about.
+                            println!("XP {} - {} - OTHER GUYS?? SKIP", xp_id, xp_type);
+                            continue;
+                        }
+                    } else {
+                        println!("XP {} - {} - Doesn't concern us, why did the API send us this XP tick??? ", xp_id, xp_type);
+                        continue;
+                    }
+                } else {
+                    println!("XP {} - {}", xp_id, xp_type);
+                    let xp_amount = json["payload"]["amount"].to_string().unquote();
+
+
+                    new_event = Event {
+                        kind: EventType::ExperienceTick,
+                        faction: Faction::from(0),
+                        br: 0,
+                        asp: 0,
+                        class: Class::from(0),
+                        name: xp_type.to_string(),
+                        weapon: format!("+{}",xp_amount),
+                        weapon_id: "0".to_owned(),
+                        headshot: false,
+                        kdr: 0.0,
+                        timestamp,
+                        vehicle: None,
+                        datetime: formatted_time,
+                    };
+                }
+
+                let mut current_session_id = None;
+                let mut event_ordering = 0;
+
                 let mut session_list_rw = session_list.write().await;
                 if let Some(current_session) = session_list_rw.active_session_mut() {
-                    current_session.log_event(exp_event).await;
+                    event_ordering = current_session.log_event(new_event.clone()).await;
+                    ui_context.request_repaint();
+                    current_session_id = current_session.get_id();
+                }
+                if let Some(sess_id) = current_session_id {
+                    db.dbc.record_event(&new_event, event_ordering, sess_id).await;
                 }
             } else {
                 println!("+{}", json);

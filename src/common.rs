@@ -213,6 +213,7 @@ pub enum EventType {
 
     ExperienceTick = 10,
     Achievement = 11,
+    Revived = 12,
 
     #[num_enum(default)]
     Unknown = 0,
