@@ -33,6 +33,7 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocket
 //EGUI offers both native and web assembly compilation targets, I don't intend to use WASM.
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
+    big_print_num("0.3.0");
     let rt = Runtime::new().unwrap();
     let rth = rt.handle();
 
@@ -698,6 +699,14 @@ async fn parse_messages(
                     .parse::<i64>()
                     .unwrap_or(0);
                 let xp_type = ExperienceType::from(xp_id);
+
+                //More visible indication in console - I hope to catch these out of the corner of
+                //my eye while playing so I can correlate undocumented XP gain IDs to what was
+                //happening in game to maybe identify what they represent.
+                if xp_type.is_missing() || xp_type == ExperienceType::Unknown {
+                    big_print_num(&json["payload"]["experience_id"].to_string());
+                }
+
                 println!("+{}", json);
 
                 let player_id;
