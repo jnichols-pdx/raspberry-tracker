@@ -585,3 +585,182 @@ pub enum WeaponType {
 }
 
 
+pub fn big_print_num(number: &str) {
+
+    println!("");
+    for slice in 0..=7 {
+        for numeral in number.chars() {
+            match numeral {
+                '0' => print_0(slice),
+                '1' => print_1(slice),
+                '2' => print_2(slice),
+                '3' => print_3(slice),
+                '4' => print_4(slice),
+                '5' => print_5(slice),
+                '6' => print_6(slice),
+                '7' => print_7(slice),
+                '8' => print_8(slice),
+                '9' => print_9(slice),
+                ' ' => print!("       "),
+                '.' => print_dot(slice),
+                _ => print!(" █████ ")
+            }
+        }
+        println!("");
+    }
+    println!("");
+
+    fn print_0(slice: usize) {
+        match slice {
+            0 => print!("  ###  "),
+            1 => print!(" #   # "),
+            2 => print!(" #   # "),
+            3 => print!(" # | # "),
+            4 => print!(" # | # "),
+            5 => print!(" #   # "),
+            6 => print!(" #   # "),
+            7 => print!("  ###  "),
+            _ => {},
+        }
+    }
+
+    fn print_1(slice: usize) {
+        match slice {
+            0 => print!("   #   "),
+            1 => print!("  ##   "),
+            2 => print!("   #   "),
+            3 => print!("   #   "),
+            4 => print!("   #   "),
+            5 => print!("   #   "),
+            6 => print!("   #   "),
+            7 => print!("  ###  "),
+            _ => {},
+        }
+    }
+
+    fn print_2(slice: usize) {
+        match slice {
+            0 => print!("  ###  "),
+            1 => print!(" #   # "),
+            2 => print!("     # "),
+            3 => print!("    #  "),
+            4 => print!("   #   "),
+            5 => print!("  #    "),
+            6 => print!(" #     "),
+            7 => print!(" ##### "),
+            _ => {},
+        }
+    }
+
+    fn print_3(slice: usize) {
+        match slice {
+            0 => print!("  ###  "),
+            1 => print!(" #   # "),
+            2 => print!("     # "),
+            3 => print!("   ##  "),
+            4 => print!("     # "),
+            5 => print!("     # "),
+            6 => print!(" #   # "),
+            7 => print!("  ###  "),
+            _ => {},
+        }
+    }
+
+    fn print_4(slice: usize) {
+        match slice {
+            0 => print!("    #  "),
+            1 => print!("   ##  "),
+            2 => print!("  # #  "),
+            3 => print!(" #  #  "),
+            4 => print!(" ##### "),
+            5 => print!("    #  "),
+            6 => print!("    #  "),
+            7 => print!("    #  "),
+            _ => {},
+        }
+    }
+
+    fn print_5(slice: usize) {
+        match slice {
+            0 => print!(" ##### "),
+            1 => print!(" #     "),
+            2 => print!(" #     "),
+            3 => print!(" ####  "),
+            4 => print!("     # "),
+            5 => print!("     # "),
+            6 => print!(" #   # "),
+            7 => print!("  ###  "),
+            _ => {},
+        }
+    }
+
+    fn print_6(slice: usize) {
+        match slice {
+            0 => print!("   ##  "),
+            1 => print!("  #    "),
+            2 => print!(" #     "),
+            3 => print!(" ####  "),
+            4 => print!(" #   # "),
+            5 => print!(" #   # "),
+            6 => print!(" #   # "),
+            7 => print!("  ###  "),
+            _ => {},
+        }
+    }
+
+    fn print_7(slice: usize) {
+        match slice {
+            0 => print!(" ##### "),
+            1 => print!("     # "),
+            2 => print!("    #  "),
+            3 => print!("    #  "),
+            4 => print!("   #   "),
+            5 => print!("   #   "),
+            6 => print!("  #    "),
+            7 => print!("  #    "),
+            _ => {},
+        }
+    }
+
+    fn print_8(slice: usize) {
+        match slice {
+            0 => print!("  ###  "),
+            1 => print!(" #   # "),
+            2 => print!(" #   # "),
+            3 => print!("  ###  "),
+            4 => print!(" #   # "),
+            5 => print!(" #   # "),
+            6 => print!(" #   # "),
+            7 => print!("  ###  "),
+            _ => {},
+        }
+    }
+
+    fn print_9(slice: usize) {
+        match slice {
+            0 => print!("  ###  "),
+            1 => print!(" #   # "),
+            2 => print!(" #   # "),
+            3 => print!(" #   # "),
+            4 => print!("  #### "),
+            5 => print!("     # "),
+            6 => print!("    #  "),
+            7 => print!("  ##   "),
+            _ => {},
+        }
+    }
+
+    fn print_dot(slice: usize) {
+        match slice {
+            0 => print!("    "),
+            1 => print!("    "),
+            2 => print!("    "),
+            3 => print!("    "),
+            4 => print!("    "),
+            5 => print!("    "),
+            6 => print!(" ## "),
+            7 => print!(" ## "),
+            _ => {},
+        }
+    }
+}
