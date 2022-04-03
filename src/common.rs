@@ -437,6 +437,12 @@ pub enum Class {
     Unknown = 0,
 }
 
+impl Class {
+    pub fn is_max(&self) -> bool {
+        matches!(self, Class::NCMax | Class::TRMax | Class::VSMax)
+    }
+}
+
 impl std::fmt::Display for Class {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
