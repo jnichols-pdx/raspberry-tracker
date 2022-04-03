@@ -20,6 +20,24 @@ pub struct Event {
 }
 
 impl Event {
+    pub fn achieved(text: &str, timestamp: i64, datetime: String) -> Event {
+        Event {
+            kind: EventType::Achievement,
+            faction: Faction::Unknown,
+            br: 0,
+            asp: 0,
+            class: Class::Unknown,
+            name: text.to_owned(),
+            weapon: "".to_owned(),
+            weapon_id: "0".to_owned(),
+            headshot: false,
+            kdr: 0.0,
+            timestamp,
+            vehicle: None,
+            datetime,
+        }
+    }
+
     pub fn ui(&self, body: &mut egui_extras::TableBody) {
         let img_size = (14.0, 14.0);
         let bg_color;
