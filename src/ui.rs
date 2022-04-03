@@ -120,6 +120,13 @@ impl TrackerApp {
             &cc.egui_ctx,
         );
 
+        {
+            let session_list_ro = app_ui.session_list.blocking_read();
+            if session_list_ro.active_session().is_some() {
+                app_ui.in_character_ui = false;
+            }
+        }
+
         app_ui
     }
 
