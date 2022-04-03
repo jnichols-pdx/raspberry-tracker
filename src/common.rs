@@ -591,9 +591,7 @@ pub enum WeaponType {
     Unknown = 0,
 }
 
-
 pub fn big_print_num(number: &str) {
-
     println!();
     for slice in 0..=7 {
         for numeral in number.chars() {
@@ -610,7 +608,7 @@ pub fn big_print_num(number: &str) {
                 '9' => print_9(slice),
                 ' ' => print!("       "),
                 '.' => print_dot(slice),
-                _ => print!(" █████ ")
+                _ => print!(" █████ "),
             }
         }
         println!();
@@ -627,7 +625,7 @@ pub fn big_print_num(number: &str) {
             5 => print!(" #   # "),
             6 => print!(" #   # "),
             7 => print!("  ###  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -641,7 +639,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("   #   "),
             6 => print!("   #   "),
             7 => print!("  ###  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -655,7 +653,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("  #    "),
             6 => print!(" #     "),
             7 => print!(" ##### "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -669,7 +667,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("     # "),
             6 => print!(" #   # "),
             7 => print!("  ###  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -683,7 +681,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("    #  "),
             6 => print!("    #  "),
             7 => print!("    #  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -697,7 +695,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("     # "),
             6 => print!(" #   # "),
             7 => print!("  ###  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -711,7 +709,7 @@ pub fn big_print_num(number: &str) {
             5 => print!(" #   # "),
             6 => print!(" #   # "),
             7 => print!("  ###  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -725,7 +723,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("   #   "),
             6 => print!("  #    "),
             7 => print!("  #    "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -739,7 +737,7 @@ pub fn big_print_num(number: &str) {
             5 => print!(" #   # "),
             6 => print!(" #   # "),
             7 => print!("  ###  "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -753,7 +751,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("     # "),
             6 => print!("    #  "),
             7 => print!("  ##   "),
-            _ => {},
+            _ => {}
         }
     }
 
@@ -767,7 +765,7 @@ pub fn big_print_num(number: &str) {
             5 => print!("    "),
             6 => print!(" ## "),
             7 => print!(" ## "),
-            _ => {},
+            _ => {}
         }
     }
 }
