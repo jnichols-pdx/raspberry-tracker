@@ -1,3 +1,4 @@
+mod achievements;
 mod character;
 mod character_list;
 mod common;
@@ -10,6 +11,7 @@ mod ui;
 mod weapons;
 
 //use std::env;
+use crate::achievements::*;
 use crate::character::*;
 use crate::character_list::*;
 use crate::common::*;
@@ -66,6 +68,7 @@ fn main() {
     };
 
     let db = DatabaseCore::new(db_pool);
+    let achievements = AchievementEngine::new(db.clone());
 
     let mut sync_db = DatabaseSync {
         dbc: db,
@@ -159,6 +162,7 @@ fn main() {
         session_list.clone(),
         rx_context_from_ui,
         sync_db.clone(),
+        achievements,
     ));
 
     eframe::run_native(
@@ -186,6 +190,7 @@ async fn websocket_threads(
     session_list: Arc<RwLock<SessionList>>,
     rx_ui_context: oneshot::Receiver<egui::Context>,
     db: DatabaseSync,
+    achievements: AchievementEngine,
 ) {
     let ws_url = url::Url::parse(
         "wss://push.planetside2.com/streaming?environment=ps2&service-id=s:raspberrytracker",
@@ -205,6 +210,7 @@ async fn websocket_threads(
         session_list.clone(),
         ui_context.clone(),
         db.clone(),
+        achievements,
     ));
     let ticker_task = tokio::spawn(ticker(ui_context));
     let session_long_update_task = tokio::spawn(session_historical_update(session_list.clone()));
@@ -277,6 +283,7 @@ async fn parse_messages(
     session_list: Arc<RwLock<SessionList>>,
     ui_context: egui::Context,
     mut db: DatabaseSync,
+    mut achievements: AchievementEngine,
 ) {
     let mut parsing = true;
     let local_tz_q = time_tz::system::get_timezone();
@@ -411,6 +418,8 @@ async fn parse_messages(
                 } else {
                     Some(Vehicle::from(vehicle_num))
                 };
+
+                let mut new_achievements = None;
 
                 let mut attacker = false;
                 let mut some_player_char: Option<FullCharacter> = None;
@@ -624,6 +633,55 @@ async fn parse_messages(
                         continue;
                     }
                 }
+                let headshot = json["payload"]["is_headshot"]
+                    .to_string()
+                    .unquote()
+                    .parse::<u8>()
+                    .unwrap_or(0)
+                    > 0;
+
+                //Notify achievements progress tracker of what happened so apropriate achievements can be recorded.
+                match event_type {
+                    EventType::Death => {
+                        let killer_id = json["payload"]["attacker_character_id"]
+                            .to_string()
+                            .unquote();
+                        new_achievements = achievements.tally_death(
+                            timestamp,
+                            &formatted_time,
+                            killer_id,
+                            vehicle,
+                            &weapon_id,
+                        );
+                    }
+                    EventType::Suicide => {
+                        new_achievements = achievements
+                            .tally_suicide(&weapon_id, timestamp, &formatted_time)
+                            .await;
+                    }
+                    EventType::Kill => {
+                        let victim_id = json["payload"]["character_id"].to_string().unquote();
+                        new_achievements = achievements
+                            .tally_kill(
+                                timestamp,
+                                &formatted_time,
+                                victim_id,
+                                vehicle,
+                                &weapon_id,
+                                headshot,
+                                ratio,
+                                class,
+                                br,
+                                asp,
+                            )
+                            .await;
+                    }
+                    EventType::DestroyVehicle => {}
+                    EventType::TeamKill => {
+                        new_achievements = achievements.tally_teamkill(timestamp, &formatted_time);
+                    }
+                    _ => {}
+                }
 
                 //Assemble it all and save.
                 let event = Event {
@@ -635,31 +693,35 @@ async fn parse_messages(
                     name,
                     weapon: weapon_name,
                     weapon_id,
-                    headshot: json["payload"]["is_headshot"]
-                        .to_string()
-                        .unquote()
-                        .parse::<u8>()
-                        .unwrap_or(0)
-                        > 0,
+                    headshot,
                     kdr: ratio,
                     timestamp,
                     vehicle,
                     datetime: formatted_time,
                 };
 
-                let mut current_session_id = None;
-                let mut event_ordering = 0;
                 {
                     let mut session_list_rw = session_list.write().await;
                     if let Some(current_session) = session_list_rw.active_session_mut() {
-                        event_ordering = current_session.log_event(event.clone()).await;
+                        let event_ordering = current_session.log_event(event.clone()).await;
                         ui_context.request_repaint();
-                        current_session_id = current_session.get_id();
+                        let current_session_id = current_session.get_id();
+                        if let Some(sess_id) = current_session_id {
+                            db.dbc.record_event(&event, event_ordering, sess_id).await;
+                        }
+                        if let Some(achievement_list) = new_achievements {
+                            for event in achievement_list {
+                                let achievement_ordering =
+                                    current_session.log_event(event.clone()).await;
+                                ui_context.request_repaint();
+                                if let Some(sess_id) = current_session_id {
+                                    db.dbc
+                                        .record_event(&event, achievement_ordering, sess_id)
+                                        .await;
+                                }
+                            }
+                        }
                     }
-                }
-
-                if let Some(sess_id) = current_session_id {
-                    db.dbc.record_event(&event, event_ordering, sess_id).await;
                 }
             } else if json["payload"]["event_name"].eq("PlayerLogout") {
                 println!("offline!");
@@ -713,7 +775,7 @@ async fn parse_messages(
                 {
                     let session_list_ro = session_list.read().await;
                     if let Some(current_session) = session_list_ro.active_session() {
-                       player_id = current_session.current_character().character_id;
+                        player_id = current_session.current_character().character_id;
                     } else {
                         continue;
                     }
@@ -735,18 +797,25 @@ async fn parse_messages(
 
                 let new_event;
 
-                if !json["payload"]["character_id"].to_string().unquote().eq(&player_id) {
+                if !json["payload"]["character_id"]
+                    .to_string()
+                    .unquote()
+                    .eq(&player_id)
+                {
                     //Some events we do care about have our player as the target in 'other_id'
                     //rather than as the reveiver of the XP itself. Check for things like being
                     //revived.
-                    if json["payload"]["other_id"].to_string().unquote().eq(&player_id) {
+                    if json["payload"]["other_id"]
+                        .to_string()
+                        .unquote()
+                        .eq(&player_id)
+                    {
                         if xp_type == ExperienceType::Revive {
                             //WE have been revived. Log a Revived event instead.
-                            let mut name =
-                                format!("Unknown ({})", json["payload"]["character_id"]
-                                    .to_string()
-                                    .unquote()
-                                );
+                            let mut name = format!(
+                                "Unknown ({})",
+                                json["payload"]["character_id"].to_string().unquote()
+                            );
                             let mut br = 0;
                             let mut asp = 0;
                             let mut kdr = 0.0;
@@ -772,10 +841,18 @@ async fn parse_messages(
                                             .parse::<i64>()
                                             .unwrap_or(0),
                                     );
-                                    let player_name = details["character_list"][0]["name"]["first"].to_string().unquote();
+                                    let player_name = details["character_list"][0]["name"]["first"]
+                                        .to_string()
+                                        .unquote();
                                     if details["character_list"][0]["outfit"].is_object() {
-                                        let outfit_alias = details["character_list"][0]["outfit"]["alias"].to_string().unquote();
-                                        let outfit_name = details["character_list"][0]["outfit"]["name"].to_string().unquote();
+                                        let outfit_alias = details["character_list"][0]["outfit"]
+                                            ["alias"]
+                                            .to_string()
+                                            .unquote();
+                                        let outfit_name = details["character_list"][0]["outfit"]
+                                            ["name"]
+                                            .to_string()
+                                            .unquote();
                                         if outfit_alias.is_empty() {
                                             name = format!("[{}] {}", outfit_name, player_name);
                                         } else {
@@ -794,12 +871,14 @@ async fn parse_messages(
                                         .unquote()
                                         .parse::<u8>()
                                         .unwrap_or(0);
-                                    let kill_count = details["character_list"][0]["kills"]["all_time"]
+                                    let kill_count = details["character_list"][0]["kills"]
+                                        ["all_time"]
                                         .to_string()
                                         .unquote()
                                         .parse::<u32>()
                                         .unwrap_or(1);
-                                    let death_count = details["character_list"][0]["weapon_deaths"]["value_forever"]
+                                    let death_count = details["character_list"][0]["weapon_deaths"]
+                                        ["value_forever"]
                                         .to_string()
                                         .unquote()
                                         .parse::<u32>()
@@ -807,6 +886,8 @@ async fn parse_messages(
                                     kdr = kill_count as f32 / death_count as f32;
                                 }
                             }
+
+                            achievements.tally_revive(timestamp);
 
                             new_event = Event {
                                 kind: EventType::Revived,
@@ -837,7 +918,6 @@ async fn parse_messages(
                     println!("XP {} - {}", xp_id, xp_type);
                     let xp_amount = json["payload"]["amount"].to_string().unquote();
 
-
                     new_event = Event {
                         kind: EventType::ExperienceTick,
                         faction: Faction::from(0),
@@ -845,7 +925,7 @@ async fn parse_messages(
                         asp: 0,
                         class: Class::from(0),
                         name: xp_type.to_string(),
-                        weapon: format!("+{}",xp_amount),
+                        weapon: format!("+{}", xp_amount),
                         weapon_id: "0".to_owned(),
                         headshot: false,
                         kdr: 0.0,
@@ -865,7 +945,9 @@ async fn parse_messages(
                     current_session_id = current_session.get_id();
                 }
                 if let Some(sess_id) = current_session_id {
-                    db.dbc.record_event(&new_event, event_ordering, sess_id).await;
+                    db.dbc
+                        .record_event(&new_event, event_ordering, sess_id)
+                        .await;
                 }
             } else {
                 println!("+{}", json);
