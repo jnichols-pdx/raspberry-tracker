@@ -337,6 +337,7 @@ pub enum ExperienceType {
     Player_Kill_by_Valkyrie_Gunner = 515,
     Missing_516 = 516,
     Missing_517 = 517,
+    Missing_612 = 612,
     Flash_Kill_by_Valkyrie_Gunner = 520,
     Sunderer_Kill_by_Valkyrie_Gunner = 521,
     Lightning_Kill_by_Valkyrie_Gunner = 522,
@@ -479,7 +480,7 @@ pub enum ExperienceType {
     Sunderer_Kill_by_ANT_Gunner = 688,
     Valkyrie_Kill_by_ANT_Gunner = 689,
     Vanguard_Kill_by_ANT_Gunner = 690,
-    
+
     //HIVE mechanics are no longer in the game. The Census API does define the following XP gain ID
     //numbers, but we are very unlikely to encounter these in the future.
     /*
@@ -1214,7 +1215,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
     Missing_1560 = 1560,
-    Missing_1565 = 1565,
+    Missing_1565 = 1565, //Probably Destroy Chimera from Harasser gunner?
     Missing_1567 = 1567,
     Missing_1568 = 1568,
 
@@ -1307,6 +1308,7 @@ impl ExperienceType {
                 | ExperienceType::Missing_421
                 | ExperienceType::Missing_516
                 | ExperienceType::Missing_517
+                | ExperienceType::Missing_612
                 | ExperienceType::Missing_668
                 | ExperienceType::Missing_1560
                 | ExperienceType::Missing_1565
@@ -1331,7 +1333,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Revenge_Kill => write!(f, "Revenge Kill XP"),
             ExperienceType::Control_Point_Defend => write!(f, "Control Point Defend XP"),
             ExperienceType::Control_Point_Attack => write!(f, "Control Point Attack XP"),
-            //ExperienceType::Facility_Captured_Not_Used => write!(f, ""),
+            ExperienceType::Facility_Captured_Not_Used => write!(f, "Facility Capture XP"),
             ExperienceType::Destroy_Secondary_Objective => write!(f, "Destroy Secondary Objective XP"),
             ExperienceType::Destroy_SecondaryObjectiveAssist => write!(f, "Assist Destroy 2nd Objective XP"),
             ExperienceType::Vehicle_Destruction_Flash => write!(f, "Flash Destroy XP"),
@@ -1881,27 +1883,28 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Containment_Site_Gate_Shield_Gen_Repair => write!(f, "Repair Gate Shield Generator XP"),
             ExperienceType::Unknown => write!(f, "??? XP"),
             ExperienceType::Missing_373 => write!(f, "Missing (373) XP"),
-            ExperienceType::Missing_378 =>  write!(f, "Missing (378) XP"),
-            ExperienceType::Missing_379 =>  write!(f, "Missing (379) XP"),
-            ExperienceType::Missing_386 =>  write!(f, "Missing (386) XP"),
-            ExperienceType::Missing_387 =>  write!(f, "Missing (387) XP"),
-            ExperienceType::Missing_388 =>  write!(f, "Missing (388) XP"),
-            ExperienceType::Missing_389 =>  write!(f, "Missing (389) XP"),
-            ExperienceType::Missing_396 =>  write!(f, "Missing (396) XP"),
-            ExperienceType::Missing_400 =>  write!(f, "Missing (400) XP"),
-            ExperienceType::Missing_402 =>  write!(f, "Missing (402) XP"),
-            ExperienceType::Missing_403 =>  write!(f, "Missing (403) XP"),
-            ExperienceType::Missing_404 =>  write!(f, "Missing (404) XP"),
-            ExperienceType::Missing_405 =>  write!(f, "Missing (405) XP"),
-            ExperienceType::Missing_421 =>  write!(f, "Missing (421) XP"),
-            ExperienceType::Missing_516 =>  write!(f, "Missing (516) XP"),
-            ExperienceType::Missing_517 =>  write!(f, "Missing (517) XP"),
-            ExperienceType::Missing_668 =>  write!(f, "Missing (668) XP"),
-            ExperienceType::Missing_1560 =>  write!(f, "Missing (1560) XP"),
-            ExperienceType::Missing_1565 =>  write!(f, "Missing (1565) XP"),
-            ExperienceType::Missing_1567 =>  write!(f, "Missing (1567) XP"),
-            ExperienceType::Missing_1568 =>  write!(f, "Missing (1568) XP"),
-            other => write!(f,"unused xp ({})", *other as i64),
+            ExperienceType::Missing_378 => write!(f, "Missing (378) XP"),
+            ExperienceType::Missing_379 => write!(f, "Missing (379) XP"),
+            ExperienceType::Missing_386 => write!(f, "Missing (386) XP"),
+            ExperienceType::Missing_387 => write!(f, "Missing (387) XP"),
+            ExperienceType::Missing_388 => write!(f, "Missing (388) XP"),
+            ExperienceType::Missing_389 => write!(f, "Missing (389) XP"),
+            ExperienceType::Missing_396 => write!(f, "Missing (396) XP"),
+            ExperienceType::Missing_400 => write!(f, "Missing (400) XP"),
+            ExperienceType::Missing_402 => write!(f, "Missing (402) XP"),
+            ExperienceType::Missing_403 => write!(f, "Missing (403) XP"),
+            ExperienceType::Missing_404 => write!(f, "Missing (404) XP"),
+            ExperienceType::Missing_405 => write!(f, "Missing (405) XP"),
+            ExperienceType::Missing_421 => write!(f, "Missing (421) XP"),
+            ExperienceType::Missing_516 => write!(f, "Missing (516) XP"),
+            ExperienceType::Missing_517 => write!(f, "Missing (517) XP"),
+            ExperienceType::Missing_612 => write!(f, "Missing (612) XP"),
+            ExperienceType::Missing_668 => write!(f, "Missing (668) XP"),
+            ExperienceType::Missing_1560 => write!(f, "Missing (1560) XP"),
+            ExperienceType::Missing_1565 => write!(f, "Missing (1565) XP"),
+            ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
+            ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
+            other => write!(f, "unused xp ({})", *other as i64),
         }
     }
 }
