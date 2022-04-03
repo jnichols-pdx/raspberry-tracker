@@ -26,6 +26,7 @@ pub struct AchievementEngine {
     rocket_kills: u32,
     iced_kills: u32,
     fire_kills: u32,
+    pistol_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -54,6 +55,7 @@ impl AchievementEngine {
             rocket_kills: 0,
             iced_kills: 0,
             fire_kills: 0,
+            pistol_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -78,6 +80,7 @@ impl AchievementEngine {
         self.rocket_kills = 0;
         self.iced_kills = 0;
         self.fire_kills = 0;
+        self.pistol_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -108,6 +111,7 @@ impl AchievementEngine {
         self.rocket_kills = 0;
         self.iced_kills = 0;
         self.fire_kills = 0;
+        self.pistol_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -308,6 +312,17 @@ impl AchievementEngine {
             }
         }
 
+        //Pistol killstreaks
+        if weapon_category == WeaponType::Pistol {
+            self.pistol_kills += 1;
+            match self.pistol_kills {
+                4  => results.push(Event::achieved("Pistol Whipped", timestamp, datetime.to_owned())),
+                8  => results.push(Event::achieved("Run and Handgun", timestamp, datetime.to_owned())),
+                12 => results.push(Event::achieved("Sidearm Slayer", timestamp, datetime.to_owned())),
+                _ => {}
+            }
+        }
+
         if !results.is_empty() {
             Some(results)
         } else {
@@ -336,7 +351,6 @@ impl AchievementEngine {
 
     pub fn tally_teamdeath(&mut self) -> Option<Vec<Event>> {
         //Should teamdeaths RESET beneficial streak counts?
-        self.team_kills += 1;
         None
     }
 
@@ -347,14 +361,17 @@ impl AchievementEngine {
         datetime: &str,
     ) -> Option<Vec<Event>> {
         self.killstreak = 0;
+        self.high_roller = 0;
+        self.headshots_consecutive = 0;
+        self.knife_kills_consecutive = 0;
         self.kdr_under_one = 0;
         self.kdr_over_one = 0;
         self.kdr_over_two = 0;
         self.kdr_over_three = 0;
-        self.high_roller = 0;
-        self.headshots_consecutive = 0;
-        self.knife_kills_consecutive = 0;
         self.rocket_kills = 0;
+        self.iced_kills = 0;
+        self.fire_kills = 0;
+        self.pistol_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
