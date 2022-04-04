@@ -1381,7 +1381,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Ram_Kill_Scythe => write!(f, "Ram Kill (Scythe) XP"),
             ExperienceType::Vehicle_Ram_Kill_Sunderer => write!(f, "Ram Kill (Sunderer) XP"),
             ExperienceType::Vehicle_Ram_Kill_Vanguard => write!(f, "Ram Kill (Vanguard) XP"),
-            ExperienceType::Explosive_Destruction => write!(f, "Explosive Destuction XP"),
+            ExperienceType::Explosive_Destruction => write!(f, "Explosive Destruction XP"),
             ExperienceType::Secondary_Facility_Object_Repair => write!(f, "2ndary Facility Obj Repair XP"),
             ExperienceType::Vehicle_Repair_Engi_Turret => write!(f, "Repair Engi Turret XP"),
             ExperienceType::Vehicle_Repair_Phalanx => write!(f, "Repair Phalanx Turret XP"),

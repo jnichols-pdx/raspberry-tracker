@@ -48,6 +48,8 @@ pub struct AchievementEngine {
     non_vehicle_kills: u32,
     revive_count: u32,
     revive_no_kills_count: u32,
+    explosives_destroyed: u32,
+    assist_count: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -95,6 +97,8 @@ impl AchievementEngine {
             non_vehicle_kills: 0,
             revive_count: 0,
             revive_no_kills_count: 0,
+            explosives_destroyed: 0,
+            assist_count: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -138,6 +142,8 @@ impl AchievementEngine {
         self.non_vehicle_kills = 0;
         self.revive_count = 0;
         self.revive_no_kills_count = 0;
+        self.explosives_destroyed = 0;
+        self.assist_count = 0;
     }
 
     pub fn tally_xp_tick(
@@ -160,6 +166,21 @@ impl AchievementEngine {
                 self.revive_no_kills_count += 1;
                 if self.revive_no_kills_count == 40 {
                     results.push(Event::achieved("Do No Harm", timestamp, datetime.to_owned()));
+                }
+            }
+            ExperienceType::Explosive_Destruction => {
+                self.explosives_destroyed += 1;
+                if self.explosives_destroyed % 3 == 0 {
+                    results.push(Event::achieved("Mine Sweeper", timestamp, datetime.to_owned()));
+                }
+            }
+            ExperienceType::Kill_Player_Assist
+                | ExperienceType::Kill_Player_Priority_Assist
+                | ExperienceType::Kill_Player_High_Priority_Assist => 
+            {
+                self.assist_count += 1;
+                if self.assist_count % 8 == 0 {
+                    results.push(Event::achieved("Side Kick", timestamp, datetime.to_owned()));
                 }
             }
             _ => {}
@@ -213,6 +234,8 @@ impl AchievementEngine {
         self.non_vehicle_kills = 0;
         self.revive_count = 0;
         self.revive_no_kills_count = 0;
+        self.explosives_destroyed = 0;
+        self.assist_count = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -674,6 +697,8 @@ impl AchievementEngine {
         self.non_vehicle_kills = 0;
         self.revive_count = 0;
         self.revive_no_kills_count = 0;
+        self.explosives_destroyed = 0;
+        self.assist_count = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
