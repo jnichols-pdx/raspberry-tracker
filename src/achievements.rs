@@ -4,7 +4,7 @@ use crate::events::*;
 use crate::experience::*;
 use crate::weapons::*;
 
-const COMBO_LIMIT: i64 = 4;
+const COMBO_LIMIT: i64 = 5;
 
 pub struct AchievementEngine {
     db: DatabaseCore,
@@ -51,6 +51,16 @@ pub struct AchievementEngine {
     explosives_destroyed: u32,
     assist_count: u32,
     savior_kills: u32,
+    last_revive_time: i64,
+    combo_revives: u32,
+    last_heal_time: i64,
+    last_repair_time: i64,
+    last_resupply_time: i64,
+    last_reshield_time: i64,
+    combo_heal_xp: u32,
+    combo_repair_xp: u32,
+    combo_resupply_xp: u32,
+    combo_reshield_xp: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -101,6 +111,16 @@ impl AchievementEngine {
             explosives_destroyed: 0,
             assist_count: 0,
             savior_kills: 0,
+            last_revive_time: 0,
+            combo_revives: 0,
+            last_heal_time: 0,
+            last_repair_time: 0,
+            last_resupply_time: 0,
+            last_reshield_time: 0,
+            combo_heal_xp: 0,
+            combo_repair_xp: 0,
+            combo_resupply_xp: 0,
+            combo_reshield_xp: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -147,6 +167,16 @@ impl AchievementEngine {
         self.explosives_destroyed = 0;
         self.assist_count = 0;
         self.savior_kills = 0;
+        self.last_revive_time = 0;
+        self.combo_revives = 0;
+        self.last_heal_time = 0;
+        self.last_repair_time = 0;
+        self.last_resupply_time = 0;
+        self.last_reshield_time = 0;
+        self.combo_heal_xp = 0;
+        self.combo_repair_xp = 0;
+        self.combo_resupply_xp = 0;
+        self.combo_reshield_xp = 0;
     }
 
     pub fn tally_xp_tick(
@@ -170,6 +200,21 @@ impl AchievementEngine {
                 if self.revive_no_kills_count == 40 {
                     results.push(Event::achieved("Do No Harm", timestamp, datetime.to_owned()));
                 }
+
+                if timestamp - self.last_revive_time < COMBO_LIMIT {
+                    self.combo_revives += 1;
+                    match self.combo_revives {
+                        2 => results.push(Event::achieved("Sustaining Force", timestamp, datetime.to_owned())),
+                        4 => results.push(Event::achieved("Rapid Fire Revival", timestamp, datetime.to_owned())),
+                        6 => results.push(Event::achieved("Miracle Worker", timestamp, datetime.to_owned())),
+                        8 => results.push(Event::achieved("Zombie Summoner", timestamp, datetime.to_owned())),
+                        _ => {}
+                    }
+                } else {
+                    self.combo_revives = 1;
+                }
+
+                self.last_revive_time = timestamp;
             }
             ExperienceType::Explosive_Destruction => {
                 self.explosives_destroyed += 1;
@@ -178,9 +223,8 @@ impl AchievementEngine {
                 }
             }
             ExperienceType::Kill_Player_Assist
-                | ExperienceType::Kill_Player_Priority_Assist
-                | ExperienceType::Kill_Player_High_Priority_Assist => 
-            {
+            | ExperienceType::Kill_Player_Priority_Assist
+            | ExperienceType::Kill_Player_High_Priority_Assist => {
                 self.assist_count += 1;
                 if self.assist_count % 8 == 0 {
                     results.push(Event::achieved("Side Kick", timestamp, datetime.to_owned()));
@@ -193,7 +237,71 @@ impl AchievementEngine {
                     results.push(Event::achieved("Overwatch", timestamp, datetime.to_owned()));
                 }
             }
+            ExperienceType::Heal_Player | ExperienceType::Squad_Heal => {
+                if timestamp - self.last_heal_time < COMBO_LIMIT {
+                    let new_total = self.combo_heal_xp + amount;
+                    if self.combo_heal_xp < 100 && new_total > 100 {
+                        results.push(Event::achieved("Main Healer", timestamp, datetime.to_owned()));
+                    } else if self.combo_heal_xp < 250 && new_total > 250 {
+                        results.push(Event::achieved("Heals Are Real", timestamp, datetime.to_owned()));
+                    } else if self.combo_heal_xp < 500 && new_total > 500 {
+                        results.push(Event::achieved("Life Force", timestamp, datetime.to_owned()));
+                    }
+                    self.combo_heal_xp = new_total;
+                } else {
+                    self.combo_heal_xp = amount;
+                }
+            }
+            ExperienceType::Resupply_Player
+            | ExperienceType::Squad_Resupply
+            | ExperienceType::Vehicle_Resupply
+            | ExperienceType::Squad_Vehicle_Resupply => {
+                if timestamp - self.last_resupply_time < COMBO_LIMIT {
+                    let new_total = self.combo_resupply_xp + amount;
+                    if self.combo_resupply_xp < 500 && new_total > 500 {
+                        results.push(Event::achieved("Supply The Demand", timestamp, datetime.to_owned()));
+                    } else if self.combo_resupply_xp < 1000 && new_total > 1000 {
+                        results.push(Event::achieved("Arms Dealer", timestamp, datetime.to_owned()));
+                    } else if self.combo_resupply_xp < 2000 && new_total > 2000 {
+                        results.push(Event::achieved("Merchant Of Death", timestamp, datetime.to_owned()));
+                    }
+                    self.combo_resupply_xp = new_total;
+                } else {
+                    self.combo_resupply_xp = amount;
+                }
+            }
+            ExperienceType::Shield_Repair | ExperienceType::Squad_Shield_Repair => {
+                if timestamp - self.last_reshield_time < COMBO_LIMIT {
+                    let new_total = self.combo_reshield_xp + amount;
+                    if self.combo_reshield_xp < 250 && new_total > 250 {
+                        results.push(Event::achieved("Bastion", timestamp, datetime.to_owned()));
+                    } else if self.combo_reshield_xp < 500 && new_total > 500 {
+                        results.push(Event::achieved("Energizer", timestamp, datetime.to_owned()));
+                    } else if self.combo_reshield_xp < 1000 && new_total > 1000 {
+                        results.push(Event::achieved("Mend And Defend", timestamp, datetime.to_owned()));
+                    }
+                    self.combo_reshield_xp = new_total;
+                } else {
+                    self.combo_reshield_xp = amount;
+                }
+            }
             _ => {}
+        }
+
+        if kind.is_repair() {
+            if timestamp - self.last_repair_time < COMBO_LIMIT {
+                let new_total = self.combo_repair_xp + amount;
+                if self.combo_repair_xp < 500  && new_total > 500 {
+                    results.push(Event::achieved("Patchworker", timestamp, datetime.to_owned()));
+                } else if self.combo_repair_xp < 1000 && new_total > 1000 {
+                    results.push(Event::achieved("Mechanized Mending", timestamp, datetime.to_owned()));
+                } else if self.combo_repair_xp < 2000 && new_total > 2000 {
+                    results.push(Event::achieved("Nanitesmith", timestamp, datetime.to_owned()));
+                }
+                self.combo_repair_xp = new_total;
+            } else {
+                self.combo_repair_xp = amount;
+            }
         }
 
         if !results.is_empty() {
@@ -247,6 +355,16 @@ impl AchievementEngine {
         self.explosives_destroyed = 0;
         self.assist_count = 0;
         self.savior_kills = 0;
+        self.last_revive_time = 0;
+        self.combo_revives = 0;
+        self.last_heal_time = 0;
+        self.last_repair_time = 0;
+        self.last_resupply_time = 0;
+        self.last_reshield_time = 0;
+        self.combo_heal_xp = 0;
+        self.combo_repair_xp = 0;
+        self.combo_resupply_xp = 0;
+        self.combo_reshield_xp = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -332,7 +450,7 @@ impl AchievementEngine {
                 _ => results.push(Event::achieved("Holy Shit", timestamp, datetime.to_owned())),
             }
         } else {
-            self.combo_kills = 0;
+            self.combo_kills = 1;
         }
 
         self.last_kill_time = timestamp;
@@ -711,6 +829,16 @@ impl AchievementEngine {
         self.explosives_destroyed = 0;
         self.assist_count = 0;
         self.savior_kills = 0;
+        self.last_revive_time = 0;
+        self.combo_revives = 0;
+        self.last_heal_time = 0;
+        self.last_repair_time = 0;
+        self.last_resupply_time = 0;
+        self.last_reshield_time = 0;
+        self.combo_heal_xp = 0;
+        self.combo_repair_xp = 0;
+        self.combo_resupply_xp = 0;
+        self.combo_reshield_xp = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player

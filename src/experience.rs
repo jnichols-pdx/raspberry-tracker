@@ -1264,8 +1264,6 @@ impl ExperienceType {
                 | ExperienceType::Vehicle_Repair_Harasser
                 | ExperienceType::Squad_Repair_R_Drone
                 | ExperienceType::Vehicle_Repair_R_Drone
-                | ExperienceType::Shield_Repair
-                | ExperienceType::Squad_Shield_Repair
                 | ExperienceType::Vehicle_Repair_Valkyrie
                 | ExperienceType::Squad_Repair_Valkyrie
                 | ExperienceType::Vehicle_Repair_Spitfire_Turret
