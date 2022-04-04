@@ -324,18 +324,28 @@ impl AchievementEngine {
         //KDR kill streaks
         if their_kdr < 1.0 {
             self.kdr_under_one += 1;
+            self.kdr_over_one = 0;
+            self.kdr_over_two = 0;
+            self.kdr_over_three = 0;
             if self.kdr_under_one == 20 {
                 results.push(Event::achieved("Easy Mode", timestamp, datetime.to_owned()));
             }
         }
-        if their_kdr >= 1.0 {
-            self.kdr_over_one += 1;
-        }
-        if their_kdr >= 2.0 {
-            self.kdr_over_two += 1;
-        }
         if their_kdr >= 3.0 {
+            self.kdr_under_one = 0;
+            self.kdr_over_one += 1;
+            self.kdr_over_two += 1;
             self.kdr_over_three += 1;
+        } else if their_kdr >= 2.0 {
+            self.kdr_under_one = 0;
+            self.kdr_over_one += 1;
+            self.kdr_over_two += 1;
+            self.kdr_over_three = 0;
+        } else if their_kdr >= 1.0 {
+            self.kdr_under_one = 0;
+            self.kdr_over_one += 1;
+            self.kdr_over_two = 0;
+            self.kdr_over_three = 0;
         }
         if self.kdr_over_three >= 3 {
             results.push(Event::achieved("Impress Myself", timestamp, datetime.to_owned()));
