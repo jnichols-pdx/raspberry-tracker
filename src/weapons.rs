@@ -494,3 +494,10 @@ pub fn weapon_is_lancer(weapon_id: &str) -> bool {
 pub fn weapon_is_c4(weapon_id: &str) -> bool {
     matches!(weapon_id, "432" | "800623" | "6009782")
 }
+
+pub fn weapon_is_frag_grenade(weapon_id: &str) -> bool {
+    matches!(
+        weapon_id,
+        "880" | "881" | "882" | "1095" | "44505" | "44605" | "44705" | "6005182" | "6005328"
+    )
+}

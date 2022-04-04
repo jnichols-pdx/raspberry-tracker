@@ -40,6 +40,8 @@ pub struct AchievementEngine {
     lancer_kills: u32,
     last_c4_kill_time: i64,
     same_time_c4_kills: u32,
+    last_frag_time: i64,
+    same_time_frag_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -81,6 +83,8 @@ impl AchievementEngine {
             lancer_kills: 0,
             last_c4_kill_time: 0,
             same_time_c4_kills: 0,
+            last_frag_time: 0,
+            same_time_frag_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -118,6 +122,8 @@ impl AchievementEngine {
         self.lancer_kills = 0;
         self.last_c4_kill_time = 0;
         self.same_time_c4_kills = 0;
+        self.last_frag_time = 0;
+        self.same_time_frag_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -159,6 +165,8 @@ impl AchievementEngine {
         self.lancer_kills = 0;
         self.last_c4_kill_time = 0;
         self.same_time_c4_kills = 0;
+        self.last_frag_time = 0;
+        self.same_time_frag_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -254,6 +262,21 @@ impl AchievementEngine {
             } else {
                 self.last_c4_kill_time = timestamp;
                 self.same_time_c4_kills = 1;
+            }
+        }
+
+        //Frag grenade simultaneous kills achievement
+        if weapon_is_frag_grenade(weapon_id) {
+            if timestamp == self.last_frag_time {
+                self.same_time_frag_kills += 1;
+                match self.same_time_frag_kills  {
+                    3 => results.push(Event::achieved("Explosive Efficiency", timestamp, datetime.to_owned())),
+                    5 => results.push(Event::achieved("Fragasm", timestamp, datetime.to_owned())),
+                    _ => {}
+                }
+            } else {
+                self.last_frag_time = timestamp;
+                self.same_time_frag_kills = 1;
             }
         }
 
@@ -567,6 +590,8 @@ impl AchievementEngine {
         self.lancer_kills = 0;
         self.last_c4_kill_time = 0;
         self.same_time_c4_kills = 0;
+        self.last_frag_time = 0;
+        self.same_time_frag_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
