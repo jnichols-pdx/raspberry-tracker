@@ -661,6 +661,13 @@ async fn parse_messages(
                     }
                     EventType::Kill => {
                         let victim_id = json["payload"]["character_id"].to_string().unquote();
+                        let your_class = Class::from(
+                            json["payload"]["attacker_loadout_id"]
+                                .to_string()
+                                .unquote()
+                                .parse::<i64>()
+                                .unwrap_or(0),
+                        );
                         new_achievements = achievements
                             .tally_kill(
                                 timestamp,
@@ -671,6 +678,7 @@ async fn parse_messages(
                                 headshot,
                                 ratio,
                                 class,
+                                your_class,
                                 br,
                                 asp,
                             )

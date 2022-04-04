@@ -32,6 +32,8 @@ pub struct AchievementEngine {
     mana_av_kills: u32,
     phalanx_ai_kills: u32,
     commissioner_kills: u32,
+    max_suit_kills: u32,
+    max_melee_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -65,6 +67,8 @@ impl AchievementEngine {
             mana_av_kills: 0,
             phalanx_ai_kills: 0,
             commissioner_kills: 0,
+            max_suit_kills: 0,
+            max_melee_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -94,6 +98,8 @@ impl AchievementEngine {
         self.mana_av_kills = 0;
         self.phalanx_ai_kills = 0;
         self.commissioner_kills = 0;
+        self.max_suit_kills = 0;
+        self.max_melee_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -129,6 +135,8 @@ impl AchievementEngine {
         self.mana_av_kills = 0;
         self.phalanx_ai_kills = 0;
         self.commissioner_kills = 0;
+        self.max_suit_kills = 0;
+        self.max_melee_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -179,6 +187,7 @@ impl AchievementEngine {
         headshot: bool,
         their_kdr: f32,
         their_class: Class,
+        your_class: Class,
         br: u8,
         asp: u8,
     ) -> Option<Vec<Event>> {
@@ -351,11 +360,39 @@ impl AchievementEngine {
             }
         }
 
+        //Max killstreak / melee achievements
+        if your_class.is_max() {
+            self.max_suit_kills += 1;
+            if self.db.get_weapon_category(weapon_id).await == WeaponType::Knife {
+                self.max_melee_kills += 1;
+                if self.max_melee_kills == 3 {
+                    results.push(Event::achieved("Exploding Fist", timestamp, datetime.to_owned()));
+                }
+            }
+            match self.max_suit_kills {
+                15 => results.push(Event::achieved("Juggernaught", timestamp, datetime.to_owned())),
+                30 => results.push(Event::achieved("Maximum Damage", timestamp, datetime.to_owned())),
+                40 => {
+                    match your_class {
+                        Class::NCMax => results.push(Event::achieved("BOOM-Sticks", timestamp, datetime.to_owned())),
+                        Class::TRMax => results.push(Event::achieved("DAKKA DAKKA", timestamp, datetime.to_owned())),
+                        Class::VSMax => results.push(Event::achieved("Z.O.E. ZOE", timestamp, datetime.to_owned())),
+                        //Why limit ourselves to what Recursion has?
+                        Class::NSOMax => results.push(Event::achieved("METAL is superior", timestamp, datetime.to_owned())),
+                        //Future max types?
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        //Vehicular achievements
         if let Some(inner_vehicle) = vehicle {
             //MANA AI turret killstreak
             if inner_vehicle == Vehicle::ManaAITurret {
                 self.mana_ai_kills += 1;
-                match self.mana_ai_kills{
+                match self.mana_ai_kills {
                     6  => results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned())),
                     15 => results.push(Event::achieved("Harvester", timestamp, datetime.to_owned())),
                     _  => {}
@@ -379,6 +416,8 @@ impl AchievementEngine {
                 }
             }
         }
+
+
 
         if !results.is_empty() {
             Some(results)
@@ -433,6 +472,8 @@ impl AchievementEngine {
         self.mana_av_kills = 0;
         self.phalanx_ai_kills = 0;
         self.commissioner_kills = 0;
+        self.max_suit_kills = 0;
+        self.max_melee_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
