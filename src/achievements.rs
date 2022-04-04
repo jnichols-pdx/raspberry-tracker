@@ -36,6 +36,7 @@ pub struct AchievementEngine {
     max_melee_kills: u32,
     roadkills: u32,
     flash_roadkills: u32,
+    proxy_mine_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -73,6 +74,7 @@ impl AchievementEngine {
             max_melee_kills: 0,
             roadkills: 0,
             flash_roadkills: 0,
+            proxy_mine_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -106,6 +108,7 @@ impl AchievementEngine {
         self.max_melee_kills = 0;
         self.roadkills = 0;
         self.flash_roadkills = 0;
+        self.proxy_mine_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -143,6 +146,7 @@ impl AchievementEngine {
         self.commissioner_kills = 0;
         self.max_suit_kills = 0;
         self.max_melee_kills = 0;
+        self.proxy_mine_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -398,6 +402,16 @@ impl AchievementEngine {
             results.push(Event::achieved("Welcome to Planetside", timestamp, datetime.to_owned()));
         }
 
+        //Mines vs Infantry kills
+        if weapon_is_proxy_mine(weapon_id) {
+            self.proxy_mine_kills += 1;
+            match self.proxy_mine_kills {
+                2 => results.push(Event::achieved("Present For Ya", timestamp, datetime.to_owned())),
+                4 => results.push(Event::achieved("Watch Your Step", timestamp, datetime.to_owned())),
+                _ => {}
+             }
+        }
+
         //Vehicular achievements
         if let Some(vehicle) = maybe_vehicle {
             //MANA AI turret killstreak
@@ -506,6 +520,7 @@ impl AchievementEngine {
         self.max_melee_kills = 0;
         self.roadkills = 0;
         self.flash_roadkills = 0;
+        self.proxy_mine_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player

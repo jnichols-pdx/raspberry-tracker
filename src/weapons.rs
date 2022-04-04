@@ -477,3 +477,12 @@ pub fn weapon_is_commissioner(weapon_id: &str) -> bool {
         "2001" | "75063" | "75170" | "75172" | "803824" | "803825" | "803826"
     )
 }
+
+//The Explosive weapon category also includes tank mines and C-4, we have to identify anti-infantry
+//proximity mines by weapon_id instead of relying on category alone.
+pub fn weapon_is_proxy_mine(weapon_id: &str) -> bool {
+    matches!(
+        weapon_id,
+        "429" | "1044" | "1045" | "6005243" | "6005422" | "6005963"
+    )
+}
