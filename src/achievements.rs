@@ -420,6 +420,11 @@ impl AchievementEngine {
                     results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned()));
                 }
             }
+
+            //Steel Rain (drop pod smashed something)
+            if inner_vehicle == Vehicle::DropPod || inner_vehicle == Vehicle::DropPodAlt {
+                results.push(Event::achieved("Steel Rain", timestamp, datetime.to_owned()));
+            }
         }
 
 

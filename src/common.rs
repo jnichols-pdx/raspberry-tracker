@@ -262,7 +262,7 @@ pub enum Vehicle {
 
     Glaive = 163,
     AVPhalanxTurretAlt = 2006,
-    DropPodALt = 2008,
+    DropPodAlt = 2008,
     AIPhalanxTurretAlt = 2009,
     PocketFlash = 2010,
     Flail = 2021,
@@ -331,7 +331,7 @@ impl std::fmt::Display for Vehicle {
 
             Vehicle::Glaive => write!(f, "Glaive"),
             Vehicle::AVPhalanxTurretAlt => write!(f, "AVPhalanxTurret1"),
-            Vehicle::DropPodALt => write!(f, "Droppod1"),
+            Vehicle::DropPodAlt => write!(f, "Droppod1"),
             Vehicle::AIPhalanxTurretAlt => write!(f, "AIPhalanxTurret1"),
             Vehicle::PocketFlash => write!(f, "PocketFlash"),
             Vehicle::Flail => write!(f, "Flail"),
