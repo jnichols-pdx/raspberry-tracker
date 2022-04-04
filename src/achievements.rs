@@ -387,6 +387,7 @@ impl AchievementEngine {
             }
         }
 
+        //Killed a new player
         if br <= 1 && asp == 0 {
             results.push(Event::achieved("Welcome to Planetside", timestamp, datetime.to_owned()));
         }
