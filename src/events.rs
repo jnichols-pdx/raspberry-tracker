@@ -261,7 +261,7 @@ impl EventList {
         }
     }
 
-    pub fn ui(&self, ctx: &egui::Context, event_mode: EventViewMode) {
+    pub fn ui(&self, ctx: &egui::Context, event_mode: EventViewMode, filter: Option<String>) {
         egui::SidePanel::right("events_panel")
             .min_width(387.0)
             .show(ctx, |ui| {
@@ -320,7 +320,13 @@ impl EventList {
                                 EventType::Revived => event_mode.revives,
                                 EventType::Unknown => true,
                             };
-                            if shown {
+                            let not_filtered = if let Some(ref filter_text) = filter {
+                                event.weapon.to_lowercase().contains(filter_text) || event.name.to_lowercase().contains(filter_text)
+                            } else {
+                                true
+                            };
+
+                            if shown && not_filtered {
                                 event.ui(&mut body);
                             }
                         }
