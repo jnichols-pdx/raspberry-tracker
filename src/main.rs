@@ -688,7 +688,9 @@ async fn parse_messages(
                             )
                             .await;
                     }
-                    EventType::DestroyVehicle => {}
+                    EventType::DestroyVehicle => {
+                        new_achievements = achievements.tally_vehicle_destroy(timestamp, &formatted_time);
+                    }
                     EventType::TeamKill => {
                         new_achievements = achievements.tally_teamkill(timestamp, &formatted_time);
                     }

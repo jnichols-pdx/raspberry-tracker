@@ -4,9 +4,12 @@ use crate::events::*;
 use crate::experience::*;
 use crate::weapons::*;
 
+const COMBO_LIMIT: i64 = 4;
+
 pub struct AchievementEngine {
     db: DatabaseCore,
     killstreak: u32,
+    combo_kills: u32,
     last_victim: String,
     last_kill_time: i64,
     deathstreak: u32,
@@ -51,6 +54,7 @@ impl AchievementEngine {
         AchievementEngine {
             db,
             killstreak: 0,
+            combo_kills: 0,
             last_victim: "".to_owned(),
             last_kill_time: 0,
             deathstreak: 0,
@@ -91,6 +95,7 @@ impl AchievementEngine {
     }
     pub fn reset(&mut self) {
         self.killstreak = 0;
+        self.combo_kills = 0;
         self.last_victim = "".to_owned();
         self.last_kill_time = 0;
         self.deathstreak = 0;
@@ -143,6 +148,7 @@ impl AchievementEngine {
     ) -> Option<Vec<Event>> {
         let mut results = Vec::new();
         self.killstreak = 0;
+        self.combo_kills = 0;
         self.deathstreak += 1;
         self.last_death_time = timestamp;
         self.last_killer = attacker_id;
@@ -178,10 +184,10 @@ impl AchievementEngine {
             results.push(Event::achieved("Mutual", timestamp, datetime.to_owned()));
         }
 
-        //Death streaks - N deaths without reviving or getting a kill.
+        //Death streaks - N deaths without getting a kill.
         //Repeats on each death after 10 in a row.
         match self.deathstreak {
-            6 => results.push(Event::achieved( "Death Streak", timestamp, datetime.to_owned())),
+            6 => results.push(Event::achieved("Death Streak", timestamp, datetime.to_owned())),
             7 => results.push(Event::achieved("Being Farmed", timestamp, datetime.to_owned())),
             _ => {}
         }
@@ -192,7 +198,7 @@ impl AchievementEngine {
         //Bad revive streaks - dying immediately after being revived is often bad.
         let revive_delta = self.last_death_time - self.last_revived_time;
 
-        if revive_delta < 4 {
+        if revive_delta < COMBO_LIMIT  {
             self.bad_revive_streak += 1;
             match self.bad_revive_streak {
                 2 => results.push(Event::achieved("Poor Choices", timestamp, datetime.to_owned())),
@@ -229,7 +235,6 @@ impl AchievementEngine {
         let mut results = Vec::new();
         self.killstreak += 1;
         self.deathstreak = 0;
-        self.last_kill_time = timestamp;
         self.last_victim = victim_id.clone();
         if headshot {
             self.headshots_consecutive += 1;
@@ -238,6 +243,29 @@ impl AchievementEngine {
         }
         self.bad_revive_streak = 0;
         self.team_kills = 0;
+
+        //Combo kills - where each previous kill was only moments before the next.
+        if timestamp - self.last_kill_time < COMBO_LIMIT {
+            self.combo_kills += 1;
+            //May be overzealous. Might need a way to collapse these in the Event list?
+            match self.killstreak {
+                0 | 1 => {}
+                2 => results.push(Event::achieved("Double Kill", timestamp, datetime.to_owned())),
+                3 => results.push(Event::achieved("Triple Kill", timestamp, datetime.to_owned())),
+                4 => results.push(Event::achieved("Multi Kill", timestamp, datetime.to_owned())),
+                5 => results.push(Event::achieved("Mega Kill", timestamp, datetime.to_owned())),
+                6 => results.push(Event::achieved("Ultra Kill", timestamp, datetime.to_owned())),
+                7 => results.push(Event::achieved("Monster Kill", timestamp, datetime.to_owned())),
+                8 => results.push(Event::achieved("Luidcrous Kill", timestamp, datetime.to_owned())),
+                //At least 9:
+                _ => results.push(Event::achieved("Holy Shit", timestamp, datetime.to_owned())),
+            }
+        } else {
+            self.combo_kills = 0;
+        }
+
+        self.last_kill_time = timestamp;
+
 
         //Mutual Kill, here the player was logged as dying before the opponent.
         let delta = self.last_kill_time - self.last_death_time;
@@ -580,6 +608,7 @@ impl AchievementEngine {
         datetime: &str,
     ) -> Option<Vec<Event>> {
         self.killstreak = 0;
+        self.combo_kills = 0;
         self.high_roller = 0;
         self.headshots_consecutive = 0;
         self.knife_kills_consecutive = 0;
@@ -630,7 +659,7 @@ impl AchievementEngine {
         self.last_revived_time = timestamp;
     }
 
-    pub fn tally_destroy_vehicle(&mut self) -> Option<Vec<Event>> {
+    pub fn tally_vehicle_destroy(&mut self, timestamp: i64, datetime: &str) -> Option<Vec<Event>> {
         None
     }
 }
