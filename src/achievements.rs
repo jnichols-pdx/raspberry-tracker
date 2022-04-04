@@ -42,6 +42,7 @@ pub struct AchievementEngine {
     same_time_c4_kills: u32,
     last_frag_time: i64,
     same_time_frag_kills: u32,
+    non_vehicle_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -85,6 +86,7 @@ impl AchievementEngine {
             same_time_c4_kills: 0,
             last_frag_time: 0,
             same_time_frag_kills: 0,
+            non_vehicle_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -124,6 +126,7 @@ impl AchievementEngine {
         self.same_time_c4_kills = 0;
         self.last_frag_time = 0;
         self.same_time_frag_kills = 0;
+        self.non_vehicle_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -167,6 +170,7 @@ impl AchievementEngine {
         self.same_time_c4_kills = 0;
         self.last_frag_time = 0;
         self.same_time_frag_kills = 0;
+        self.non_vehicle_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -480,6 +484,8 @@ impl AchievementEngine {
 
         //Vehicular achievements
         if let Some(vehicle) = maybe_vehicle {
+            self.non_vehicle_kills = 0;
+
             //MANA AI turret killstreak
             if vehicle == Vehicle::ManaAITurret {
                 self.mana_ai_kills += 1;
@@ -524,6 +530,13 @@ impl AchievementEngine {
                 if self.roadkills == 4 {
                     results.push(Event::achieved("Road Rage", timestamp, datetime.to_owned()));
                 }
+            }
+        } else {
+            self.non_vehicle_kills += 1;
+            match self.non_vehicle_kills {
+                40 => results.push(Event::achieved("Batman", timestamp, datetime.to_owned())),
+                50 => results.push(Event::achieved("Cheater", timestamp, datetime.to_owned())),
+                _  => {}
             }
         }
 
@@ -592,6 +605,7 @@ impl AchievementEngine {
         self.same_time_c4_kills = 0;
         self.last_frag_time = 0;
         self.same_time_frag_kills = 0;
+        self.non_vehicle_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
