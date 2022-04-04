@@ -34,6 +34,8 @@ pub struct AchievementEngine {
     commissioner_kills: u32,
     max_suit_kills: u32,
     max_melee_kills: u32,
+    roadkills: u32,
+    flash_roadkills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -69,6 +71,8 @@ impl AchievementEngine {
             commissioner_kills: 0,
             max_suit_kills: 0,
             max_melee_kills: 0,
+            roadkills: 0,
+            flash_roadkills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -100,6 +104,8 @@ impl AchievementEngine {
         self.commissioner_kills = 0;
         self.max_suit_kills = 0;
         self.max_melee_kills = 0;
+        self.roadkills = 0;
+        self.flash_roadkills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -182,7 +188,7 @@ impl AchievementEngine {
         timestamp: i64,
         datetime: &str,
         victim_id: String,
-        vehicle: Option<Vehicle>,
+        maybe_vehicle: Option<Vehicle>,
         weapon_id: &str,
         headshot: bool,
         their_kdr: f32,
@@ -393,9 +399,9 @@ impl AchievementEngine {
         }
 
         //Vehicular achievements
-        if let Some(inner_vehicle) = vehicle {
+        if let Some(vehicle) = maybe_vehicle {
             //MANA AI turret killstreak
-            if inner_vehicle == Vehicle::ManaAITurret {
+            if vehicle == Vehicle::ManaAITurret {
                 self.mana_ai_kills += 1;
                 match self.mana_ai_kills {
                     6  => results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned())),
@@ -405,7 +411,7 @@ impl AchievementEngine {
             }
 
             //MANA AV turret killstreak
-            if inner_vehicle == Vehicle::ManaAVTurret {
+            if vehicle == Vehicle::ManaAVTurret {
                 self.mana_av_kills += 1;
                 if self.mana_av_kills == 12 {
                     results.push(Event::achieved("Precipice", timestamp, datetime.to_owned()));
@@ -413,7 +419,7 @@ impl AchievementEngine {
             }
 
             //Phalanx / Builder AI turret killstreak
-            if inner_vehicle == Vehicle::AIPhalanxTurret || inner_vehicle == Vehicle::AIBuilderTower
+            if vehicle == Vehicle::AIPhalanxTurret || vehicle == Vehicle::AIBuilderTower
             {
                 self.phalanx_ai_kills += 1;
                 if self.phalanx_ai_kills == 6 {
@@ -422,8 +428,22 @@ impl AchievementEngine {
             }
 
             //Steel Rain (drop pod smashed something)
-            if inner_vehicle == Vehicle::DropPod || inner_vehicle == Vehicle::DropPodAlt {
+            if vehicle == Vehicle::DropPod || vehicle == Vehicle::DropPodAlt {
                 results.push(Event::achieved("Steel Rain", timestamp, datetime.to_owned()));
+            }
+
+            //Roadkills
+            if weapon_id.eq("0") {
+                self.roadkills += 1;
+                if vehicle.is_flash() {
+                    self.flash_roadkills += 1;
+                    results.push(Event::achieved("Quad Damage", timestamp, datetime.to_owned()));
+                } else {
+                    results.push(Event::achieved("Roadkill", timestamp, datetime.to_owned()));
+                }
+                if self.roadkills == 4 {
+                    results.push(Event::achieved("Road Rage", timestamp, datetime.to_owned()));
+                }
             }
         }
 
@@ -484,6 +504,8 @@ impl AchievementEngine {
         self.commissioner_kills = 0;
         self.max_suit_kills = 0;
         self.max_melee_kills = 0;
+        self.roadkills = 0;
+        self.flash_roadkills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player

@@ -391,8 +391,6 @@ async fn parse_messages(
                     false
                 };
                 println!("{:?}", json);
-                let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
-                let weapon_name = db.dbc.get_weapon_name(&weapon_id).await;
                 let timestamp = json["payload"]["timestamp"]
                     .to_string()
                     .unquote()
@@ -417,6 +415,12 @@ async fn parse_messages(
                     None
                 } else {
                     Some(Vehicle::from(vehicle_num))
+                };
+                let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
+                let weapon_name = if weapon_id.eq("0") && vehicle.is_some() {
+                    "Roadkill".to_owned()
+                } else {
+                    db.dbc.get_weapon_name(&weapon_id).await
                 };
 
                 let mut new_achievements = None;
@@ -613,10 +617,10 @@ async fn parse_messages(
                         .unquote()
                         .parse::<i64>()
                         .unwrap_or(-1);
-                    let material = Vehicle::from(materiel_num);
-                    if material.is_true_vehicle() {
+                    let materiel = Vehicle::from(materiel_num);
+                    if materiel.is_true_vehicle() {
                         if materiel_num > 0 {
-                            name = format!("{}({})", Vehicle::from(materiel_num), name);
+                            name = format!("{} ({})", Vehicle::from(materiel_num), name);
                         }
 
                         event_type = match event_type {
