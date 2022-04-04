@@ -305,7 +305,27 @@ impl AchievementEngine {
         }
 
         //Fire -- 3 kills with a flare pistol
-        if weapon_id.eq("76359") {
+        //Cannot rely on item_category_id as flare guns appear to be spread out between id 3
+        //(pistol) and id 143 (undocumented, underbarrel/attachment?).
+        if matches!(
+            weapon_id,
+            "74590" |
+                "75516" |
+                "75517" |
+                "75518" |
+                "75519" |
+                "75520" |
+                "75521" |
+                "75522" |
+                "76359" |
+                "801971" |
+                "803007" |
+                "803008" |
+                "803009" |
+                "803010" |
+                "803011" |
+                "803012" )
+        {
             self.fire_kills += 1;
             if self.fire_kills > 0 && self.fire_kills % 3 == 0 {
                 results.push(Event::achieved("Fire", timestamp, datetime.to_owned()));
