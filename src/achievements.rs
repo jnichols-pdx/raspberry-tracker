@@ -50,6 +50,7 @@ pub struct AchievementEngine {
     revive_no_kills_count: u32,
     explosives_destroyed: u32,
     assist_count: u32,
+    savior_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -99,6 +100,7 @@ impl AchievementEngine {
             revive_no_kills_count: 0,
             explosives_destroyed: 0,
             assist_count: 0,
+            savior_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -144,6 +146,7 @@ impl AchievementEngine {
         self.revive_no_kills_count = 0;
         self.explosives_destroyed = 0;
         self.assist_count = 0;
+        self.savior_kills = 0;
     }
 
     pub fn tally_xp_tick(
@@ -181,6 +184,13 @@ impl AchievementEngine {
                 self.assist_count += 1;
                 if self.assist_count % 8 == 0 {
                     results.push(Event::achieved("Side Kick", timestamp, datetime.to_owned()));
+                }
+            }
+            //TODO: verify how these interact - do we ever see both for the same kill?
+            ExperienceType::Savior_Kill_Non_MAX | ExperienceType::Savior_Kill_MAX => {
+                self.savior_kills += 1;
+                if self.savior_kills % 3 == 0 {
+                    results.push(Event::achieved("Overwatch", timestamp, datetime.to_owned()));
                 }
             }
             _ => {}
@@ -236,6 +246,7 @@ impl AchievementEngine {
         self.revive_no_kills_count = 0;
         self.explosives_destroyed = 0;
         self.assist_count = 0;
+        self.savior_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -699,6 +710,7 @@ impl AchievementEngine {
         self.revive_no_kills_count = 0;
         self.explosives_destroyed = 0;
         self.assist_count = 0;
+        self.savior_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
