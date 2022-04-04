@@ -439,11 +439,20 @@ pub enum Class {
 
 impl Class {
     pub fn is_max(&self) -> bool {
-        matches!(self, Class::NCMax | Class::TRMax | Class::VSMax)
+        matches!(
+            self,
+            Class::NCMax | Class::TRMax | Class::VSMax | Class::NSOMax
+        )
     }
 
     pub fn is_infil(&self) -> bool {
-        matches!(self, Class::NCInfiltrator | Class::TRInfiltrator | Class::VSInfiltrator)
+        matches!(
+            self,
+            Class::NCInfiltrator
+                | Class::TRInfiltrator
+                | Class::VSInfiltrator
+                | Class::NSOInfiltrator
+        )
     }
 }
 

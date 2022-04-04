@@ -2,6 +2,7 @@ use crate::common::*;
 use crate::db::*;
 use crate::events::*;
 use crate::experience::*;
+use crate::weapons::*;
 
 pub struct AchievementEngine {
     db: DatabaseCore,
@@ -30,6 +31,7 @@ pub struct AchievementEngine {
     mana_ai_kills: u32,
     mana_av_kills: u32,
     phalanx_ai_kills: u32,
+    commissioner_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -62,6 +64,7 @@ impl AchievementEngine {
             mana_ai_kills: 0,
             mana_av_kills: 0,
             phalanx_ai_kills: 0,
+            commissioner_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -90,6 +93,7 @@ impl AchievementEngine {
         self.mana_ai_kills = 0;
         self.mana_av_kills = 0;
         self.phalanx_ai_kills = 0;
+        self.commissioner_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -124,6 +128,7 @@ impl AchievementEngine {
         self.mana_ai_kills = 0;
         self.mana_av_kills = 0;
         self.phalanx_ai_kills = 0;
+        self.commissioner_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -317,27 +322,7 @@ impl AchievementEngine {
         }
 
         //Fire -- 3 kills with a flare pistol
-        //Cannot rely on item_category_id as flare guns appear to be spread out between id 3
-        //(pistol) and id 143 (undocumented, underbarrel/attachment?).
-        if matches!(
-            weapon_id,
-            "74590" |
-                "75516" |
-                "75517" |
-                "75518" |
-                "75519" |
-                "75520" |
-                "75521" |
-                "75522" |
-                "76359" |
-                "801971" |
-                "803007" |
-                "803008" |
-                "803009" |
-                "803010" |
-                "803011" |
-                "803012" )
-        {
+        if weapon_is_flare_gun(weapon_id) {
             self.fire_kills += 1;
             if self.fire_kills > 0 && self.fire_kills % 3 == 0 {
                 results.push(Event::achieved("Fire", timestamp, datetime.to_owned()));
@@ -352,6 +337,17 @@ impl AchievementEngine {
                 8  => results.push(Event::achieved("Run and Handgun", timestamp, datetime.to_owned())),
                 12 => results.push(Event::achieved("Sidearm Slayer", timestamp, datetime.to_owned())),
                 _ => {}
+            }
+        }
+
+        //Commisioiner killstreak / 'Executions' (kill infil with the commie)
+        if weapon_is_commissioner(weapon_id) {
+            self.commissioner_kills += 1;
+            if self.commissioner_kills == 3 {
+                results.push(Event::achieved("Commissioner", timestamp, datetime.to_owned()));
+            }
+            if their_class.is_infil() {
+                results.push(Event::achieved("Executioner", timestamp, datetime.to_owned()));
             }
         }
 
@@ -375,7 +371,8 @@ impl AchievementEngine {
             }
 
             //Phalanx / Builder AI turret killstreak
-            if inner_vehicle == Vehicle::AIPhalanxTurret || inner_vehicle == Vehicle::AIBuilderTower {
+            if inner_vehicle == Vehicle::AIPhalanxTurret || inner_vehicle == Vehicle::AIBuilderTower
+            {
                 self.phalanx_ai_kills += 1;
                 if self.phalanx_ai_kills == 6 {
                     results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned()));
@@ -435,6 +432,7 @@ impl AchievementEngine {
         self.mana_ai_kills = 0;
         self.mana_av_kills = 0;
         self.phalanx_ai_kills = 0;
+        self.commissioner_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player

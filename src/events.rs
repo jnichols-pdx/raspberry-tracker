@@ -321,7 +321,8 @@ impl EventList {
                                 EventType::Unknown => true,
                             };
                             let not_filtered = if let Some(ref filter_text) = filter {
-                                event.weapon.to_lowercase().contains(filter_text) || event.name.to_lowercase().contains(filter_text)
+                                event.weapon.to_lowercase().contains(filter_text)
+                                    || event.name.to_lowercase().contains(filter_text)
                             } else {
                                 true
                             };
