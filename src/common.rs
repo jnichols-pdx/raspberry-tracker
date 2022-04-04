@@ -441,6 +441,10 @@ impl Class {
     pub fn is_max(&self) -> bool {
         matches!(self, Class::NCMax | Class::TRMax | Class::VSMax)
     }
+
+    pub fn is_infil(&self) -> bool {
+        matches!(self, Class::NCInfiltrator | Class::TRInfiltrator | Class::VSInfiltrator)
+    }
 }
 
 impl std::fmt::Display for Class {
