@@ -387,6 +387,10 @@ impl AchievementEngine {
             }
         }
 
+        if br <= 1 && asp == 0 {
+            results.push(Event::achieved("Welcome to Planetside", timestamp, datetime.to_owned()));
+        }
+
         //Vehicular achievements
         if let Some(inner_vehicle) = vehicle {
             //MANA AI turret killstreak
