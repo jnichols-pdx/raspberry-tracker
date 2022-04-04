@@ -37,6 +37,7 @@ pub struct AchievementEngine {
     roadkills: u32,
     flash_roadkills: u32,
     proxy_mine_kills: u32,
+    lancer_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -75,6 +76,7 @@ impl AchievementEngine {
             roadkills: 0,
             flash_roadkills: 0,
             proxy_mine_kills: 0,
+            lancer_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -109,6 +111,7 @@ impl AchievementEngine {
         self.roadkills = 0;
         self.flash_roadkills = 0;
         self.proxy_mine_kills = 0;
+        self.lancer_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -147,6 +150,7 @@ impl AchievementEngine {
         self.max_suit_kills = 0;
         self.max_melee_kills = 0;
         self.proxy_mine_kills = 0;
+        self.lancer_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -370,6 +374,14 @@ impl AchievementEngine {
             }
         }
 
+        //Lancer killstreak
+        if weapon_is_lancer(weapon_id) {
+            self.lancer_kills += 1;
+            if self.lancer_kills == 7 {
+                results.push(Event::achieved("Care Bear", timestamp, datetime.to_owned()));
+            }
+        }
+
         //Max killstreak / melee achievements
         if your_class.is_max() {
             self.max_suit_kills += 1;
@@ -521,6 +533,7 @@ impl AchievementEngine {
         self.roadkills = 0;
         self.flash_roadkills = 0;
         self.proxy_mine_kills = 0;
+        self.lancer_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player

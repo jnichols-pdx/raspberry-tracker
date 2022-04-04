@@ -486,3 +486,7 @@ pub fn weapon_is_proxy_mine(weapon_id: &str) -> bool {
         "429" | "1044" | "1045" | "6005243" | "6005422" | "6005963"
     )
 }
+
+pub fn weapon_is_lancer(weapon_id: &str) -> bool {
+    matches!(weapon_id, "268" | "35002")
+}
