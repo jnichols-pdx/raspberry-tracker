@@ -38,6 +38,8 @@ pub struct AchievementEngine {
     flash_roadkills: u32,
     proxy_mine_kills: u32,
     lancer_kills: u32,
+    last_c4_kill_time: i64,
+    same_time_c4_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -77,6 +79,8 @@ impl AchievementEngine {
             flash_roadkills: 0,
             proxy_mine_kills: 0,
             lancer_kills: 0,
+            last_c4_kill_time: 0,
+            same_time_c4_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -112,6 +116,8 @@ impl AchievementEngine {
         self.flash_roadkills = 0;
         self.proxy_mine_kills = 0;
         self.lancer_kills = 0;
+        self.last_c4_kill_time = 0;
+        self.same_time_c4_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -151,6 +157,8 @@ impl AchievementEngine {
         self.max_melee_kills = 0;
         self.proxy_mine_kills = 0;
         self.lancer_kills = 0;
+        self.last_c4_kill_time = 0;
+        self.same_time_c4_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -233,6 +241,19 @@ impl AchievementEngine {
             let delta = timestamp - self.last_explosive_suicide_time;
             if delta == 0 || delta == 1 {
                 results.push(Event::achieved("Suicide Bomber", timestamp, datetime.to_owned()));
+            }
+        }
+
+        //C-4 Simultaneous Kills achievement
+        if weapon_is_c4(weapon_id) {
+            if timestamp == self.last_c4_kill_time {
+                self.same_time_c4_kills += 1;
+                if self.same_time_c4_kills == 4 {
+                    results.push(Event::achieved("Terrorists Win", timestamp, datetime.to_owned()));
+                }
+            } else {
+                self.last_c4_kill_time = timestamp;
+                self.same_time_c4_kills = 1;
             }
         }
 
@@ -534,6 +555,8 @@ impl AchievementEngine {
         self.flash_roadkills = 0;
         self.proxy_mine_kills = 0;
         self.lancer_kills = 0;
+        self.last_c4_kill_time = 0;
+        self.same_time_c4_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
