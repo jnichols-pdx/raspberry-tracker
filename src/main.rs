@@ -769,6 +769,7 @@ async fn parse_messages(
                     }
                 }
             } else if json["payload"]["event_name"].eq("GainExperience") {
+                let mut new_achievements = None;
                 let xp_id = json["payload"]["experience_id"]
                     .to_string()
                     .unquote()
@@ -932,6 +933,9 @@ async fn parse_messages(
                     println!("XP {} - {}", xp_id, xp_type);
                     let xp_amount = json["payload"]["amount"].to_string().unquote();
 
+                    let xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
+                    new_achievements = achievements.tally_xp_tick(xp_type, xp_numeric, timestamp, &formatted_time);
+
                     new_event = Event {
                         kind: EventType::ExperienceTick,
                         faction: Faction::from(0),
@@ -957,6 +961,18 @@ async fn parse_messages(
                     event_ordering = current_session.log_event(new_event.clone()).await;
                     ui_context.request_repaint();
                     current_session_id = current_session.get_id();
+                    if let Some(achievement_list) = new_achievements {
+                        for event in achievement_list {
+                            let achievement_ordering =
+                                current_session.log_event(event.clone()).await;
+                            ui_context.request_repaint();
+                            if let Some(sess_id) = current_session_id {
+                                db.dbc
+                                    .record_event(&event, achievement_ordering, sess_id)
+                                    .await;
+                            }
+                        }
+                    }
                 }
                 if let Some(sess_id) = current_session_id {
                     db.dbc

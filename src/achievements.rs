@@ -46,6 +46,8 @@ pub struct AchievementEngine {
     last_frag_time: i64,
     same_time_frag_kills: u32,
     non_vehicle_kills: u32,
+    revive_count: u32,
+    revive_no_kills_count: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -91,6 +93,8 @@ impl AchievementEngine {
             last_frag_time: 0,
             same_time_frag_kills: 0,
             non_vehicle_kills: 0,
+            revive_count: 0,
+            revive_no_kills_count: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -132,10 +136,40 @@ impl AchievementEngine {
         self.last_frag_time = 0;
         self.same_time_frag_kills = 0;
         self.non_vehicle_kills = 0;
+        self.revive_count = 0;
+        self.revive_no_kills_count = 0;
     }
 
-    pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
-        None
+    pub fn tally_xp_tick(
+        &mut self,
+        kind: ExperienceType,
+        amount: u32,
+        timestamp: i64,
+        datetime: &str,
+    ) -> Option<Vec<Event>> {
+        let mut results = Vec::new();
+        match kind {
+            ExperienceType::Revive => {
+                self.revive_count += 1;
+                match self.revive_count {
+                    5  => results.push(Event::achieved("Cautious Practicioner", timestamp, datetime.to_owned())),
+                    15 => results.push(Event::achieved("Master Medic", timestamp, datetime.to_owned())),
+                    30 => results.push(Event::achieved("Shadow Healer", timestamp, datetime.to_owned())),
+                    _ => {}
+                }
+                self.revive_no_kills_count += 1;
+                if self.revive_no_kills_count == 40 {
+                    results.push(Event::achieved("Do No Harm", timestamp, datetime.to_owned()));
+                }
+            }
+            _ => {}
+        }
+
+        if !results.is_empty() {
+            Some(results)
+        } else {
+            None
+        }
     }
 
     pub fn tally_death(
@@ -177,6 +211,8 @@ impl AchievementEngine {
         self.last_frag_time = 0;
         self.same_time_frag_kills = 0;
         self.non_vehicle_kills = 0;
+        self.revive_count = 0;
+        self.revive_no_kills_count = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -235,6 +271,7 @@ impl AchievementEngine {
         let mut results = Vec::new();
         self.killstreak += 1;
         self.deathstreak = 0;
+        self.revive_no_kills_count = 0;
         self.last_victim = victim_id.clone();
         if headshot {
             self.headshots_consecutive += 1;
@@ -635,6 +672,8 @@ impl AchievementEngine {
         self.last_frag_time = 0;
         self.same_time_frag_kills = 0;
         self.non_vehicle_kills = 0;
+        self.revive_count = 0;
+        self.revive_no_kills_count = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
