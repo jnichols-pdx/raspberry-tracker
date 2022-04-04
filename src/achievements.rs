@@ -27,6 +27,9 @@ pub struct AchievementEngine {
     iced_kills: u32,
     fire_kills: u32,
     pistol_kills: u32,
+    mana_ai_kills: u32,
+    mana_av_kills: u32,
+    phalanx_ai_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -56,6 +59,9 @@ impl AchievementEngine {
             iced_kills: 0,
             fire_kills: 0,
             pistol_kills: 0,
+            mana_ai_kills: 0,
+            mana_av_kills: 0,
+            phalanx_ai_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -81,6 +87,9 @@ impl AchievementEngine {
         self.iced_kills = 0;
         self.fire_kills = 0;
         self.pistol_kills = 0;
+        self.mana_ai_kills = 0;
+        self.mana_av_kills = 0;
+        self.phalanx_ai_kills = 0;
     }
 
     pub fn tally_xp_tick(&mut self, kind: ExperienceType, amount: u32) -> Option<Vec<Event>> {
@@ -112,6 +121,9 @@ impl AchievementEngine {
         self.iced_kills = 0;
         self.fire_kills = 0;
         self.pistol_kills = 0;
+        self.mana_ai_kills = 0;
+        self.mana_av_kills = 0;
+        self.phalanx_ai_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -343,6 +355,34 @@ impl AchievementEngine {
             }
         }
 
+        if let Some(inner_vehicle) = vehicle {
+            //MANA AI turret killstreak
+            if inner_vehicle == Vehicle::ManaAITurret {
+                self.mana_ai_kills += 1;
+                match self.mana_ai_kills{
+                    6  => results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned())),
+                    15 => results.push(Event::achieved("Harvester", timestamp, datetime.to_owned())),
+                    _  => {}
+                }
+            }
+
+            //MANA AV turret killstreak
+            if inner_vehicle == Vehicle::ManaAVTurret {
+                self.mana_av_kills += 1;
+                if self.mana_av_kills == 12 {
+                    results.push(Event::achieved("Precipice", timestamp, datetime.to_owned()));
+                }
+            }
+
+            //Phalanx / Builder AI turret killstreak
+            if inner_vehicle == Vehicle::AIPhalanxTurret || inner_vehicle == Vehicle::AIBuilderTower {
+                self.phalanx_ai_kills += 1;
+                if self.phalanx_ai_kills == 6 {
+                    results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned()));
+                }
+            }
+        }
+
         if !results.is_empty() {
             Some(results)
         } else {
@@ -392,6 +432,9 @@ impl AchievementEngine {
         self.iced_kills = 0;
         self.fire_kills = 0;
         self.pistol_kills = 0;
+        self.mana_ai_kills = 0;
+        self.mana_av_kills = 0;
+        self.phalanx_ai_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
