@@ -400,6 +400,60 @@ impl Vehicle {
                 | Vehicle::ReclaimedProwler
         )
     }
+
+    pub fn is_flash(&self) -> bool {
+        matches!(self, Vehicle::Flash | Vehicle::PocketFlash)
+    }
+
+    pub fn is_tank(&self) -> bool {
+        matches!(
+            self,
+            Vehicle::Lightning
+                | Vehicle::Prowler
+                | Vehicle::Vanguard
+                | Vehicle::Magrider
+                | Vehicle::Chimera
+                | Vehicle::Colossus
+                | Vehicle::ReclaimedMagrider
+                | Vehicle::ReclaimedVanguard
+                | Vehicle::ReclaimedProwler
+        )
+    }
+
+    pub fn is_aircraft(&self) -> bool {
+        matches!(
+            self,
+            Vehicle::Mosquito
+                | Vehicle::Scythe
+                | Vehicle::Reaver
+                | Vehicle::Dervish
+                | Vehicle::Valkyrie
+                | Vehicle::Wasp
+                | Vehicle::Liberator
+                | Vehicle::Galaxy
+                | Vehicle::Lodestar
+                | Vehicle::BastionFleetCarrier
+                | Vehicle::MosquitoInterceptor
+                | Vehicle::ReaverInterceptor
+                | Vehicle::ScytheInterceptor
+                | Vehicle::ReclaimedGalaxy
+                | Vehicle::ReclaimedValkyrie
+        )
+
+    }
+
+    pub fn is_esf(&self) -> bool { 
+        matches!(
+            self,
+            Vehicle::Mosquito
+                | Vehicle::Scythe
+                | Vehicle::Reaver
+                | Vehicle::Dervish
+                | Vehicle::MosquitoInterceptor
+                | Vehicle::ReaverInterceptor
+                | Vehicle::ScytheInterceptor
+        )
+    }
 }
 
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
