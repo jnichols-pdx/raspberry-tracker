@@ -501,3 +501,7 @@ pub fn weapon_is_frag_grenade(weapon_id: &str) -> bool {
         "880" | "881" | "882" | "1095" | "44505" | "44605" | "44705" | "6005182" | "6005328"
     )
 }
+
+pub fn weapon_is_tank_mine(weapon_id: &str) -> bool {
+    matches!(weapon_id, "650" | "6005961" | "6005962")
+}

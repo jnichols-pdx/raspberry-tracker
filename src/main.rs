@@ -611,8 +611,9 @@ async fn parse_messages(
                     }
                 }
 
+                let mut materiel_num = 0;
                 if vehicle_destroyed {
-                    let materiel_num = json["payload"]["vehicle_id"]
+                    materiel_num = json["payload"]["vehicle_id"]
                         .to_string()
                         .unquote()
                         .parse::<i64>()
@@ -689,7 +690,17 @@ async fn parse_messages(
                             .await;
                     }
                     EventType::DestroyVehicle => {
-                        new_achievements = achievements.tally_vehicle_destroy(timestamp, &formatted_time);
+                        let victim_id = json["payload"]["character_id"].to_string().unquote();
+                        new_achievements = achievements
+                            .tally_vehicle_destroy(
+                                &weapon_id,
+                                vehicle.unwrap(),
+                                Vehicle::from(materiel_num),
+                                victim_id,
+                                timestamp,
+                                &formatted_time,
+                            )
+                            .await;
                     }
                     EventType::TeamKill => {
                         new_achievements = achievements.tally_teamkill(timestamp, &formatted_time);

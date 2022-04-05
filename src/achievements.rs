@@ -61,6 +61,9 @@ pub struct AchievementEngine {
     combo_repair_xp: u32,
     combo_resupply_xp: u32,
     combo_reshield_xp: u32,
+    last_vehicle_destroy_time: i64,
+    last_vehicle_destroy_weapon: String,
+    pizza_awarded_time: i64,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -121,6 +124,9 @@ impl AchievementEngine {
             combo_repair_xp: 0,
             combo_resupply_xp: 0,
             combo_reshield_xp: 0,
+            last_vehicle_destroy_time: 0,
+            last_vehicle_destroy_weapon: "".to_owned(),
+            pizza_awarded_time: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -177,6 +183,9 @@ impl AchievementEngine {
         self.combo_repair_xp = 0;
         self.combo_resupply_xp = 0;
         self.combo_reshield_xp = 0;
+        self.last_vehicle_destroy_time = 0;
+        self.last_vehicle_destroy_weapon = "".to_owned();
+        self.pizza_awarded_time = 0;
     }
 
     pub fn tally_xp_tick(
@@ -365,6 +374,9 @@ impl AchievementEngine {
         self.combo_repair_xp = 0;
         self.combo_resupply_xp = 0;
         self.combo_reshield_xp = 0;
+        self.last_vehicle_destroy_time = 0;
+        self.last_vehicle_destroy_weapon = "".to_owned();
+        self.pizza_awarded_time = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -699,6 +711,24 @@ impl AchievementEngine {
              }
         }
 
+        //Tank mine kills - Only trigger on maxes / vehicle destruction resulting in occupant
+        //death, however we only want to trigger once even if the vehicle held multiple players.
+        //This still isn't perfect, as a vehicle being blown up with infantry standing in range to
+        //also be blown up, while not in the vehicle, will be counted.
+        if weapon_is_tank_mine(weapon_id) {
+            if self.pizza_awarded_time != timestamp {
+                if self.last_vehicle_destroy_time == timestamp {
+                    if weapon_is_tank_mine(&self.last_vehicle_destroy_weapon) {
+                        results.push(Event::achieved("Pizza Delivery", timestamp, datetime.to_owned()));
+                        self.pizza_awarded_time = timestamp;
+                    }
+                } else if their_class.is_max() {
+                    results.push(Event::achieved("Pizza Delivery - MAX", timestamp, datetime.to_owned()));
+                    self.pizza_awarded_time = timestamp;
+                }
+            }
+        }
+
         //Vehicular achievements
         if let Some(vehicle) = maybe_vehicle {
             self.non_vehicle_kills = 0;
@@ -839,6 +869,9 @@ impl AchievementEngine {
         self.combo_repair_xp = 0;
         self.combo_resupply_xp = 0;
         self.combo_reshield_xp = 0;
+        self.last_vehicle_destroy_time = 0;
+        self.last_vehicle_destroy_weapon = "".to_owned();
+        self.pizza_awarded_time = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
@@ -863,7 +896,18 @@ impl AchievementEngine {
         self.last_revived_time = timestamp;
     }
 
-    pub fn tally_vehicle_destroy(&mut self, timestamp: i64, datetime: &str) -> Option<Vec<Event>> {
+    pub async fn tally_vehicle_destroy(
+        &mut self,
+        weapon_id: &str,
+        our_vehicle: Vehicle,
+        their_vehicle: Vehicle,
+        driver_id: String,
+        timestamp: i64,
+        datetime: &str
+    ) -> Option<Vec<Event>> {
+        self.last_vehicle_destroy_time = timestamp;
+        self.last_vehicle_destroy_weapon = weapon_id.to_owned();
+
         None
     }
 }
