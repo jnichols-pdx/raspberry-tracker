@@ -65,6 +65,7 @@ pub struct AchievementEngine {
     last_vehicle_destroy_weapon: String,
     pizza_awarded_time: i64,
     last_fighter_pilot_id: String,
+    ground_vehicle_kills: u32,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -129,6 +130,7 @@ impl AchievementEngine {
             last_vehicle_destroy_weapon: "".to_owned(),
             pizza_awarded_time: 0,
             last_fighter_pilot_id: "".to_owned(),
+            ground_vehicle_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -189,6 +191,7 @@ impl AchievementEngine {
         self.last_vehicle_destroy_weapon = "".to_owned();
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
+        self.ground_vehicle_kills = 0;
     }
 
     pub fn tally_xp_tick(
@@ -381,6 +384,7 @@ impl AchievementEngine {
         self.last_vehicle_destroy_weapon = "".to_owned();
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
+        self.ground_vehicle_kills = 0;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -792,6 +796,18 @@ impl AchievementEngine {
             if weapon_cat.is_tank_primary() && weapon_is_not_skyguard(weapon_id) && timestamp == self.last_vehicle_destroy_time && victim_id.eq(&self.last_fighter_pilot_id) {
                 results.push(Event::achieved("Flyswatter", timestamp, datetime.to_owned()));
             }
+
+            //Ground vehicle based killstreaks
+            if vehicle.is_ground_vehicle()
+            {
+                self.ground_vehicle_kills += 1;
+                match self.ground_vehicle_kills {
+                    15 => results.push(Event::achieved("Armored Assault", timestamp, datetime.to_owned())),
+                    30 => results.push(Event::achieved("Blitzkrieg", timestamp, datetime.to_owned())),
+                    _  => {}
+                }
+            }
+
         } else {
             self.non_vehicle_kills += 1;
             match self.non_vehicle_kills {
@@ -887,6 +903,7 @@ impl AchievementEngine {
         self.last_vehicle_destroy_weapon = "".to_owned();
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
+        self.ground_vehicle_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player

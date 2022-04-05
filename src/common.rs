@@ -454,6 +454,32 @@ impl Vehicle {
                 | Vehicle::ScytheInterceptor
         )
     }
+
+    pub fn is_ground_vehicle(&self) -> bool {
+        matches!(
+            self,
+            Vehicle::Flash
+                | Vehicle::Javelin
+                | Vehicle::Harasserr
+                | Vehicle::Sunderer
+                | Vehicle::Lightning
+                | Vehicle::Prowler
+                | Vehicle::Vanguard
+                | Vehicle::Magrider
+                | Vehicle::Chimera
+                | Vehicle::Colossus
+                | Vehicle::Ant
+                | Vehicle::Deliverer
+                | Vehicle::PocketFlash
+                | Vehicle::JavelinAlt1
+                | Vehicle::SpitfireALt3
+                | Vehicle::JavelinAlt2
+                | Vehicle::ReclaimedSunderer
+                | Vehicle::ReclaimedMagrider
+                | Vehicle::ReclaimedVanguard
+                | Vehicle::ReclaimedProwler
+        )
+    }
 }
 
 #[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
