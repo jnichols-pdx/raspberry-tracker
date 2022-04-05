@@ -648,14 +648,29 @@ pub enum WeaponType {
     Bastion_Pilot_Bombard = 209,
     Bastion_Missiles = 210,
     Colossus_Primary = 211,
-    ColossuS_FR = 212,
-    ColossuS_FL = 213,
-    ColossuS_RR = 214,
-    ColossuS_RL = 215,
+    Colossus_FR = 212,
+    Colossus_FL = 213,
+    Colossus_RR = 214,
+    Colossus_RL = 215,
 
     //Not available in Census: Dervish, Chimera, Javelin specific weapon Category IDs.
     #[num_enum(default)]
     Unknown = 0,
+}
+
+impl WeaponType {
+
+    //Missing Chimera main guns - TODO: find the Chimera_Primary weapon category ID#
+    pub fn is_tank_primary(&self) -> bool {
+        matches!(
+            self,
+            WeaponType::Lightning_Primary
+            | WeaponType::Magrider_Primary
+            | WeaponType::Prowler_Primary
+            | WeaponType::Vanguard_Primary
+            | WeaponType::Colossus_Primary
+        )
+    }
 }
 
 pub fn big_print_num(number: &str) {

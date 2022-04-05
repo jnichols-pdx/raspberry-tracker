@@ -64,6 +64,7 @@ pub struct AchievementEngine {
     last_vehicle_destroy_time: i64,
     last_vehicle_destroy_weapon: String,
     pizza_awarded_time: i64,
+    last_fighter_pilot_id: String,
 }
 
 #[allow(dead_code, unused_variables)]
@@ -127,6 +128,7 @@ impl AchievementEngine {
             last_vehicle_destroy_time: 0,
             last_vehicle_destroy_weapon: "".to_owned(),
             pizza_awarded_time: 0,
+            last_fighter_pilot_id: "".to_owned(),
         }
     }
     pub fn reset(&mut self) {
@@ -186,6 +188,7 @@ impl AchievementEngine {
         self.last_vehicle_destroy_time = 0;
         self.last_vehicle_destroy_weapon = "".to_owned();
         self.pizza_awarded_time = 0;
+        self.last_fighter_pilot_id = "".to_owned();
     }
 
     pub fn tally_xp_tick(
@@ -377,6 +380,7 @@ impl AchievementEngine {
         self.last_vehicle_destroy_time = 0;
         self.last_vehicle_destroy_weapon = "".to_owned();
         self.pizza_awarded_time = 0;
+        self.last_fighter_pilot_id = "".to_owned();
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -715,8 +719,7 @@ impl AchievementEngine {
         //death, however we only want to trigger once even if the vehicle held multiple players.
         //This still isn't perfect, as a vehicle being blown up with infantry standing in range to
         //also be blown up, while not in the vehicle, will be counted.
-        if weapon_is_tank_mine(weapon_id) {
-            if self.pizza_awarded_time != timestamp {
+        if weapon_is_tank_mine(weapon_id) && self.pizza_awarded_time != timestamp {
                 if self.last_vehicle_destroy_time == timestamp {
                     if weapon_is_tank_mine(&self.last_vehicle_destroy_weapon) {
                         results.push(Event::achieved("Pizza Delivery", timestamp, datetime.to_owned()));
@@ -726,7 +729,11 @@ impl AchievementEngine {
                     results.push(Event::achieved("Pizza Delivery - MAX", timestamp, datetime.to_owned()));
                     self.pizza_awarded_time = timestamp;
                 }
-            }
+        }
+
+        //Decimation - Shoot down an ESF with the Decimator rocket launcher, killing the pilot.
+        if weapon_is_decimator(weapon_id) && timestamp == self.last_vehicle_destroy_time && victim_id.eq(&self.last_fighter_pilot_id) {
+            results.push(Event::achieved("Decimation", timestamp, datetime.to_owned()));
         }
 
         //Vehicular achievements
@@ -777,6 +784,13 @@ impl AchievementEngine {
                 if self.roadkills == 4 {
                     results.push(Event::achieved("Road Rage", timestamp, datetime.to_owned()));
                 }
+            }
+
+            let weapon_cat = self.db.get_weapon_category(weapon_id).await;
+
+            //Tank vs Aircraft
+            if weapon_cat.is_tank_primary() && weapon_is_not_skyguard(weapon_id) && timestamp == self.last_vehicle_destroy_time && victim_id.eq(&self.last_fighter_pilot_id) {
+                results.push(Event::achieved("Flyswatter", timestamp, datetime.to_owned()));
             }
         } else {
             self.non_vehicle_kills += 1;
@@ -872,6 +886,7 @@ impl AchievementEngine {
         self.last_vehicle_destroy_time = 0;
         self.last_vehicle_destroy_weapon = "".to_owned();
         self.pizza_awarded_time = 0;
+        self.last_fighter_pilot_id = "".to_owned();
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
@@ -905,9 +920,24 @@ impl AchievementEngine {
         timestamp: i64,
         datetime: &str
     ) -> Option<Vec<Event>> {
+        let mut results = Vec::new();
         self.last_vehicle_destroy_time = timestamp;
         self.last_vehicle_destroy_weapon = weapon_id.to_owned();
 
-        None
+        if their_vehicle == Vehicle::DropPod || their_vehicle == Vehicle::DropPodAlt {
+            results.push(Event::achieved("Shoot The Needle", timestamp, datetime.to_owned()));
+        }
+
+        if their_vehicle.is_esf() {
+            self.last_fighter_pilot_id = driver_id;
+        } else {
+            self.last_fighter_pilot_id = "".to_owned();
+        }
+
+        if !results.is_empty() {
+            Some(results)
+        } else {
+            None
+        }
     }
 }

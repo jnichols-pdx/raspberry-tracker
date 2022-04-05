@@ -505,3 +505,14 @@ pub fn weapon_is_frag_grenade(weapon_id: &str) -> bool {
 pub fn weapon_is_tank_mine(weapon_id: &str) -> bool {
     matches!(weapon_id, "650" | "6005961" | "6005962")
 }
+
+pub fn weapon_is_decimator(weapon_id: &str) -> bool {
+    matches!(
+        weapon_id,
+        "50560" | "802299" | "802300" | "6003611" | "6004407"
+    )
+}
+
+pub fn weapon_is_not_skyguard(weapon_id: &str) -> bool {
+    !matches!(weapon_id, "3106" | "3107" | "3108" | "6005303")
+}
