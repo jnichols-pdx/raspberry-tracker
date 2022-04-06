@@ -457,7 +457,7 @@ impl AchievementEngine {
         if timestamp - self.last_kill_time < COMBO_LIMIT {
             self.combo_kills += 1;
             //May be overzealous. Might need a way to collapse these in the Event list?
-            match self.killstreak {
+            match self.combo_kills{
                 0 | 1 => {}
                 2 => results.push(Event::achieved("Double Kill", timestamp, datetime.to_owned())),
                 3 => results.push(Event::achieved("Triple Kill", timestamp, datetime.to_owned())),
