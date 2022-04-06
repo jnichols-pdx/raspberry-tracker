@@ -69,6 +69,9 @@ pub struct AchievementEngine {
     ground_vehicle_kills: u32,
     opponents: HashMap<String, PlayerInteraction>,
     tank_mines_defused: u32,
+    last_radar_kill_time: i64,
+    last_radar_kill_id: String,
+    radar_kills: u32,
 }
 
 struct PlayerInteraction {
@@ -153,6 +156,9 @@ impl AchievementEngine {
             ground_vehicle_kills: 0,
             opponents: HashMap::new(),
             tank_mines_defused: 0,
+            last_radar_kill_time: 0,
+            last_radar_kill_id: "".to_owned(),
+            radar_kills: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -216,12 +222,16 @@ impl AchievementEngine {
         self.ground_vehicle_kills = 0;
         self.opponents.clear();
         self.tank_mines_defused = 0;
+        self.last_radar_kill_time = 0;
+        self.last_radar_kill_id = "".to_owned();
+        self.radar_kills = 0;
     }
 
     pub fn tally_xp_tick(
         &mut self,
         kind: ExperienceType,
         amount: u32,
+        other_id: String,
         timestamp: i64,
         datetime: &str,
     ) -> Option<Vec<Event>> {
@@ -330,6 +340,16 @@ impl AchievementEngine {
                     results.push(Event::achieved("Counter Terrorists", timestamp, datetime.to_owned()));
                 }
             }
+            ExperienceType::Motion_Detect => {
+                if self.last_kill_time == timestamp && self.last_victim.eq(&other_id) && self.last_radar_kill_time != timestamp && !self.last_radar_kill_id.eq(&other_id) {
+                    self.radar_kills += 1;
+                    self.last_radar_kill_time = timestamp;
+                    self.last_radar_kill_id = other_id;
+                    if self.radar_kills % 10 == 0 {
+                        results.push(Event::achieved("Interlinked", timestamp, datetime.to_owned()));
+                    }
+                }
+            }
             _ => {}
         }
 
@@ -416,6 +436,9 @@ impl AchievementEngine {
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
         self.tank_mines_defused = 0;
+        self.last_radar_kill_time = 0;
+        self.last_radar_kill_id = "".to_owned();
+        self.radar_kills = 0;
 
         let opponent = self.opponents.entry(attacker_id).or_insert_with(PlayerInteraction::new);
         opponent.deaths_to_player = 0;
@@ -958,6 +981,9 @@ impl AchievementEngine {
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
         self.tank_mines_defused = 0;
+        self.last_radar_kill_time = 0;
+        self.last_radar_kill_id = "".to_owned();
+        self.radar_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
@@ -989,7 +1015,7 @@ impl AchievementEngine {
         their_vehicle: Vehicle,
         driver_id: String,
         timestamp: i64,
-        datetime: &str
+        datetime: &str,
     ) -> Option<Vec<Event>> {
         let mut results = Vec::new();
         self.last_vehicle_destroy_time = timestamp;

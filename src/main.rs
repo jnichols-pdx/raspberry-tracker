@@ -944,8 +944,17 @@ async fn parse_messages(
                     println!("XP {} - {}", xp_id, xp_type);
                     let xp_amount = json["payload"]["amount"].to_string().unquote();
 
+                    let other_id =  json["payload"]["other_id"]
+                        .to_string()
+                        .unquote();
                     let xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
-                    new_achievements = achievements.tally_xp_tick(xp_type, xp_numeric, timestamp, &formatted_time);
+                    new_achievements = achievements.tally_xp_tick(
+                        xp_type,
+                        xp_numeric,
+                        other_id,
+                        timestamp,
+                        &formatted_time
+                    );
 
                     new_event = Event {
                         kind: EventType::ExperienceTick,
