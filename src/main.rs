@@ -694,7 +694,7 @@ async fn parse_messages(
                         new_achievements = achievements
                             .tally_vehicle_destroy(
                                 &weapon_id,
-                                vehicle.unwrap(),
+                                vehicle,
                                 Vehicle::from(materiel_num),
                                 victim_id,
                                 timestamp,

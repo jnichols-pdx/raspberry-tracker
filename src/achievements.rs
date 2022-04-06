@@ -931,7 +931,7 @@ impl AchievementEngine {
     pub async fn tally_vehicle_destroy(
         &mut self,
         weapon_id: &str,
-        our_vehicle: Vehicle,
+        our_vehicle: Option<Vehicle>,
         their_vehicle: Vehicle,
         driver_id: String,
         timestamp: i64,
