@@ -360,20 +360,22 @@ async fn parse_messages(
                             db.dbc.update_char_with_full(&bob).await;
 
                             {
+                                let timestamp = json["payload"]["timestamp"]
+                                    .to_string()
+                                    .unquote()
+                                    .parse::<i64>()
+                                    .unwrap_or(0);
                                 let mut session_list_rw = session_list.write().await;
                                 session_list_rw.push(
                                     Session::new_async(
                                         bob,
-                                        json["payload"]["timestamp"]
-                                            .to_string()
-                                            .unquote()
-                                            .parse::<i64>()
-                                            .unwrap(),
+                                        timestamp,
                                         db.clone(),
                                     )
                                     .await,
                                 );
                                 ui_context.request_repaint();
+                                achievements.reset(timestamp);
                             }
                         }
                     }
@@ -761,6 +763,7 @@ async fn parse_messages(
                 let mut session_list_rw = session_list.write().await;
                 if let Some(current_session) = session_list_rw.active_session_mut() {
                     current_session.end(timestamp).await;
+                    achievements.reset(0);
                 }
                 ui_context.request_repaint();
             } else if json["payload"]["event_name"].eq("BattleRankUp") {

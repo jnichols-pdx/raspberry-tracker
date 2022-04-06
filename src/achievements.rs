@@ -10,6 +10,7 @@ const COMBO_MEND_LIMIT: i64 = 61;
 const COMBO_RESUPPLY_LIMIT: i64 = 91;
 
 pub struct AchievementEngine {
+    login_time: i64,
     db: DatabaseCore,
     killstreak: u32,
     combo_kills: u32,
@@ -97,6 +98,7 @@ impl PlayerInteraction {
 impl AchievementEngine {
     pub fn new(db: DatabaseCore) -> Self {
         AchievementEngine {
+            login_time: 0,
             db,
             killstreak: 0,
             combo_kills: 0,
@@ -163,7 +165,8 @@ impl AchievementEngine {
             radar_kills: 0,
         }
     }
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self, start_time: i64) {
+        self.login_time = start_time;
         self.killstreak = 0;
         self.combo_kills = 0;
         self.last_victim = "".to_owned();
@@ -512,6 +515,15 @@ impl AchievementEngine {
         }
         self.bad_revive_streak = 0;
         self.team_kills = 0;
+
+        let login_delta = timestamp - self.login_time;
+        if login_delta <= 60 {
+            self.login_time = 0; //Prevent triggering more than once per session
+            results.push(Event::achieved("First Blood", timestamp, datetime.to_owned()));
+        } else if login_delta <= 90 {
+            self.login_time = 0; //Prevent triggering more than once per session
+            results.push(Event::achieved("Insant Action", timestamp, datetime.to_owned()));
+        }
 
         //Per player killstreak and Revenge achievements
         let opponent = self.opponents.entry(victim_id.clone()).or_insert_with(PlayerInteraction::new);
