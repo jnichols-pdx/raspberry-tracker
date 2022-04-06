@@ -6,6 +6,8 @@ use crate::weapons::*;
 use std::collections::HashMap;
 
 const COMBO_LIMIT: i64 = 5;
+const COMBO_MEND_LIMIT: i64 = 61;
+const COMBO_RESUPPLY_LIMIT: i64 = 91;
 
 pub struct AchievementEngine {
     db: DatabaseCore,
@@ -287,7 +289,7 @@ impl AchievementEngine {
                 }
             }
             ExperienceType::Heal_Player | ExperienceType::Squad_Heal => {
-                if timestamp - self.last_heal_time < COMBO_LIMIT {
+                if timestamp - self.last_heal_time < COMBO_MEND_LIMIT {
                     let new_total = self.combo_heal_xp + amount;
                     if self.combo_heal_xp < 100 && new_total > 100 {
                         results.push(Event::achieved("Main Healer", timestamp, datetime.to_owned()));
@@ -305,7 +307,7 @@ impl AchievementEngine {
             | ExperienceType::Squad_Resupply
             | ExperienceType::Vehicle_Resupply
             | ExperienceType::Squad_Vehicle_Resupply => {
-                if timestamp - self.last_resupply_time < COMBO_LIMIT {
+                if timestamp - self.last_resupply_time < COMBO_RESUPPLY_LIMIT {
                     let new_total = self.combo_resupply_xp + amount;
                     if self.combo_resupply_xp < 500 && new_total > 500 {
                         results.push(Event::achieved("Supply The Demand", timestamp, datetime.to_owned()));
@@ -320,7 +322,7 @@ impl AchievementEngine {
                 }
             }
             ExperienceType::Shield_Repair | ExperienceType::Squad_Shield_Repair => {
-                if timestamp - self.last_reshield_time < COMBO_LIMIT {
+                if timestamp - self.last_reshield_time < COMBO_MEND_LIMIT {
                     let new_total = self.combo_reshield_xp + amount;
                     if self.combo_reshield_xp < 250 && new_total > 250 {
                         results.push(Event::achieved("Bastion", timestamp, datetime.to_owned()));
@@ -354,7 +356,7 @@ impl AchievementEngine {
         }
 
         if kind.is_repair() {
-            if timestamp - self.last_repair_time < COMBO_LIMIT {
+            if timestamp - self.last_repair_time < COMBO_MEND_LIMIT {
                 let new_total = self.combo_repair_xp + amount;
                 if self.combo_repair_xp < 500  && new_total > 500 {
                     results.push(Event::achieved("Patchworker", timestamp, datetime.to_owned()));
