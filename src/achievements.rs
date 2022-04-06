@@ -3,6 +3,7 @@ use crate::db::*;
 use crate::events::*;
 use crate::experience::*;
 use crate::weapons::*;
+use std::collections::HashMap;
 
 const COMBO_LIMIT: i64 = 5;
 
@@ -66,6 +67,24 @@ pub struct AchievementEngine {
     pizza_awarded_time: i64,
     last_fighter_pilot_id: String,
     ground_vehicle_kills: u32,
+    opponents: HashMap<String, PlayerInteraction>,
+}
+
+struct PlayerInteraction {
+    latest_death_time: i64,
+    player_kills: u32,
+    deaths_to_player: u32,
+}
+
+impl PlayerInteraction {
+    pub fn new() -> Self {
+        Self {
+            latest_death_time: 0,
+            player_kills: 0,
+            deaths_to_player: 0,
+        }
+    }
+
 }
 
 #[allow(dead_code, unused_variables)]
@@ -131,6 +150,7 @@ impl AchievementEngine {
             pizza_awarded_time: 0,
             last_fighter_pilot_id: "".to_owned(),
             ground_vehicle_kills: 0,
+            opponents: HashMap::new(),
         }
     }
     pub fn reset(&mut self) {
@@ -192,6 +212,7 @@ impl AchievementEngine {
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
+        self.opponents.clear();
     }
 
     pub fn tally_xp_tick(
@@ -339,7 +360,7 @@ impl AchievementEngine {
         self.combo_kills = 0;
         self.deathstreak += 1;
         self.last_death_time = timestamp;
-        self.last_killer = attacker_id;
+        self.last_killer = attacker_id.clone();
         self.headshots_consecutive = 0;
         self.knife_kills_consecutive = 0;
         self.team_kills = 0;
@@ -385,6 +406,10 @@ impl AchievementEngine {
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
+
+        let opponent = self.opponents.entry(attacker_id).or_insert_with(PlayerInteraction::new);
+        opponent.deaths_to_player = 0;
+        opponent.player_kills += 1;
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
@@ -452,6 +477,24 @@ impl AchievementEngine {
         }
         self.bad_revive_streak = 0;
         self.team_kills = 0;
+
+        //Per player killstreak and Revenge achievements
+        let opponent = self.opponents.entry(victim_id.clone()).or_insert_with(PlayerInteraction::new);
+        if opponent.player_kills >= 3 {
+            results.push(Event::achieved("Revenge", timestamp, datetime.to_owned()));
+        }
+        opponent.player_kills = 0;
+        opponent.deaths_to_player += 1;
+        opponent.latest_death_time = timestamp;
+        match opponent.deaths_to_player {
+            0 | 1 | 2  => {}
+            3 => results.push(Event::achieved("Repeat Customer", timestamp, datetime.to_owned())),
+            4 => results.push(Event::achieved("Think They'd Learn!", timestamp, datetime.to_owned())),
+            5 => results.push(Event::achieved("Domination", timestamp, datetime.to_owned())),
+            6 | 7 | 8 | 9 => results.push(Event::achieved("Recursion", timestamp, datetime.to_owned())),
+            //At least 10:
+            _ => results.push(Event::achieved("Recursive Recursion", timestamp, datetime.to_owned())),
+        }
 
         //Combo kills - where each previous kill was only moments before the next.
         if timestamp - self.last_kill_time < COMBO_LIMIT {
