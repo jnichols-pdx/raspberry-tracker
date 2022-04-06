@@ -388,7 +388,7 @@ impl AchievementEngine {
 
         //Mutual Kill, here the opponent was logged as dying before the player.
         let delta = self.last_death_time - self.last_kill_time;
-        if delta == 0 || delta == 1 && self.last_killer.eq(&self.last_victim) {
+        if (delta == 0 || delta == 1) && self.last_killer.eq(&self.last_victim) {
             results.push(Event::achieved("Mutual", timestamp, datetime.to_owned()));
         }
 
@@ -478,7 +478,7 @@ impl AchievementEngine {
 
         //Mutual Kill, here the player was logged as dying before the opponent.
         let delta = self.last_kill_time - self.last_death_time;
-        if delta == 0 || delta == 1 && self.last_killer.eq(&self.last_victim) {
+        if (delta == 0 || delta == 1) && self.last_killer.eq(&self.last_victim) {
             results.push(Event::achieved("Mutual", timestamp, datetime.to_owned()))
         }
 
