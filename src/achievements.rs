@@ -352,7 +352,7 @@ impl AchievementEngine {
                 }
             }
             ExperienceType::Motion_Detect => {
-                if self.last_kill_time == timestamp && self.last_victim.eq(&other_id) && self.last_radar_kill_time != timestamp && !self.last_radar_kill_id.eq(&other_id) {
+                if self.last_kill_time == timestamp && self.last_victim.eq(&other_id) && (self.last_radar_kill_time != timestamp || !self.last_radar_kill_id.eq(&other_id)) {
                     self.radar_kills += 1;
                     self.last_radar_kill_time = timestamp;
                     self.last_radar_kill_id = other_id;
