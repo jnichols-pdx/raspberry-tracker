@@ -67,6 +67,7 @@ pub struct AchievementEngine {
     combo_reshield_xp: u32,
     last_vehicle_destroy_time: i64,
     last_vehicle_destroy_weapon: String,
+    last_vehicle_destroy_kind: Vehicle,
     pizza_awarded_time: i64,
     last_fighter_pilot_id: String,
     ground_vehicle_kills: u32,
@@ -75,6 +76,7 @@ pub struct AchievementEngine {
     last_radar_kill_time: i64,
     last_radar_kill_id: String,
     radar_kills: u32,
+    air_to_ground_kills: u32,
 }
 
 struct PlayerInteraction {
@@ -155,6 +157,7 @@ impl AchievementEngine {
             combo_reshield_xp: 0,
             last_vehicle_destroy_time: 0,
             last_vehicle_destroy_weapon: "".to_owned(),
+            last_vehicle_destroy_kind: Vehicle::Unknown,
             pizza_awarded_time: 0,
             last_fighter_pilot_id: "".to_owned(),
             ground_vehicle_kills: 0,
@@ -163,6 +166,7 @@ impl AchievementEngine {
             last_radar_kill_time: 0,
             last_radar_kill_id: "".to_owned(),
             radar_kills: 0,
+            air_to_ground_kills: 0,
         }
     }
     pub fn reset(&mut self, start_time: i64) {
@@ -222,6 +226,7 @@ impl AchievementEngine {
         self.combo_reshield_xp = 0;
         self.last_vehicle_destroy_time = 0;
         self.last_vehicle_destroy_weapon = "".to_owned();
+        self.last_vehicle_destroy_kind = Vehicle::Unknown;
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
@@ -230,6 +235,7 @@ impl AchievementEngine {
         self.last_radar_kill_time = 0;
         self.last_radar_kill_id = "".to_owned();
         self.radar_kills = 0;
+        self.air_to_ground_kills = 0;
     }
 
     pub fn tally_xp_tick(
@@ -437,6 +443,7 @@ impl AchievementEngine {
         self.combo_reshield_xp = 0;
         self.last_vehicle_destroy_time = 0;
         self.last_vehicle_destroy_weapon = "".to_owned();
+        self.last_vehicle_destroy_kind = Vehicle::Unknown;
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
@@ -444,6 +451,7 @@ impl AchievementEngine {
         self.last_radar_kill_time = 0;
         self.last_radar_kill_id = "".to_owned();
         self.radar_kills = 0;
+        self.air_to_ground_kills = 0;
 
         let opponent = self.opponents.entry(attacker_id).or_insert_with(PlayerInteraction::new);
         opponent.deaths_to_player = 0;
@@ -898,6 +906,17 @@ impl AchievementEngine {
                 }
             }
 
+            //Air to Ground killstreaks
+            if vehicle.is_aircraft() && (timestamp != self.last_vehicle_destroy_time || !self.last_vehicle_destroy_kind.is_aircraft()) {
+                self.air_to_ground_kills += 1;
+                match self.air_to_ground_kills {
+                    15 => results.push(Event::achieved("Death From Above", timestamp, datetime.to_owned())),
+                    40 => results.push(Event::achieved("Bombardier", timestamp, datetime.to_owned())),
+                    60 => results.push(Event::achieved("Scourge Of the Skies", timestamp, datetime.to_owned())),
+                    _  => {}
+                }
+            }
+
         } else {
             self.non_vehicle_kills += 1;
             match self.non_vehicle_kills {
@@ -991,6 +1010,7 @@ impl AchievementEngine {
         self.combo_reshield_xp = 0;
         self.last_vehicle_destroy_time = 0;
         self.last_vehicle_destroy_weapon = "".to_owned();
+        self.last_vehicle_destroy_kind = Vehicle::Unknown;
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
@@ -998,6 +1018,7 @@ impl AchievementEngine {
         self.last_radar_kill_time = 0;
         self.last_radar_kill_id = "".to_owned();
         self.radar_kills = 0;
+        self.air_to_ground_kills = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
@@ -1034,6 +1055,7 @@ impl AchievementEngine {
         let mut results = Vec::new();
         self.last_vehicle_destroy_time = timestamp;
         self.last_vehicle_destroy_weapon = weapon_id.to_owned();
+        self.last_vehicle_destroy_kind = their_vehicle;
 
         if their_vehicle == Vehicle::DropPod || their_vehicle == Vehicle::DropPodAlt {
             results.push(Event::achieved("Shoot The Needle", timestamp, datetime.to_owned()));
