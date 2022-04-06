@@ -77,6 +77,8 @@ pub struct AchievementEngine {
     last_radar_kill_id: String,
     radar_kills: u32,
     air_to_ground_kills: u32,
+    last_air_to_air_time: i64,
+    air_to_air_destructions: u32,
 }
 
 struct PlayerInteraction {
@@ -167,6 +169,8 @@ impl AchievementEngine {
             last_radar_kill_id: "".to_owned(),
             radar_kills: 0,
             air_to_ground_kills: 0,
+            last_air_to_air_time: 0,
+            air_to_air_destructions: 0,
         }
     }
     pub fn reset(&mut self, start_time: i64) {
@@ -236,6 +240,8 @@ impl AchievementEngine {
         self.last_radar_kill_id = "".to_owned();
         self.radar_kills = 0;
         self.air_to_ground_kills = 0;
+        self.last_air_to_air_time = 0;
+        self.air_to_air_destructions = 0;
     }
 
     pub fn tally_xp_tick(
@@ -452,6 +458,8 @@ impl AchievementEngine {
         self.last_radar_kill_id = "".to_owned();
         self.radar_kills = 0;
         self.air_to_ground_kills = 0;
+        self.last_air_to_air_time = 0;
+        self.air_to_air_destructions = 0;
 
         let opponent = self.opponents.entry(attacker_id).or_insert_with(PlayerInteraction::new);
         opponent.deaths_to_player = 0;
@@ -907,7 +915,10 @@ impl AchievementEngine {
             }
 
             //Air to Ground killstreaks
-            if vehicle.is_aircraft() && (timestamp != self.last_vehicle_destroy_time || !self.last_vehicle_destroy_kind.is_aircraft()) {
+            if vehicle.is_aircraft()
+                && (timestamp != self.last_vehicle_destroy_time
+                || !self.last_vehicle_destroy_kind.is_aircraft())
+            {
                 self.air_to_ground_kills += 1;
                 match self.air_to_ground_kills {
                     15 => results.push(Event::achieved("Death From Above", timestamp, datetime.to_owned())),
@@ -917,6 +928,21 @@ impl AchievementEngine {
                 }
             }
 
+            //Air to Air vehicle destroy streaks
+            if vehicle.is_aircraft()
+                && timestamp == self.last_vehicle_destroy_time
+                && self.last_vehicle_destroy_kind.is_aircraft()
+                && timestamp != self.last_air_to_air_time
+            {
+                self.air_to_air_destructions += 1;
+                self.last_air_to_air_time = timestamp;
+                match self.air_to_air_destructions {
+                    3  => results.push(Event::achieved("Ace", timestamp, datetime.to_owned())),
+                    8  => results.push(Event::achieved("Top Gun", timestamp, datetime.to_owned())),
+                    20 => results.push(Event::achieved("Superman", timestamp, datetime.to_owned())),
+                    _  => {}
+                }
+            }
         } else {
             self.non_vehicle_kills += 1;
             match self.non_vehicle_kills {
@@ -1019,6 +1045,8 @@ impl AchievementEngine {
         self.last_radar_kill_id = "".to_owned();
         self.radar_kills = 0;
         self.air_to_ground_kills = 0;
+        self.last_air_to_air_time = 0;
+        self.air_to_air_destructions = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
