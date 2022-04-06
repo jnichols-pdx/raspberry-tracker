@@ -68,6 +68,7 @@ pub struct AchievementEngine {
     last_fighter_pilot_id: String,
     ground_vehicle_kills: u32,
     opponents: HashMap<String, PlayerInteraction>,
+    tank_mines_defused: u32,
 }
 
 struct PlayerInteraction {
@@ -151,6 +152,7 @@ impl AchievementEngine {
             last_fighter_pilot_id: "".to_owned(),
             ground_vehicle_kills: 0,
             opponents: HashMap::new(),
+            tank_mines_defused: 0,
         }
     }
     pub fn reset(&mut self) {
@@ -213,6 +215,7 @@ impl AchievementEngine {
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
         self.opponents.clear();
+        self.tank_mines_defused = 0;
     }
 
     pub fn tally_xp_tick(
@@ -321,6 +324,12 @@ impl AchievementEngine {
                     self.combo_reshield_xp = amount;
                 }
             }
+            ExperienceType::Tank_Mine_Despawn_or_Defusal => {
+                self.tank_mines_defused += 1;
+                if self.tank_mines_defused % 3 == 0 {
+                    results.push(Event::achieved("Counter Terrorists", timestamp, datetime.to_owned()));
+                }
+            }
             _ => {}
         }
 
@@ -406,6 +415,7 @@ impl AchievementEngine {
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
+        self.tank_mines_defused = 0;
 
         let opponent = self.opponents.entry(attacker_id).or_insert_with(PlayerInteraction::new);
         opponent.deaths_to_player = 0;
@@ -947,6 +957,7 @@ impl AchievementEngine {
         self.pizza_awarded_time = 0;
         self.last_fighter_pilot_id = "".to_owned();
         self.ground_vehicle_kills = 0;
+        self.tank_mines_defused = 0;
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
