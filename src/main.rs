@@ -447,7 +447,7 @@ async fn parse_messages(
                     Some(Vehicle::from(vehicle_num))
                 };
                 let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
-                let weapon_name = if weapon_id.eq("0") && vehicle.is_some() {
+                let mut weapon_name = if weapon_id.eq("0") && vehicle.is_some() {
                     "Roadkill".to_owned()
                 } else {
                     db.dbc.get_weapon_name(&weapon_id).await
@@ -736,6 +736,12 @@ async fn parse_messages(
                         new_achievements = achievements.tally_teamkill(timestamp, &formatted_time);
                     }
                     _ => {}
+                }
+
+                //Crashing something like an aircraft into terrain and killing yourself shouldn't
+                //be considered a 'roadkill'. Turn self-roadkills back into Suicide. 
+                if event_type == EventType::Suicide && weapon_name.eq("Roadkill") {
+                    weapon_name = "Suicide".to_owned();
                 }
 
                 //Assemble it all and save.
