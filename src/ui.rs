@@ -147,7 +147,7 @@ impl TrackerApp {
 
 impl epi::App for TrackerApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &epi::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut epi::Frame) {
         {
             let session_list_ro = self.session_list.blocking_read();
             if self.session_count < session_list_ro.len() {
