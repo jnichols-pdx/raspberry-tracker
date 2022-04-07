@@ -35,7 +35,7 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocket
 //EGUI offers both native and web assembly compilation targets, I don't intend to use WASM.
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    big_print_num("0.3.0");
+    big_print_num("0.4.0");
     let rt = Runtime::new().unwrap();
     let rth = rt.handle();
 
