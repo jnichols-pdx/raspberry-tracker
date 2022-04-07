@@ -447,8 +447,12 @@ async fn parse_messages(
                     Some(Vehicle::from(vehicle_num))
                 };
                 let weapon_id = json["payload"]["attacker_weapon_id"].to_string().unquote();
-                let mut weapon_name = if weapon_id.eq("0") && vehicle.is_some() {
-                    "Roadkill".to_owned()
+                let mut weapon_name = if weapon_id.eq("0"){
+                    if vehicle.is_some() {
+                        "Roadkill".to_owned()
+                    } else {
+                        "Fatality".to_owned()
+                    }
                 } else {
                     db.dbc.get_weapon_name(&weapon_id).await
                 };
@@ -739,8 +743,10 @@ async fn parse_messages(
                 }
 
                 //Crashing something like an aircraft into terrain and killing yourself shouldn't
-                //be considered a 'roadkill'. Turn self-roadkills back into Suicide. 
-                if event_type == EventType::Suicide && weapon_name.eq("Roadkill") {
+                //be considered a 'roadkill'. Turn self-roadkills/fatalities back into Suicide.
+                if event_type == EventType::Suicide
+                    && (weapon_name.eq("Roadkill") || weapon_name.eq("Fatality"))
+                {
                     weapon_name = "Suicide".to_owned();
                 }
 

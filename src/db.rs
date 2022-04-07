@@ -266,7 +266,7 @@ impl DatabaseCore {
     pub async fn get_weapon_name(&mut self, weapon_id: &str) -> String {
         let weapon_name;
         if weapon_id == "0" {
-            weapon_name = "Suicide".to_owned(); //applies for crashing vehicles... but what of roadkills / fall damage?
+            weapon_name = "Suicide".to_owned();
         } else {
             let weapons_rw = self.weapons.write().await;
             match weapons_rw.get(weapon_id) {
