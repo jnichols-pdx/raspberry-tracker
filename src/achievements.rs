@@ -559,6 +559,7 @@ impl AchievementEngine {
             //At least 10:
             _ => results.push(Event::achieved("Recursive Recursion", timestamp, datetime.to_owned())),
         }
+        println!("Opponent {} now at {} deaths to player", victim_id, opponent.deaths_to_player);
 
         //Combo kills - where each previous kill was only moments before the next.
         if timestamp - self.last_kill_time < COMBO_LIMIT {
@@ -949,6 +950,11 @@ impl AchievementEngine {
                 50 => results.push(Event::achieved("Cheater", timestamp, datetime.to_owned())),
                 _  => {}
             }
+
+            //Fatality achievement - Weapon id 0 and not a vehicle roadkill
+            if weapon_id.eq("0") {
+                results.push(Event::achieved("Fatality", timestamp, datetime.to_owned()));
+            }
         }
 
 
@@ -1106,11 +1112,13 @@ impl AchievementEngine {
         character_id: String,
         timestamp: i64,
         datetime: &str,
-    ) -> Option<Vec<Event>> {
-        let mut results = Vec::new();
+    ) -> Option<Event> {
+        let mut rage_event = None;
         if let Some(opponent) = self.opponents.get(&character_id) {
+            println!("{} had {} deaths_to_player at logout", character_id, opponent.deaths_to_player);
             if opponent.deaths_to_player > 0 {
                 let delta = timestamp - opponent.latest_death_time;
+                println!("{} death to logout delta: {} seconds", character_id, delta);
                 if delta <= RAGE_LIMIT {
                     let name: String;
                     match lookup_new_char_details(&character_id) {
@@ -1145,15 +1153,14 @@ impl AchievementEngine {
                     } else {
                         format!("Rage Quit ({})", name)
                     };
-                    results.push(Event::achieved(&rage_message, timestamp, datetime.to_owned()));
+                    println!("push here: {}", rage_message);
+                    rage_event = Some(Event::achieved(&rage_message, timestamp, datetime.to_owned()));
                 }
             }
             self.opponents.remove(&character_id);
-        }
-        if !results.is_empty() {
-            Some(results)
         } else {
-            None
+            println!("{} not in oppo list at logout", character_id)
         }
+        rage_event
     }
 }

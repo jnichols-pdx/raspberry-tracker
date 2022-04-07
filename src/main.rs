@@ -836,7 +836,18 @@ async fn parse_messages(
                         .format(&formatter)
                         .unwrap_or_else(|_| "?-?-? ?:?:?".into());
                     //Someone else logged out, send to achievement engine to check for rage quits.
-                    achievements.tally_logout(character_id, timestamp, &formatted_time);
+                    if let Some(rage_event) = achievements.tally_logout(character_id, timestamp, &formatted_time)
+                    {
+                        let mut session_list_rw = session_list.write().await;
+                        if let Some(current_session) = session_list_rw.active_session_mut() {
+                            let event_ordering = current_session.log_event(rage_event.clone()).await;
+                            ui_context.request_repaint();
+                            let current_session_id = current_session.get_id();
+                            if let Some(sess_id) = current_session_id {
+                                db.dbc.record_event(&rage_event, event_ordering, sess_id).await;
+                            }
+                        }
+                    }
                 }
             } else if json["payload"]["event_name"].eq("BattleRankUp") {
                 println!("Found rankup!");
