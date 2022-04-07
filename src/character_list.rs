@@ -22,7 +22,7 @@ impl CharacterList {
     pub fn new(
         ws_out: mpsc::Sender<Message>,
         sl: Arc<RwLock<SessionList>>,
-        ws_logout_out: mpsc::Sender<Message>
+        ws_logout_out: mpsc::Sender<Message>,
     ) -> Self {
         CharacterList {
             characters: Vec::new(),

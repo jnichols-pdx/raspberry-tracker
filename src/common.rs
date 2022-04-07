@@ -454,7 +454,6 @@ impl Vehicle {
                 | Vehicle::ReclaimedGalaxy
                 | Vehicle::ReclaimedValkyrie
         )
-
     }
 
     pub fn is_esf(&self) -> bool {

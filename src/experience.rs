@@ -1333,8 +1333,12 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Control_Point_Defend => write!(f, "Control Point Defend XP"),
             ExperienceType::Control_Point_Attack => write!(f, "Control Point Attack XP"),
             ExperienceType::Facility_Captured_Not_Used => write!(f, "Facility Capture XP"),
-            ExperienceType::Destroy_Secondary_Objective => write!(f, "Destroy Secondary Objective XP"),
-            ExperienceType::Destroy_SecondaryObjectiveAssist => write!(f, "Assist Destroy 2nd Objective XP"),
+            ExperienceType::Destroy_Secondary_Objective => {
+                write!(f, "Destroy Secondary Objective XP")
+            }
+            ExperienceType::Destroy_SecondaryObjectiveAssist => {
+                write!(f, "Assist Destroy 2nd Objective XP")
+            }
             ExperienceType::Vehicle_Destruction_Flash => write!(f, "Flash Destroy XP"),
             ExperienceType::Multiple_Kill => write!(f, "Multikill XP"),
             ExperienceType::Vehicle_RoadKill => write!(f, "Roadkill XP"),
@@ -1381,7 +1385,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Ram_Kill_Sunderer => write!(f, "Ram Kill (Sunderer) XP"),
             ExperienceType::Vehicle_Ram_Kill_Vanguard => write!(f, "Ram Kill (Vanguard) XP"),
             ExperienceType::Explosive_Destruction => write!(f, "Explosive Destruction XP"),
-            ExperienceType::Secondary_Facility_Object_Repair => write!(f, "2ndary Facility Obj Repair XP"),
+            ExperienceType::Secondary_Facility_Object_Repair => {
+                write!(f, "2ndary Facility Obj Repair XP")
+            }
             ExperienceType::Vehicle_Repair_Engi_Turret => write!(f, "Repair Engi Turret XP"),
             ExperienceType::Vehicle_Repair_Phalanx => write!(f, "Repair Phalanx Turret XP"),
             ExperienceType::Vehicle_Repair_Drop_Pod => write!(f, "Repair Drop Pod XP"),
@@ -1424,73 +1430,205 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Squad_Repair_Vanguard => write!(f, "Repair Squad Vanguard XP"),
             ExperienceType::Squad_MAX_Repair => write!(f, "Repair Squad MAX XP"),
             ExperienceType::Drop_Pod_Kill => write!(f, "Kill Drop Pod XP"),
-            ExperienceType::Player_Kill_by_Sunderer_Gunner => write!(f, "Sundere Gunner Kill (Player) XP"),
-            ExperienceType::Player_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Player) XP"),
-            ExperienceType::Player_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Player) XP"),
-            ExperienceType::Player_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Player) XP"),
-            ExperienceType::Player_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Player) XP"),
-            ExperienceType::Player_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Player) XP"),
-            ExperienceType::Flash_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Flash) XP"),
-            ExperienceType::Sunderer_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Lightning) XP"),
-            ExperienceType::Magrider_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Magrider) XP"),
-            ExperienceType::Vanguard_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Vanguard) XP"),
-            ExperienceType::Prowler_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Prowler) XP"),
-            ExperienceType::Scythe_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Scythe) XP"),
-            ExperienceType::Reaver_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Reaver) XP"),
-            ExperienceType::Mosquito_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Mosquito) XP"),
-            ExperienceType::Lib_Kill_by_Sunderer => write!(f, "Sunderer Gunner Kill Liberator(Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Galaxy) XP"),
-            ExperienceType::Flash_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (FLash) XP"),
-            ExperienceType::Sunderer_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Lightning) XP"),
-            ExperienceType::Vanguard_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Vanguard) XP"),
-            ExperienceType::Prowler_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Prowler) XP"),
-            ExperienceType::Reaver_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Reaver) XP"),
-            ExperienceType::Mosquito_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Mosquito) XP"),
-            ExperienceType::Lib_Kill_by_Magrider => write!(f, "Magrider Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Galaxy) XP"),
-            ExperienceType::Flash_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Flash) XP"),
-            ExperienceType::Sunderer_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Lightning) XP"),
-            ExperienceType::Magrider_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Magrider) XP"),
-            ExperienceType::Prowler_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Prowler) XP"),
-            ExperienceType::Scythe_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Scythe) XP"),
-            ExperienceType::Mosquito_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Mosquito) XP"),
-            ExperienceType::Lib_Kill_by_Vanguard => write!(f, "Vanguard Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Galaxy) XP"),
-            ExperienceType::Flash_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Flash) XP"),
+            ExperienceType::Player_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sundere Gunner Kill (Player) XP")
+            }
+            ExperienceType::Player_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Player) XP")
+            }
+            ExperienceType::Player_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Player) XP")
+            }
+            ExperienceType::Player_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Player) XP")
+            }
+            ExperienceType::Player_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Player) XP")
+            }
+            ExperienceType::Player_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Player) XP")
+            }
+            ExperienceType::Flash_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Lib_Kill_by_Sunderer => {
+                write!(f, "Sunderer Gunner Kill Liberator(Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Flash_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (FLash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Lib_Kill_by_Magrider => {
+                write!(f, "Magrider Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Flash_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Lib_Kill_by_Vanguard => {
+                write!(f, "Vanguard Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Flash_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Flash) XP")
+            }
             ExperienceType::Galaxy_Spawn_Bonus => write!(f, "Galaxy Spawn Bonus XP"),
-            ExperienceType::Sunderer_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Lightning) XP"),
-            ExperienceType::Magrider_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Magrider) XP"),
-            ExperienceType::Vanguard_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Vanguard) XP"),
-            ExperienceType::Scythe_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Scythe) XP"),
-            ExperienceType::Reaver_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Reaver) XP"),
-            ExperienceType::Liberator_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Galaxy) XP"),
-            ExperienceType::Flash_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Flash) XP"),
-            ExperienceType::Sunderer_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Lightning) XP"),
-            ExperienceType::Magrider_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Magrider) XP"),
-            ExperienceType::Vanguard_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Vanguard) XP"),
-            ExperienceType::Prowler_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Prowler) XP"),
-            ExperienceType::Scythe_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Scythe) XP"),
-            ExperienceType::Reaver_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Reaver) XP"),
-            ExperienceType::Mosquito_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Mosquito) XP"),
-            ExperienceType::Lib_Kill_by_Liberator => write!(f, "Liberator Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Galaxy) XP"),
-            ExperienceType::Flash_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Flash) XP"),
-            ExperienceType::Sunderer_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Lightning) XP"),
-            ExperienceType::Magrider_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Magrider) XP"),
-            ExperienceType::Vanguard_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Vanguard) XP"),
-            ExperienceType::Prowler_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Prowler) XP"),
-            ExperienceType::Scythe_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Scythe) XP"),
-            ExperienceType::Reaver_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Reaver) XP"),
-            ExperienceType::Mosquito_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Mosquito) XP"),
-            ExperienceType::LibKill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Galaxy) XP"),
+            ExperienceType::Sunderer_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Liberator_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Flash_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Lib_Kill_by_Liberator => {
+                write!(f, "Liberator Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Flash_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::LibKill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Galaxy) XP")
+            }
             ExperienceType::Sunderer_Spawn_Bonus => write!(f, "Sunderer Spawn XP"),
             ExperienceType::Facility_placed_bomb => write!(f, "Facility Placed Bomb XP"),
             ExperienceType::Facility_defused_bomb => write!(f, "Facility Defused Bomb XP"),
@@ -1513,12 +1651,20 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Spot_Kill_Sunderer => write!(f, "Spot Kill (Sunderer) XP"),
             ExperienceType::Spot_Kill_Vanguard => write!(f, "Spot Kill (Vanguard) XP"),
             ExperienceType::Squad_Spot_Kill_Flash => write!(f, "Spot Squad Kill (Flash) XP"),
-            ExperienceType::Squad_Spot_Kill_Engi_Turret => write!(f, "Spot Squad Kill (Mana Turret) XP"),
-            ExperienceType::Squad_Spot_Kill_Phalanx => write!(f, "Spot Squad Kill (Phalanx Turret) XP"),
+            ExperienceType::Squad_Spot_Kill_Engi_Turret => {
+                write!(f, "Spot Squad Kill (Mana Turret) XP")
+            }
+            ExperienceType::Squad_Spot_Kill_Phalanx => {
+                write!(f, "Spot Squad Kill (Phalanx Turret) XP")
+            }
             ExperienceType::Squad_Spot_Kill_Drop_Pod => write!(f, "Spot Squad Kill (Drop Pod) XP"),
             ExperienceType::Squad_Spot_Kill_Galaxy => write!(f, "Spot Squad Kill (Galaxy) XP"),
-            ExperienceType::Squad_Spot_Kill_Liberator => write!(f, "Spot Squad Kill (Liberator) XP"),
-            ExperienceType::Squad_Spot_Kill_Lightning => write!(f, "Spot Squad Kill (Lightning) XP"),
+            ExperienceType::Squad_Spot_Kill_Liberator => {
+                write!(f, "Spot Squad Kill (Liberator) XP")
+            }
+            ExperienceType::Squad_Spot_Kill_Lightning => {
+                write!(f, "Spot Squad Kill (Lightning) XP")
+            }
             ExperienceType::Squad_Spot_Kill_Magrider => write!(f, "Spot Squad Kill (Magrider) XP"),
             ExperienceType::Squad_Spot_Kill_Mosquito => write!(f, "Spot Squad Kill (Mosquito) XP"),
             ExperienceType::Squad_Spot_Kill_Prowler => write!(f, "Spot Squad Kill (Prowler) XP"),
@@ -1533,16 +1679,26 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Spawn_Kill => write!(f, "Spawn Kill XP"),
             ExperienceType::Priority_Kill => write!(f, "Priority Kill XP"),
             ExperienceType::High_Priority_Kill => write!(f, "High Priority Kill XP"),
-            ExperienceType::Lightning_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Lightning) XP"),
-            ExperienceType::Prowler_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Prowler) XP"),
+            ExperienceType::Lightning_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Lightning) XP")
+            }
+            ExperienceType::Prowler_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Prowler) XP")
+            }
             ExperienceType::Galaxy_Damage => write!(f, "Vehicle Damage (Galaxy) XP"),
             ExperienceType::Liberator_Damage => write!(f, "Vehicle Damage (Liberator) XP"),
-            ExperienceType::Magrider_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Magrider) XP"),
+            ExperienceType::Magrider_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Magrider) XP")
+            }
             ExperienceType::Mosquito_Damage => write!(f, "Vehicle Damage (Mosquito) XP"),
             ExperienceType::Reaver_Damage => write!(f, "Vehicle Damage (Reaver) XP"),
             ExperienceType::Scythe_Damage => write!(f, "Vehicle Damage (Scythe) XP"),
-            ExperienceType::Sunderer_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Sunderer) XP"),
-            ExperienceType::Vanguard_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Vanguard) XP"),
+            ExperienceType::Sunderer_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Sunderer) XP")
+            }
+            ExperienceType::Vanguard_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Vanguard) XP")
+            }
             ExperienceType::Ribbon_Experience => write!(f, "Ribbon XP"),
             ExperienceType::Motion_Detect => write!(f, "Motion Detection XP"),
             ExperienceType::Squad_Motion_Spot => write!(f, "Squad Motion Spot XP"),
@@ -1553,51 +1709,129 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Kill_Assist_Harasser => write!(f, "Kill Assist Harasser XP"),
             ExperienceType::Spot_Kill_Harasser => write!(f, "Spot Kill (Harasser) XP"),
             ExperienceType::Squad_Spot_Kill_Harasser => write!(f, "Spot Squad Kill (Harasser) XP"),
-            ExperienceType::Harasser_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Harasser) XP"),
-            ExperienceType::Harasser_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Harasser) XP"),
-            ExperienceType::Harasser_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Harasser) XP"),
-            ExperienceType::Harasser_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Harasser) XP"),
-            ExperienceType::Harasser_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Harasser) XP"),
-            ExperienceType::Harasser_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Harasser) XP"),
-            ExperienceType::Player_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Player) XP"),
-            ExperienceType::Flash_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Flash) XP"),
-            ExperienceType::Sunderer_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Lightning) XP"),
-            ExperienceType::Vanguard_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Vanguard) XP"),
-            ExperienceType::Prowler_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Prowler) XP"),
-            ExperienceType::Reaver_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Reaver) XP"),
-            ExperienceType::Mosquito_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Mosquito) XP"),
-            ExperienceType::Lib_Kill_by_Harasser => write!(f, "Harasser Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Galaxy) XP"),
-            ExperienceType::Harasser_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Harasser) XP"),
-            ExperienceType::Magrider_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Magrider) XP"),
-            ExperienceType::Scythe_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Scythe) XP"),
+            ExperienceType::Harasser_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Player_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Player) XP")
+            }
+            ExperienceType::Flash_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Lib_Kill_by_Harasser => {
+                write!(f, "Harasser Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Scythe) XP")
+            }
             ExperienceType::Tank_Mine_Despawn_or_Defusal => write!(f, "Defuse Tank Mine XP"),
             ExperienceType::Alert_Reward => write!(f, "Alert Reward XP"),
-            ExperienceType::Tank_Hunter_Bonus_Prowler_Kill => write!(f, "Tank Hunter Bonus Prowler Kill XP"),
-            ExperienceType::Tank_Hunter_Bonus_Magrider_Kil => write!(f, "Tank Hunter Bonus Magrider Kill XP"),
-            ExperienceType::Dogfighter_Bonus_Mosquito_Kill => write!(f, "Dogfighter Bonus Mosquito Kill XP"),
-            ExperienceType::Dogfighter_Bonus_Reaver_Kill => write!(f, "Dogfighter Bonus ReaverKill XP"),
-            ExperienceType::Dogfighter_Bonus_Scythe_Kill => write!(f, "Dogfighter Bonus Scythe Kill XP"),
-            ExperienceType::Tank_Hunter_Bonus_Vanguard_Kil => write!(f, "Tank Hunter Bonus Vanguard Kill XP"),
+            ExperienceType::Tank_Hunter_Bonus_Prowler_Kill => {
+                write!(f, "Tank Hunter Bonus Prowler Kill XP")
+            }
+            ExperienceType::Tank_Hunter_Bonus_Magrider_Kil => {
+                write!(f, "Tank Hunter Bonus Magrider Kill XP")
+            }
+            ExperienceType::Dogfighter_Bonus_Mosquito_Kill => {
+                write!(f, "Dogfighter Bonus Mosquito Kill XP")
+            }
+            ExperienceType::Dogfighter_Bonus_Reaver_Kill => {
+                write!(f, "Dogfighter Bonus ReaverKill XP")
+            }
+            ExperienceType::Dogfighter_Bonus_Scythe_Kill => {
+                write!(f, "Dogfighter Bonus Scythe Kill XP")
+            }
+            ExperienceType::Tank_Hunter_Bonus_Vanguard_Kil => {
+                write!(f, "Tank Hunter Bonus Vanguard Kill XP")
+            }
             ExperienceType::Savior_Kill_Non_MAX => write!(f, "Savior Kill XP"),
             ExperienceType::Saved => write!(f, "Saved XP"),
             ExperienceType::Holiday_Event_NPC_Kill => write!(f, "Holiday NPC Kill XP"),
             ExperienceType::Holiday_Event_NPC_Gold_Kill => write!(f, "Holiday G-NPC Kill XP"),
-            ExperienceType::Snowman_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Snowman) XP"),
-            ExperienceType::Snowman_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Snowman) XP"),
-            ExperienceType::Snowman_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Snowman) XP"),
-            ExperienceType::Snowman_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Snowman) XP"),
-            ExperienceType::Snowman_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Snowman) XP"),
-            ExperienceType::Snowman_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Snowman) XP"),
-            ExperienceType::Snowman_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Sunder_Gunner => write!(f, "Sunderer Gunner Kill (Great Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Mag_Gunner => write!(f, "Magrider Gunner Kill (Great Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Vang_Gunner => write!(f, "Vanguard Gunner Kill (Great Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Prow_Gunner => write!(f, "Prowler Gunner Kill (Great Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Great Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Gal_Gunner => write!(f, "Galaxy Gunner Kill (Great Snowman) XP"),
-            ExperienceType::GSnowman_Kill_by_Haras_Gunner => write!(f, "Harasser Gunner Kill (Great Snowman) XP"),
+            ExperienceType::Snowman_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Sunder_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Great Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Mag_Gunner => {
+                write!(f, "Magrider Gunner Kill (Great Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Vang_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Great Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Prow_Gunner => {
+                write!(f, "Prowler Gunner Kill (Great Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Great Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Gal_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Great Snowman) XP")
+            }
+            ExperienceType::GSnowman_Kill_by_Haras_Gunner => {
+                write!(f, "Harasser Gunner Kill (Great Snowman) XP")
+            }
             ExperienceType::Scout_Radar_Detect => write!(f, "Scout Rader Detect XP"),
             ExperienceType::Squad_Scout_Radar_Detect => write!(f, "Squad Scout Radar Detext XP"),
             ExperienceType::Squad_Vehicle_Spawn_Bonus => write!(f, "Squad Vehicle Spawn Bonus XP"),
@@ -1618,12 +1852,18 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Squad_Spot_Kill_R_Drone => write!(f, ""),*/
             ExperienceType::Motion_Sensor_Spotter_Kill => write!(f, "Destroy Motion Spotter XP"),
             ExperienceType::Kill_Player_Priority_Assist => write!(f, "Kill Assist on Priority XP"),
-            ExperienceType::Kill_Player_High_Priority_Assist => write!(f, "Kill Assist High Priority XP"),
+            ExperienceType::Kill_Player_High_Priority_Assist => {
+                write!(f, "Kill Assist High Priority XP")
+            }
             ExperienceType::Shield_Regen_Tool_Kill => write!(f, "Destroy Shield Regen Tool XP"),
             ExperienceType::Shield_Repair => write!(f, "Shield Repair XP"),
             ExperienceType::Squad_Shield_Repair => write!(f, "Squad Shield Repair XP"),
-            ExperienceType::Chain_Expl_Assist_Infantry => write!(f, "Chain Explosion Assist (Infantry) XP"),
-            ExperienceType::Chain_Expl_Assist_Flash => write!(f, "Chain Explosion Assist (Flash) XP"),
+            ExperienceType::Chain_Expl_Assist_Infantry => {
+                write!(f, "Chain Explosion Assist (Infantry) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Flash => {
+                write!(f, "Chain Explosion Assist (Flash) XP")
+            }
             ExperienceType::Vehicle_Destruction_Valkyrie => write!(f, "Destroy Valkyrie XP"),
             ExperienceType::Vehicle_Ram_Kill_Valkyrie => write!(f, "Ram Kill (Valkyrie) XP"),
             ExperienceType::Vehicle_Repair_Valkyrie => write!(f, "Repair Valkyrie XP"),
@@ -1632,44 +1872,114 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Spot_Kill_Valkyrie => write!(f, "Spot Kill (Valkyrie) XP"),
             ExperienceType::Squad_Spot_Kill_Valkyrie => write!(f, "Spot Squad Kill (Valkyrie) XP"),
             ExperienceType::Valkyrie_Damage => write!(f, "Vehicle Damage (Valkyrie) XP"),
-            ExperienceType::Valkyrie_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Valkyrie_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Valkyrie_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Valkyrie_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Valkyrie_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Valkyrie_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Player_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Player) XP"),
-            ExperienceType::Flash_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Flash) XP"),
-            ExperienceType::Sunderer_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Sunderer) XP"),
-            ExperienceType::Lightning_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Lightning) XP"),
-            ExperienceType::Vanguard_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Vanguard) XP"),
-            ExperienceType::Prowler_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Prowler) XP"),
-            ExperienceType::Reaver_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Reaver) XP"),
-            ExperienceType::Mosquito_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Mosquito) XP"),
-            ExperienceType::Lib_Kill_by_Valkyrie => write!(f, "Valkyrie Gunner Kill (Liberator) XP"),
-            ExperienceType::Galaxy_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Galaxy) XP"),
-            ExperienceType::Magrider_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Magrider) XP"),
-            ExperienceType::Scythe_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Scythe) XP"),
-            ExperienceType::Snowman_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (SNowman) XP"),
+            ExperienceType::Valkyrie_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Player_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Player) XP")
+            }
+            ExperienceType::Flash_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Lightning_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Lightning) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Reaver_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Lib_Kill_by_Valkyrie => {
+                write!(f, "Valkyrie Gunner Kill (Liberator) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (SNowman) XP")
+            }
             //ExperienceType::R_Drone_Kill_by_Valkyrie_Gunner => write!(f, ""),
-            ExperienceType::Valkyrie_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Chain_Expl_Assist_Phalanx => write!(f, "Chain Explosion Assist (Phalanx) XP"),
-            ExperienceType::Chain_Expl_Assist_Drop_Pod => write!(f, "Chain Explosion Assist (Drop Pod) XP"),
-            ExperienceType::Chain_Expl_Assist_Galaxy => write!(f, "Chain Explosion Assist (Galaxy) XP"),
-            ExperienceType::Chain_Expl_Assist_Liberator => write!(f, "Chain Explosion Assist (Liberator) XP"),
-            ExperienceType::Chain_Expl_Assist_Lightning => write!(f, "Chain Explosion Assist (Lightning) XP"),
-            ExperienceType::Chain_Expl_Assist_Magrider => write!(f, "Chain Explosion Assist (Magrider) XP"),
-            ExperienceType::Chain_Expl_Assist_Mosquito => write!(f, "Chain Explosion Assist (Mosquito) XP"),
-            ExperienceType::Chain_Expl_Assist_Prowler => write!(f, "Chain Explosion Assist (Prowler) XP"),
-            ExperienceType::Chain_Expl_Assist_Reaver => write!(f, "Chain Explosion Assist (Reaver) XP"),
-            ExperienceType::Chain_Expl_Assist_Scythe => write!(f, "Chain Explosion Assist (Scythe) XP"),
-            ExperienceType::Chain_Expl_Assist_Sunderer => write!(f, "Chain Explosion Assist (Sunderer) XP"),
-            ExperienceType::Chain_Expl_Assist_Vanguard => write!(f, "Chain Explosion Assist (Vanguard) XP"),
-            ExperienceType::Chain_Expl_Assist_Harasser => write!(f, "Chain Explosion Assist (Harasser) XP"),
+            ExperienceType::Valkyrie_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Phalanx => {
+                write!(f, "Chain Explosion Assist (Phalanx) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Drop_Pod => {
+                write!(f, "Chain Explosion Assist (Drop Pod) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Galaxy => {
+                write!(f, "Chain Explosion Assist (Galaxy) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Liberator => {
+                write!(f, "Chain Explosion Assist (Liberator) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Lightning => {
+                write!(f, "Chain Explosion Assist (Lightning) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Magrider => {
+                write!(f, "Chain Explosion Assist (Magrider) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Mosquito => {
+                write!(f, "Chain Explosion Assist (Mosquito) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Prowler => {
+                write!(f, "Chain Explosion Assist (Prowler) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Reaver => {
+                write!(f, "Chain Explosion Assist (Reaver) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Scythe => {
+                write!(f, "Chain Explosion Assist (Scythe) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Sunderer => {
+                write!(f, "Chain Explosion Assist (Sunderer) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Vanguard => {
+                write!(f, "Chain Explosion Assist (Vanguard) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Harasser => {
+                write!(f, "Chain Explosion Assist (Harasser) XP")
+            }
             //ExperienceType::Chain_Expl_Assist_R_Drone => write!(f, ""),
-            ExperienceType::Chain_Expl_Assist_Valkyrie => write!(f, "Chain Explosion Assist (Valkyrie) XP"),
+            ExperienceType::Chain_Expl_Assist_Valkyrie => {
+                write!(f, "Chain Explosion Assist (Valkyrie) XP")
+            }
             ExperienceType::Concussion_Grenade_Assist => write!(f, "Concussion Assist XP"),
-            ExperienceType::Concussion_Grenade_Squad_Assist => write!(f, "Squad Concussion Assist XP"),
+            ExperienceType::Concussion_Grenade_Squad_Assist => {
+                write!(f, "Squad Concussion Assist XP")
+            }
             ExperienceType::EMP_Grenade_Assist => write!(f, "EMP Assist XP"),
             ExperienceType::EMP_Grenade_Squad_Assist => write!(f, "Squad EMP Assist XP"),
             ExperienceType::Flashbang_Assist => write!(f, "Flashbang Assist XP"),
@@ -1677,33 +1987,73 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Objective_Pulse_Defend => write!(f, "Point Defend XP"),
             ExperienceType::Objective_Pulse_Capture => write!(f, "Point Capture XP"),
             ExperienceType::Halloween_Event_NPC_GreatP_Kill => write!(f, "Great Pumpkin Kill XP"),
-            ExperienceType::Pumpkin_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Pumpkin) XP"),
-            ExperienceType::Pumpkin_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Sunder_Gunner => write!(f, "Sunderer Gunner Kill (Great Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Mag_Gunner => write!(f, "Magrider Gunner Kill (Great Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Vang_Gunner => write!(f, "Vanguard Gunner Kill (Great Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Prow_Gunner => write!(f, "Prowler Gunner Kill (Great Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Great Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Gal_Gunner => write!(f, "Galaxy Gunner Kill (Great Pumpkin) XP"),
-            ExperienceType::GPumpkin_Kill_by_Haras_Gunner => write!(f, "Harasser Gunner Kill (Great Pumpkin) XP"),
+            ExperienceType::Pumpkin_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Sunder_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Great Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Mag_Gunner => {
+                write!(f, "Magrider Gunner Kill (Great Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Vang_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Great Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Prow_Gunner => {
+                write!(f, "Prowler Gunner Kill (Great Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Great Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Gal_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Great Pumpkin) XP")
+            }
+            ExperienceType::GPumpkin_Kill_by_Haras_Gunner => {
+                write!(f, "Harasser Gunner Kill (Great Pumpkin) XP")
+            }
             ExperienceType::Halloween_Event_NPC_Kill => write!(f, "Halloween NPC Kill XP"),
-            ExperienceType::Harasser_Kill_by_Valkyrie_Gunner => write!(f, "Valkyie Gunner Kill (Harasser) XP"),
-            ExperienceType::Valkyrie_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Snowman_kill_by_squad_member => write!(f, "Snowman Kill By Squad Member XP"),
-            ExperienceType::Gsnowman_kill_by_squad_member => write!(f, "Great Snowman Kill By Squad Member XP"),
+            ExperienceType::Harasser_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyie Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Snowman_kill_by_squad_member => {
+                write!(f, "Snowman Kill By Squad Member XP")
+            }
+            ExperienceType::Gsnowman_kill_by_squad_member => {
+                write!(f, "Great Snowman Kill By Squad Member XP")
+            }
             ExperienceType::Destroy_Spitfire_Turret => write!(f, "Destroy Spitty XP"),
             ExperienceType::Vehicle_Ram_Kill_Spitfire_Turret => write!(f, "Ram Kill (Spitty) XP"),
             ExperienceType::Vehicle_Repair_Spitfire_Turret => write!(f, "Repair Spitty XP"),
             ExperienceType::Kill_Assist_Spitfire_Turret => write!(f, "Kill Assist Spitty XP"),
             ExperienceType::Squad_Repair_Spitfire_Turret => write!(f, "Repair Squad Spitty XP"),
             ExperienceType::Spot_Kill_Spitfire_Turret => write!(f, "Spot Kill (Spitty) XP"),
-            ExperienceType::Squad_Spot_Kill_Spitfire_Turret => write!(f, "Spot Squad Kill (Spitty) XP"),
+            ExperienceType::Squad_Spot_Kill_Spitfire_Turret => {
+                write!(f, "Spot Squad Kill (Spitty) XP")
+            }
             //ExperienceType::Kill_Dummy_NPC => write!(f, ""),
             ExperienceType::Savior_Kill_MAX => write!(f, "Savior Kill MAX XP"),
             ExperienceType::Bounty_Kill_Bonus => write!(f, "Bounty Kill Bonus XP"),
@@ -1715,60 +2065,124 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Victory_Point_XP25_percent_XP => write!(f, "Victory Point 25% XP"),
             ExperienceType::Victory_Point_XP50_percent_XP => write!(f, "Victory Point 50% XP"),
             ExperienceType::Victory_Point_XP75_percent_XP => write!(f, "Victory Point 75% XP"),
-            ExperienceType::Victory_Point_XP_plus_50_percent_XP => write!(f, "Victory Point +50% XP"),
-            ExperienceType::Vehicle_Ram_Kill_Construction_Med => write!(f, "Ram Kill (Construction [Med]) XP"),
-            ExperienceType::Kill_or_Destroy_Construction_Med => write!(f, "Destroy Construction (Med) XP"),
-            ExperienceType::Squad_Repair_Construction_Med => write!(f, "Repair Squad Construcion (Med) XP"),
+            ExperienceType::Victory_Point_XP_plus_50_percent_XP => {
+                write!(f, "Victory Point +50% XP")
+            }
+            ExperienceType::Vehicle_Ram_Kill_Construction_Med => {
+                write!(f, "Ram Kill (Construction [Med]) XP")
+            }
+            ExperienceType::Kill_or_Destroy_Construction_Med => {
+                write!(f, "Destroy Construction (Med) XP")
+            }
+            ExperienceType::Squad_Repair_Construction_Med => {
+                write!(f, "Repair Squad Construcion (Med) XP")
+            }
             ExperienceType::Repair_Construction_Med => write!(f, "Repair Construcion (Med) XP"),
-            ExperienceType::KillAssist_Construction_Med => write!(f, "Kill Assist Construction (Med) XP"),
-            ExperienceType::Spot_Kill_Construction_Med => write!(f, "Spot Kill (Construction [Med]) XP"),
-            ExperienceType::Squad_Spot_Kill_Construction_Med => write!(f, "Spot Squad Kill (Construction [Med]) XP"),
-            ExperienceType::Vehicle_Ram_Kill_Construction_Small => write!(f, "Ram Kill (Constrruction [Small]) XP"),
-            ExperienceType::Kill_or_Destroy_Construction_Small => write!(f, "Destroy Construction (Small) XP"),
-            ExperienceType::Squad_Repair_Construction_Small => write!(f, "Repair Squad Construcion (Small) XP"),
+            ExperienceType::KillAssist_Construction_Med => {
+                write!(f, "Kill Assist Construction (Med) XP")
+            }
+            ExperienceType::Spot_Kill_Construction_Med => {
+                write!(f, "Spot Kill (Construction [Med]) XP")
+            }
+            ExperienceType::Squad_Spot_Kill_Construction_Med => {
+                write!(f, "Spot Squad Kill (Construction [Med]) XP")
+            }
+            ExperienceType::Vehicle_Ram_Kill_Construction_Small => {
+                write!(f, "Ram Kill (Constrruction [Small]) XP")
+            }
+            ExperienceType::Kill_or_Destroy_Construction_Small => {
+                write!(f, "Destroy Construction (Small) XP")
+            }
+            ExperienceType::Squad_Repair_Construction_Small => {
+                write!(f, "Repair Squad Construcion (Small) XP")
+            }
             ExperienceType::Repair_Construction_Small => write!(f, "Repair Construcion (Small) XP"),
-            ExperienceType::KillAssist_Construction_Small => write!(f, "Kill Assist Construction (Small) XP"),
-            ExperienceType::Spot_Kill_Construction_Small => write!(f, "Spot Kill (Construction [Small]) XP"),
-            ExperienceType::Squad_Spot_Kill_Construction_Small => write!(f, "Spot Kill (Construction [Small]) XP"),
-            ExperienceType::Vehicle_Ram_Kill_Construction_Large => write!(f, "Ram Kill (Construction [Large]) XP"),
-            ExperienceType::Kill_or_Destroy_Construction_Large => write!(f, "Destroy Construction (Large) XP"),
-            ExperienceType::Squad_Repair_Construction_Large => write!(f, "Repair Squad Construcion (Large) XP"),
+            ExperienceType::KillAssist_Construction_Small => {
+                write!(f, "Kill Assist Construction (Small) XP")
+            }
+            ExperienceType::Spot_Kill_Construction_Small => {
+                write!(f, "Spot Kill (Construction [Small]) XP")
+            }
+            ExperienceType::Squad_Spot_Kill_Construction_Small => {
+                write!(f, "Spot Kill (Construction [Small]) XP")
+            }
+            ExperienceType::Vehicle_Ram_Kill_Construction_Large => {
+                write!(f, "Ram Kill (Construction [Large]) XP")
+            }
+            ExperienceType::Kill_or_Destroy_Construction_Large => {
+                write!(f, "Destroy Construction (Large) XP")
+            }
+            ExperienceType::Squad_Repair_Construction_Large => {
+                write!(f, "Repair Squad Construcion (Large) XP")
+            }
             ExperienceType::Repair_Construction_Large => write!(f, "Repair Construcion (Large) XP"),
-            ExperienceType::KillAssist_Construction_Large => write!(f, "Kill Assist Construction (Large) XP"),
-            ExperienceType::Spot_Kill_Construction_Large => write!(f, "Spot Kill (Construction [Large]) XP"),
-            ExperienceType::Squad_Spot_Kill_Construction_Large => write!(f, "Spot Squad Kill (Construction [Large]) XP"),
-            ExperienceType::Vehicle_Ram_Kill_Construction_Core => write!(f, "Ram Kill (Construction [Core]) XP"),
-            ExperienceType::Kill_or_Destroy_Construction_Core => write!(f, "Destroy Construction (Core) XP"),
-            ExperienceType::Squad_Repair_Construction_Core => write!(f, "Repair Squad Construcion (Core) XP"),
+            ExperienceType::KillAssist_Construction_Large => {
+                write!(f, "Kill Assist Construction (Large) XP")
+            }
+            ExperienceType::Spot_Kill_Construction_Large => {
+                write!(f, "Spot Kill (Construction [Large]) XP")
+            }
+            ExperienceType::Squad_Spot_Kill_Construction_Large => {
+                write!(f, "Spot Squad Kill (Construction [Large]) XP")
+            }
+            ExperienceType::Vehicle_Ram_Kill_Construction_Core => {
+                write!(f, "Ram Kill (Construction [Core]) XP")
+            }
+            ExperienceType::Kill_or_Destroy_Construction_Core => {
+                write!(f, "Destroy Construction (Core) XP")
+            }
+            ExperienceType::Squad_Repair_Construction_Core => {
+                write!(f, "Repair Squad Construcion (Core) XP")
+            }
             ExperienceType::Repair_Construction_Core => write!(f, "Repair Construcion (Core) XP"),
-            ExperienceType::KillAssist_Construction_Core => write!(f, "Kill Assist Construction (Core) XP"),
-            ExperienceType::Spot_Kill_Construction_Core => write!(f, "Spot Kill (Construction [Core]) XP"),
-            ExperienceType::Squad_Spot_Kill_Construction_Core => write!(f, "Spot Squad Kill (Construction [Core]) XP"),
+            ExperienceType::KillAssist_Construction_Core => {
+                write!(f, "Kill Assist Construction (Core) XP")
+            }
+            ExperienceType::Spot_Kill_Construction_Core => {
+                write!(f, "Spot Kill (Construction [Core]) XP")
+            }
+            ExperienceType::Squad_Spot_Kill_Construction_Core => {
+                write!(f, "Spot Squad Kill (Construction [Core]) XP")
+            }
             ExperienceType::Vehicle_Destruction_ANT => write!(f, "Destroy ANT XP"),
             ExperienceType::Vehicle_Ram_Kill_ANT => write!(f, "Ram Kill (ANT) XP"),
             ExperienceType::Vehicle_Repair_ANT => write!(f, "Repair ANT XP"),
             ExperienceType::Kill_Assist_ANT => write!(f, "Kill Assist Ant XP"),
             ExperienceType::Squad_Repair_ANT => write!(f, "Repair Squad ANT XP"),
             ExperienceType::ANT_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (ANT) XP"),
-            ExperienceType::ANT_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (ANT) XP"),
-            ExperienceType::ANT_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (ANT) XP"),
+            ExperienceType::ANT_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (ANT) XP")
+            }
+            ExperienceType::ANT_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (ANT) XP")
+            }
             ExperienceType::ANT_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (ANT) XP"),
             ExperienceType::ANT_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (ANT) XP"),
             ExperienceType::ANT_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (ANT) XP"),
             ExperienceType::Spot_Kill_ANT => write!(f, "Spot Kill (ANT) XP"),
             ExperienceType::Squad_Spot_Kill_ANT => write!(f, "Spot Squad Kill (ANT) XP"),
             ExperienceType::ANT_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (ANT) XP"),
-            ExperienceType::ANT_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (ANT) XP"),
-            ExperienceType::ANT_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (ANT) XP"),
+            ExperienceType::ANT_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (ANT) XP")
+            }
+            ExperienceType::ANT_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (ANT) XP")
+            }
             ExperienceType::Chain_Expl_Assist_ANT => write!(f, "Chain Explosion Assist (ANT) XP"),
             ExperienceType::Bounty_Kill_Cashed_In_Alt => write!(f, "Alternate Bounty Claimed XP"),
             ExperienceType::Cortium_Harvest => write!(f, "Harvest Cortium XP"),
             ExperienceType::Cortium_Deposit => write!(f, "Deposit Cortium XP"),
             ExperienceType::Flash_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Flash) XP"),
             ExperienceType::Galaxy_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Galaxy) XP"),
-            ExperienceType::Harasser_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Harasser) XP"),
-            ExperienceType::Magrider_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Magrider) XP"),
-            ExperienceType::Mosquito_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Mosquito) XP"),
+            ExperienceType::Harasser_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Magrider_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Mosquito) XP")
+            }
             ExperienceType::Player_Kill_by_ANT_Gunner => write!(f, "Ant Gunner Kill (Player) XP"),
             ExperienceType::Prowler_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Prowler) XP"),
             ExperienceType::Pumpkin_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Pumpkin) XP"),
@@ -1776,18 +2190,36 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Reaver_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Reaver) XP"),
             ExperienceType::Scythe_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Scythe) XP"),
             ExperienceType::Snowman_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Snowman) XP"),
-            ExperienceType::Sunderer_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Sunderer) XP"),
-            ExperienceType::Valkyrie_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Vanguard_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Vanguard) XP"),
+            ExperienceType::Sunderer_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Vanguard) XP")
+            }
             ExperienceType::Destroy_Hardlight_Barrier => write!(f, "Destroy Hardlight Barrier XP"),
-            ExperienceType::Vehicle_Ram_Kill_Hardlight_Barrier => write!(f, "Ram Kill (Hardlight Barrier) XP"),
-            ExperienceType::Vehicle_Repair_Hardlight_Barrier => write!(f, "Repair Hardlight Barrier XP"),
-            ExperienceType::Kill_Assist_Hardlight_Barrier => write!(f, "Kill Assist Hardlight Barrier XP"),
-            ExperienceType::Squad_Repair_Hardlight_Barrier => write!(f, "Repair Squad Hardlight Barrier XP"),
+            ExperienceType::Vehicle_Ram_Kill_Hardlight_Barrier => {
+                write!(f, "Ram Kill (Hardlight Barrier) XP")
+            }
+            ExperienceType::Vehicle_Repair_Hardlight_Barrier => {
+                write!(f, "Repair Hardlight Barrier XP")
+            }
+            ExperienceType::Kill_Assist_Hardlight_Barrier => {
+                write!(f, "Kill Assist Hardlight Barrier XP")
+            }
+            ExperienceType::Squad_Repair_Hardlight_Barrier => {
+                write!(f, "Repair Squad Hardlight Barrier XP")
+            }
             //ExperienceType::Hardlight_Cover_Blocking_Exp_placeholder_until_code_is_done => write!(f, ""),
             ExperienceType::Draw_Fire_Award => write!(f, "Draw Fire XP"),
-            ExperienceType::Flash_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Flash) XP`"),
-            ExperienceType::Harasser_Damage_Infantry_vs_Vehicle => write!(f, "Vehcile Damage (Harasser) XP"),
+            ExperienceType::Flash_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Flash) XP`")
+            }
+            ExperienceType::Harasser_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehcile Damage (Harasser) XP")
+            }
             ExperienceType::Router_Kill => write!(f, "Destroy Router XP"),
             //ExperienceType::Generic_Npc_Spawn => write!(f, ""),
             //ExperienceType::Event_Anomaly_Defense_Pulse => write!(f, ""),
@@ -1798,75 +2230,187 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Repair_Colossus => write!(f, "Repair Colossus XP"),
             ExperienceType::Squad_Repair_Colossus => write!(f, "Repair Squad Colossus XP"),
             ExperienceType::Kill_Assist_Colossus => write!(f, "Kill Assist Colossus XP"),
-            ExperienceType::Tank_Hunter_Bonus_Colossus_Kill => write!(f, "Tank Hunter Bonus Collossus Kill XP"),
-            ExperienceType::Chain_Expl_Assist_Colossus => write!(f, "Chain Explosion Assist (Colossus) XP"),
+            ExperienceType::Tank_Hunter_Bonus_Colossus_Kill => {
+                write!(f, "Tank Hunter Bonus Collossus Kill XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Colossus => {
+                write!(f, "Chain Explosion Assist (Colossus) XP")
+            }
             ExperienceType::Squad_Spot_Kill_Colossus => write!(f, "Spot Squad Kill (Colossus) XP"),
             ExperienceType::Spot_Kill_Colossus => write!(f, "Spot Kill (Colossus) XP"),
-            ExperienceType::Colossus_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Colossus) XP"),
-            ExperienceType::Flash_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Flash) XP"),
-            ExperienceType::Vanguard_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Vanguard) XP"),
-            ExperienceType::ANT_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (ANT) XP"),
-            ExperienceType::Galaxy_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Galaxy) XP"),
-            ExperienceType::Harasser_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Harasser) XP"),
-            ExperienceType::Magrider_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Magrider) XP"),
-            ExperienceType::Mosquito_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Mosquito) XP"),
-            ExperienceType::Player_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Player) XP"),
-            ExperienceType::Prowler_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Prowler) XP"),
-            ExperienceType::Pumpkin_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Pumpkin) XP"),
+            ExperienceType::Colossus_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Colossus) XP")
+            }
+            ExperienceType::Flash_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::ANT_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (ANT) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Player_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Player) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Pumpkin) XP")
+            }
             //ExperienceType::R_Drone_Kill_by_Colossus_Gunner => write!(f, ""),
-            ExperienceType::Reaver_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Reaver) XP"),
-            ExperienceType::Scythe_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Scythe) XP"),
-            ExperienceType::Snowman_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Snowman) XP"),
-            ExperienceType::Sunderer_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Sunderer) XP"),
-            ExperienceType::Valkyrie_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Colossus_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Colossus) XP"),
+            ExperienceType::Reaver_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Colossus_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Colossus) XP")
+            }
             ExperienceType::Vehicle_Destruction_Javelin => write!(f, "Destroy Javelin XP"),
             ExperienceType::Squad_Repair_Javelin => write!(f, "Repair Javelin XP"),
             ExperienceType::Vehicle_Repair_Javelin => write!(f, "Repair Squad Javelin XP"),
             ExperienceType::Vehicle_Ram_Bonus_Javelin => write!(f, "Ram Kill (Javelin) XP"), //XP name typo?
             ExperienceType::Kill_Assist_Javelin => write!(f, "Kill Assist Javelin XP"),
-            ExperienceType::Javelin_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Magrider_Gunner => write!(f, "Magrider Gunner Kill (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Liberator_Gunner => write!(f, "Liberator Gunner Kill (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Javelin) XP"),
+            ExperienceType::Javelin_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Javelin) XP")
+            }
+            ExperienceType::Javelin_Kill_by_Magrider_Gunner => {
+                write!(f, "Magrider Gunner Kill (Javelin) XP")
+            }
+            ExperienceType::Javelin_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Javelin) XP")
+            }
+            ExperienceType::Javelin_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Javelin) XP")
+            }
+            ExperienceType::Javelin_Kill_by_Liberator_Gunner => {
+                write!(f, "Liberator Gunner Kill (Javelin) XP")
+            }
+            ExperienceType::Javelin_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Javelin) XP")
+            }
             ExperienceType::Spot_Kill_Javelin => write!(f, "Spot Kill (Javelin) XP"),
             ExperienceType::Squad_Spot_Kill_Javelin => write!(f, "Spot Squad Kill (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Javelin) XP"),
-            ExperienceType::Chain_Expl_Assist_Javelin => write!(f, "Chain Explosion Assist (Javelin) XP"),
-            ExperienceType::Javelin_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Javelin) XP"),
+            ExperienceType::Javelin_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Javelin) XP")
+            }
+            ExperienceType::Chain_Expl_Assist_Javelin => {
+                write!(f, "Chain Explosion Assist (Javelin) XP")
+            }
+            ExperienceType::Javelin_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Javelin) XP")
+            }
             ExperienceType::Javelin_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Javelin) XP"),
-            ExperienceType::Javelin_Damage_Infantry_vs_Vehicle => write!(f, "Vehicle Damage (Javelin) XP"),
-            ExperienceType::Player_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Player) XP"),
+            ExperienceType::Javelin_Damage_Infantry_vs_Vehicle => {
+                write!(f, "Vehicle Damage (Javelin) XP")
+            }
+            ExperienceType::Player_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Player) XP")
+            }
             ExperienceType::ANT_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (ANT) XP"),
-            ExperienceType::Colossus_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Colossus) XP"),
-            ExperienceType::Flash_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Flash) XP"),
-            ExperienceType::Galaxy_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Galaxy) XP"),
-            ExperienceType::Harasser_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Harasser) XP"),
-            ExperienceType::Magrider_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Magrider) XP"),
-            ExperienceType::Mosquito_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Mosquito) XP"),
-            ExperienceType::Prowler_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Prowler) XP"),
-            ExperienceType::Pumpkin_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Pumpkin) XP"),
+            ExperienceType::Colossus_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Colossus) XP")
+            }
+            ExperienceType::Flash_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Flash) XP")
+            }
+            ExperienceType::Galaxy_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Galaxy) XP")
+            }
+            ExperienceType::Harasser_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Harasser) XP")
+            }
+            ExperienceType::Magrider_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Magrider) XP")
+            }
+            ExperienceType::Mosquito_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Mosquito) XP")
+            }
+            ExperienceType::Prowler_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Prowler) XP")
+            }
+            ExperienceType::Pumpkin_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Pumpkin) XP")
+            }
             //ExperienceType::R_Drone_Kill_by_Bastion_Gunner => write!(f, ""),
-            ExperienceType::Reaver_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Reaver) XP"),
-            ExperienceType::Scythe_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Scythe) XP"),
-            ExperienceType::Snowman_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Snowman) XP"),
-            ExperienceType::Sunderer_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Sunderer) XP"),
-            ExperienceType::Valkyrie_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Valkyrie) XP"),
-            ExperienceType::Vanguard_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Vanguard) XP"),
-            ExperienceType::Vehicle_Component_Destruction_Bastion => write!(f, "Destroy Bastion Component Xp"),
-            ExperienceType::Kill_Assist_Bastion_Component => write!(f, "Kill Assist Bastion Component XP"),
-            ExperienceType::Bastion_Component_Kill_by_Sunderer_Gunner => write!(f, "Sunderer Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Vanguard_Gunner => write!(f, "Vanguard Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Prowler_Gunner => write!(f, "Prowler Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Lib_Gunner => write!(f, "Liberator Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Galaxy_Gunner => write!(f, "Galaxy Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Harasser_Gunner => write!(f, "Harasser Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Valkyrie_Gunner => write!(f, "Valkyrie Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_ANT_Gunner => write!(f, "ANT Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Colossus_Gunner => write!(f, "Colossus Gunner Kill (Bastion Component) XP"),
-            ExperienceType::Bastion_Component_Kill_by_Bastion_Gunner => write!(f, "Bastion Gunner Kill (Bastion Component) XP"),
+            ExperienceType::Reaver_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Reaver) XP")
+            }
+            ExperienceType::Scythe_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Scythe) XP")
+            }
+            ExperienceType::Snowman_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Snowman) XP")
+            }
+            ExperienceType::Sunderer_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Sunderer) XP")
+            }
+            ExperienceType::Valkyrie_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Valkyrie) XP")
+            }
+            ExperienceType::Vanguard_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Vanguard) XP")
+            }
+            ExperienceType::Vehicle_Component_Destruction_Bastion => {
+                write!(f, "Destroy Bastion Component Xp")
+            }
+            ExperienceType::Kill_Assist_Bastion_Component => {
+                write!(f, "Kill Assist Bastion Component XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Sunderer_Gunner => {
+                write!(f, "Sunderer Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Vanguard_Gunner => {
+                write!(f, "Vanguard Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Prowler_Gunner => {
+                write!(f, "Prowler Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Lib_Gunner => {
+                write!(f, "Liberator Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Galaxy_Gunner => {
+                write!(f, "Galaxy Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Harasser_Gunner => {
+                write!(f, "Harasser Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Valkyrie_Gunner => {
+                write!(f, "Valkyrie Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_ANT_Gunner => {
+                write!(f, "ANT Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Colossus_Gunner => {
+                write!(f, "Colossus Gunner Kill (Bastion Component) XP")
+            }
+            ExperienceType::Bastion_Component_Kill_by_Bastion_Gunner => {
+                write!(f, "Bastion Gunner Kill (Bastion Component) XP")
+            }
             ExperienceType::Bastion_Component_Damage => write!(f, "Vehicle Damage (Bastion) XP"),
             //ExperienceType::Destroy_Lightning_Arrester => write!(f, "Destroy Lightning Arrestor XP"),
             //ExperienceType::Lightning_Arrester_Absorb_Xp => write!(f, ""),
@@ -1877,9 +2421,15 @@ impl std::fmt::Display for ExperienceType {
             //ExperienceType::tutorial2_grantBr1 => write!(f, ""),
             ExperienceType::Door_Lock_Repair => write!(f, "Repair Shield Door Lock XP"),
             ExperienceType::Destroy_Shield_Door_Lock => write!(f, "Destroy Shield Door Lock XP"),
-            ExperienceType::Containment_Site_Gate_Shield_Gen_Destroy => write!(f, "Destroy Gate Shield Generator XP"),
-            ExperienceType::Containment_Site_Gate_Shield_Gen_Destroy_Assist => write!(f, "Assist Destroy Gate Shield Generator XP"),
-            ExperienceType::Containment_Site_Gate_Shield_Gen_Repair => write!(f, "Repair Gate Shield Generator XP"),
+            ExperienceType::Containment_Site_Gate_Shield_Gen_Destroy => {
+                write!(f, "Destroy Gate Shield Generator XP")
+            }
+            ExperienceType::Containment_Site_Gate_Shield_Gen_Destroy_Assist => {
+                write!(f, "Assist Destroy Gate Shield Generator XP")
+            }
+            ExperienceType::Containment_Site_Gate_Shield_Gen_Repair => {
+                write!(f, "Repair Gate Shield Generator XP")
+            }
             ExperienceType::Unknown => write!(f, "??? XP"),
             ExperienceType::Missing_373 => write!(f, "Missing (373) XP"),
             ExperienceType::Missing_378 => write!(f, "Missing (378) XP"),
@@ -1894,7 +2444,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_403 => write!(f, "Missing (403) XP"),
             ExperienceType::Missing_404 => write!(f, "Missing (404) XP"),
             ExperienceType::Missing_405 => write!(f, "Missing (405) XP"),
-            ExperienceType::Pass_Kill_Share_MANA_407 => write!(f, "Passenger Kill Share - Engineer Turret"),
+            ExperienceType::Pass_Kill_Share_MANA_407 => {
+                write!(f, "Passenger Kill Share - Engineer Turret")
+            }
             ExperienceType::Missing_421 => write!(f, "Missing (421) XP"),
             ExperienceType::Missing_516 => write!(f, "Missing (516) XP"),
             ExperienceType::Missing_517 => write!(f, "Missing (517) XP"),
