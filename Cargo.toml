@@ -1,6 +1,6 @@
 [package]
 name = "raspberry-tracker"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["James Nichols <jtylernichols@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
