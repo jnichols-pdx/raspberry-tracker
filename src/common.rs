@@ -1,5 +1,5 @@
 use crate::db::*;
-use num_enum::FromPrimitive;
+use num_enum::{FromPrimitive, IntoPrimitive};
 use std::io::Read;
 use std::ops::Sub;
 use time::{Date, Duration};
@@ -30,7 +30,7 @@ impl std::fmt::Display for Faction {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, IntoPrimitive, PartialEq, Debug)]
 #[repr(i64)]
 pub enum World {
     CN = 1,
@@ -40,6 +40,13 @@ pub enum World {
     CB = 13,
     JA = 19,
     ST = 40,
+}
+
+impl World {
+    pub fn as_id_string(&self) -> String {
+        let world_num: i64 = (*self).into();
+        format!("{}", world_num)
+    }
 }
 
 impl std::fmt::Display for World {
@@ -112,6 +119,14 @@ pub fn subscribe_session_string(character_id: &str) -> String {
 
 pub fn clear_subscribe_session_string() -> String {
     "{\"service\":\"event\",\"action\":\"clearSubscribe\",\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\",\"GainExperience\"]}".to_owned()
+}
+
+pub fn subscribe_logouts_string(world_id: &str) -> String {
+    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"worlds\":[{}],\"eventNames\":[\"PlayerLogout\"]}}", world_id)
+}
+
+pub fn clear_subscribe_logouts_string(world_id: &str) -> String {
+    format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"worlds\":[{}],\"eventNames\":[\"PlayerLogout\"]}}", world_id)
 }
 
 pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
@@ -442,7 +457,7 @@ impl Vehicle {
 
     }
 
-    pub fn is_esf(&self) -> bool { 
+    pub fn is_esf(&self) -> bool {
         matches!(
             self,
             Vehicle::Mosquito
@@ -685,16 +700,15 @@ pub enum WeaponType {
 }
 
 impl WeaponType {
-
     //Missing Chimera main guns - TODO: find the Chimera_Primary weapon category ID#
     pub fn is_tank_primary(&self) -> bool {
         matches!(
             self,
             WeaponType::Lightning_Primary
-            | WeaponType::Magrider_Primary
-            | WeaponType::Prowler_Primary
-            | WeaponType::Vanguard_Primary
-            | WeaponType::Colossus_Primary
+                | WeaponType::Magrider_Primary
+                | WeaponType::Prowler_Primary
+                | WeaponType::Vanguard_Primary
+                | WeaponType::Colossus_Primary
         )
     }
 }

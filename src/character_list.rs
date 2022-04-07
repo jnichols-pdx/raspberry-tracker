@@ -15,16 +15,22 @@ pub struct CharacterList {
     pub message: Option<String>,
     pub websocket_out: mpsc::Sender<Message>,
     pub session_list: Arc<RwLock<SessionList>>,
+    pub logout_websocket_out: mpsc::Sender<Message>,
 }
 
 impl CharacterList {
-    pub fn new(ws_out: mpsc::Sender<Message>, sl: Arc<RwLock<SessionList>>) -> Self {
+    pub fn new(
+        ws_out: mpsc::Sender<Message>,
+        sl: Arc<RwLock<SessionList>>,
+        ws_logout_out: mpsc::Sender<Message>
+    ) -> Self {
         CharacterList {
             characters: Vec::new(),
             new_char_name: "".to_owned(),
             message: None,
             websocket_out: ws_out,
             session_list: sl,
+            logout_websocket_out: ws_logout_out,
         }
     }
 
@@ -167,6 +173,11 @@ impl ViewWithDB for CharacterList {
 
                                 },
                             }
+
+                        let _logout_res = self.logout_websocket_out.blocking_send(Message::Text(
+                            subscribe_logouts_string(&char.server.as_id_string()),
+                        ));
+
                         char.to_track = false;
                     }
                     if char.changed_auto_track {

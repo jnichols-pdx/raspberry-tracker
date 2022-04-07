@@ -7,8 +7,7 @@ use egui::*;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
 use std::sync::Arc;
-use tokio::sync::{mpsc, oneshot, RwLock};
-use tokio_tungstenite::tungstenite::protocol::Message;
+use tokio::sync::{oneshot, RwLock};
 
 pub struct TrackerApp {
     pub in_character_ui: bool,
@@ -18,7 +17,6 @@ pub struct TrackerApp {
     pub lastx: f32,
     pub lasty: f32,
     pub size_changed: bool,
-    pub ws_out: mpsc::Sender<Message>,
     pub session_count: usize,
     pub images: Option<Vec<TextureHandle>>,
     pub event_list_mode: EventViewMode,
@@ -26,7 +24,6 @@ pub struct TrackerApp {
 }
 
 impl TrackerApp {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         char_list: Arc<RwLock<CharacterList>>,
@@ -34,7 +31,6 @@ impl TrackerApp {
         db: DatabaseSync,
         lastx: f32,
         lasty: f32,
-        ws_out: mpsc::Sender<Message>,
         mut context_cb: Option<oneshot::Sender<egui::Context>>,
     ) -> Self {
         let initial_count;
@@ -53,7 +49,6 @@ impl TrackerApp {
             lastx,
             lasty,
             size_changed: false,
-            ws_out,
             session_count: initial_count,
             images: None,
             event_list_mode,

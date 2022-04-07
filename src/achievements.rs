@@ -8,6 +8,7 @@ use std::collections::HashMap;
 const COMBO_LIMIT: i64 = 5;
 const COMBO_MEND_LIMIT: i64 = 61;
 const COMBO_RESUPPLY_LIMIT: i64 = 91;
+const RAGE_LIMIT: i64 = 10;
 
 pub struct AchievementEngine {
     login_time: i64,
@@ -581,7 +582,6 @@ impl AchievementEngine {
 
         self.last_kill_time = timestamp;
 
-
         //Mutual Kill, here the player was logged as dying before the opponent.
         let delta = self.last_kill_time - self.last_death_time;
         if (delta == 0 || delta == 1) && self.last_killer.eq(&self.last_victim) {
@@ -822,7 +822,7 @@ impl AchievementEngine {
                 2 => results.push(Event::achieved("Present For Ya", timestamp, datetime.to_owned())),
                 4 => results.push(Event::achieved("Watch Your Step", timestamp, datetime.to_owned())),
                 _ => {}
-             }
+            }
         }
 
         //Tank mine kills - Only trigger on maxes / vehicle destruction resulting in occupant
@@ -869,8 +869,7 @@ impl AchievementEngine {
             }
 
             //Phalanx / Builder AI turret killstreak
-            if vehicle == Vehicle::AIPhalanxTurret || vehicle == Vehicle::AIBuilderTower
-            {
+            if vehicle == Vehicle::AIPhalanxTurret || vehicle == Vehicle::AIBuilderTower {
                 self.phalanx_ai_kills += 1;
                 if self.phalanx_ai_kills == 6 {
                     results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned()));
@@ -1095,6 +1094,62 @@ impl AchievementEngine {
             self.last_fighter_pilot_id = "".to_owned();
         }
 
+        if !results.is_empty() {
+            Some(results)
+        } else {
+            None
+        }
+    }
+
+    pub fn tally_logout(
+        &mut self,
+        character_id: String,
+        timestamp: i64,
+        datetime: &str,
+    ) -> Option<Vec<Event>> {
+        let mut results = Vec::new();
+        if let Some(opponent) = self.opponents.get(&character_id) {
+            if opponent.deaths_to_player > 0 {
+                let delta = timestamp - opponent.latest_death_time;
+                if delta <= RAGE_LIMIT {
+                    let name: String;
+                    match lookup_new_char_details(&character_id) {
+                        Err(whut) => {
+                            println!("{}", whut);
+                            name = format!("missing: {}", character_id);
+                        }
+                        Ok(details) => {
+                            let player_name = details["character_list"][0]["name"]["first"]
+                                .to_string()
+                                .unquote();
+                            if details["character_list"][0]["outfit"].is_object() {
+                                let outfit_alias = details["character_list"][0]["outfit"]["alias"]
+                                    .to_string()
+                                    .unquote();
+                                let outfit_name = details["character_list"][0]["outfit"]["name"]
+                                    .to_string()
+                                    .unquote();
+                                if outfit_alias.is_empty() {
+                                    name = format!("[{}] {}", outfit_name, player_name);
+                                } else {
+                                    name = format!("[{}] {}", outfit_alias, player_name);
+                                }
+                            } else {
+                                name = player_name;
+                            }
+                        }
+                    }
+
+                    let rage_message = if opponent.deaths_to_player >= 3 {
+                        format!("Submission ({})", name)
+                    } else {
+                        format!("Rage Quit ({})", name)
+                    };
+                    results.push(Event::achieved(&rage_message, timestamp, datetime.to_owned()));
+                }
+            }
+            self.opponents.remove(&character_id);
+        }
         if !results.is_empty() {
             Some(results)
         } else {

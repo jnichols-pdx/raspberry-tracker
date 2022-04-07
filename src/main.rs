@@ -40,6 +40,7 @@ fn main() {
     let rth = rt.handle();
 
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
+    let (tx_to_logout_websocket, rx_logout_from_app) = mpsc::channel::<Message>(32);
     let (tx_context_to_ws, rx_context_from_ui) = oneshot::channel::<egui::Context>();
 
     let db_url;
@@ -80,15 +81,17 @@ fn main() {
     let session_list = Arc::new(RwLock::new(sync_db.get_sessions_sync()));
 
     let mut char_to_track = None;
-    let character_list = Arc::new(RwLock::new(
-        sync_db.get_character_list_sync(tx_to_websocket.clone(), session_list.clone()),
-    ));
+    let character_list = Arc::new(RwLock::new(sync_db.get_character_list_sync(
+        tx_to_websocket.clone(),
+        session_list.clone(),
+        tx_to_logout_websocket.clone(),
+    )));
     {
         let mut char_list_rw = character_list.blocking_write();
         for achar in &char_list_rw.characters {
             let _res = tx_to_websocket.blocking_send(
                 Message::Text(
-                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\",\"PlayerLogout\"]}}",
+                    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[\"{}\"],\"eventNames\":[\"PlayerLogin\"]}}",
                     achar.character_id)
                 .to_owned()));
 
@@ -117,6 +120,10 @@ fn main() {
                     char_list_rw.update_entry_from_full(&active_char);
                     let _res = tx_to_websocket.blocking_send(Message::Text(
                         subscribe_session_string(&active_char.character_id),
+                    ));
+
+                    let _logout_res = tx_to_logout_websocket.blocking_send(Message::Text(
+                        subscribe_logouts_string(&active_char.server.as_id_string()),
                     ));
 
                     {
@@ -157,12 +164,14 @@ fn main() {
 
     sync_db.rt.spawn(websocket_threads(
         rx_from_app,
-        tx_to_websocket.clone(),
+        tx_to_websocket,
         character_list.clone(),
         session_list.clone(),
         rx_context_from_ui,
         sync_db.clone(),
         achievements,
+        rx_logout_from_app,
+        tx_to_logout_websocket,
     ));
 
     eframe::run_native(
@@ -176,13 +185,13 @@ fn main() {
                 sync_db,
                 x_size,
                 y_size,
-                tx_to_websocket,
                 Some(tx_context_to_ws),
             ))
         }),
     );
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn websocket_threads(
     rx_from_app: mpsc::Receiver<Message>,
     ws_out: mpsc::Sender<Message>,
@@ -191,18 +200,24 @@ async fn websocket_threads(
     rx_ui_context: oneshot::Receiver<egui::Context>,
     db: DatabaseSync,
     achievements: AchievementEngine,
+    rx_logouts_from_app: mpsc::Receiver<Message>,
+    ws_logouts_out: mpsc::Sender<Message>,
 ) {
     let ws_url = url::Url::parse(
         "wss://push.planetside2.com/streaming?environment=ps2&service-id=s:raspberrytracker",
     )
     .unwrap();
-    let (ws_str, _) = connect_async(ws_url).await.unwrap(); //.expect("failed to connect to streaming api");
-                                                            //println!("{:?}", ws_str);
+    let (ws_str, _) = connect_async(ws_url.clone()).await.unwrap(); //.expect("failed to connect to streaming api");
+                                                                    //println!("{:?}", ws_str);
     let (ws_write, ws_read) = ws_str.split();
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
+
+    let (ws_logout_stream, _) = connect_async(ws_url).await.unwrap();
+    let (ws_logout_write, ws_logout_read) = ws_logout_stream.split();
+
     let ui_context = rx_ui_context.await.unwrap();
-    let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write));
-    let in_task = tokio::spawn(ws_incoming(ws_read, report_to_parser));
+    let out_task = tokio::spawn(ws_outgoing(rx_from_app, ws_write, "Standard"));
+    let in_task = tokio::spawn(ws_incoming(ws_read, report_to_parser.clone(), "Standard"));
     let parse_task = tokio::spawn(parse_messages(
         ws_messages,
         char_list,
@@ -211,9 +226,13 @@ async fn websocket_threads(
         ui_context.clone(),
         db.clone(),
         achievements,
+        ws_logouts_out.clone(),
     ));
     let ticker_task = tokio::spawn(ticker(ui_context));
     let session_long_update_task = tokio::spawn(session_historical_update(session_list.clone()));
+    let out_logout_task =
+        tokio::spawn(ws_outgoing(rx_logouts_from_app, ws_logout_write, "Logouts"));
+    let in_logout_task = tokio::spawn(ws_incoming(ws_logout_read, report_to_parser, "Logouts"));
 
     tokio::select! {
         _ = out_task => {},
@@ -221,6 +240,8 @@ async fn websocket_threads(
         _ = parse_task => {},
         _ = ticker_task => {},
         _ = session_long_update_task => {},
+        _ = out_logout_task => {},
+        _ = in_logout_task => {},
     }
 }
 
@@ -230,12 +251,13 @@ async fn ws_outgoing(
         WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
         Message,
     >,
+    endpoint_name: &str,
 ) {
     let mut looking = true;
     while looking {
         match rx_from_app.recv().await {
             Some(msg) => {
-                println!("Want to send {}", msg);
+                println!("[{}] Want to send {}", endpoint_name, msg);
                 let _result = ws_out.send(msg).await;
             }
             None => {
@@ -251,6 +273,7 @@ async fn ws_incoming(
         WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
     >,
     report_to_parser: mpsc::Sender<serde_json::Value>,
+    endpoint_name: &str,
 ) {
     let print_task = ws_in.for_each(|message| async {
         match message.unwrap().into_text() {
@@ -262,11 +285,11 @@ async fn ws_incoming(
                 } else if json["type"].is_string() {
                     let _ignore = report_to_parser.send(json).await;
                 } else {
-                    println!("-{}", json);
+                    println!("-[{}] {}", endpoint_name, json);
                 }
             }
             Err(e) => {
-                println!("DIH {:?}", e);
+                println!("[{}] DIH {:?}", endpoint_name, e);
             }
         }
     });
@@ -276,6 +299,7 @@ async fn ws_incoming(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn parse_messages(
     mut ws_messages: mpsc::Receiver<serde_json::Value>,
     char_list: Arc<RwLock<CharacterList>>,
@@ -284,6 +308,7 @@ async fn parse_messages(
     ui_context: egui::Context,
     mut db: DatabaseSync,
     mut achievements: AchievementEngine,
+    ws_logouts_out: mpsc::Sender<Message>,
 ) {
     let mut parsing = true;
     let local_tz_q = time_tz::system::get_timezone();
@@ -345,6 +370,15 @@ async fn parse_messages(
                         println!("dah {:?}", e);
                     };
 
+                    if let Err(e) = ws_logouts_out
+                        .send(Message::Text(subscribe_logouts_string(
+                            &json["payload"]["world_id"].to_string(),
+                        )))
+                        .await
+                    {
+                        println!("deh {:?}", e);
+                    };
+
                     match lookup_new_char_details(
                         &json["payload"]["character_id"].to_string().unquote(),
                     ) {
@@ -366,14 +400,8 @@ async fn parse_messages(
                                     .parse::<i64>()
                                     .unwrap_or(0);
                                 let mut session_list_rw = session_list.write().await;
-                                session_list_rw.push(
-                                    Session::new_async(
-                                        bob,
-                                        timestamp,
-                                        db.clone(),
-                                    )
-                                    .await,
-                                );
+                                session_list_rw
+                                    .push(Session::new_async(bob, timestamp, db.clone()).await);
                                 ui_context.request_repaint();
                                 achievements.reset(timestamp);
                             }
@@ -751,21 +779,53 @@ async fn parse_messages(
                     }
                 }
             } else if json["payload"]["event_name"].eq("PlayerLogout") {
-                println!("offline!");
                 let timestamp = json["payload"]["timestamp"]
                     .to_string()
                     .unquote()
                     .parse::<i64>()
                     .unwrap();
-                let _res = ws_out
-                    .send(Message::Text(clear_subscribe_session_string()))
-                    .await;
-                let mut session_list_rw = session_list.write().await;
-                if let Some(current_session) = session_list_rw.active_session_mut() {
-                    current_session.end(timestamp).await;
-                    achievements.reset(0);
+                let character_id = json["payload"]["character_id"].to_string().unquote();
+
+                let mut player_logging_out = false;
+                {
+                    let session_list_ro = session_list.read().await;
+                    if let Some(current_session) = session_list_ro.active_session() {
+                        player_logging_out = current_session.match_player_id(&character_id);
+                    }
                 }
-                ui_context.request_repaint();
+
+                if player_logging_out {
+                    println!("offline!");
+                    let _res = ws_out
+                        .send(Message::Text(clear_subscribe_session_string()))
+                        .await;
+                    let mut players_world = "All".to_owned();
+                    let mut session_list_rw = session_list.write().await;
+                    if let Some(current_session) = session_list_rw.active_session_mut() {
+                        current_session.end(timestamp).await;
+                        players_world = current_session.current_character().server.as_id_string();
+                        achievements.reset(0);
+                    }
+                    let _res_logout = ws_logouts_out
+                        .send(Message::Text(clear_subscribe_logouts_string(
+                            &players_world,
+                        )))
+                        .await;
+                    ui_context.request_repaint();
+                } else {
+                    let datetime = OffsetDateTime::from_unix_timestamp(timestamp)
+                        .unwrap_or_else(|_| OffsetDateTime::now_utc())
+                        .to_timezone(local_tz);
+                    let formatter = time::format_description::parse(
+                        "[hour repr:12]:[minute]:[second] [period]",
+                    )
+                    .unwrap();
+                    let formatted_time = datetime
+                        .format(&formatter)
+                        .unwrap_or_else(|_| "?-?-? ?:?:?".into());
+                    //Someone else logged out, send to achievement engine to check for rage quits.
+                    achievements.tally_logout(character_id, timestamp, &formatted_time);
+                }
             } else if json["payload"]["event_name"].eq("BattleRankUp") {
                 println!("Found rankup!");
                 if let Ok(latest_asp) =
@@ -947,16 +1007,14 @@ async fn parse_messages(
                     println!("XP {} - {}", xp_id, xp_type);
                     let xp_amount = json["payload"]["amount"].to_string().unquote();
 
-                    let other_id =  json["payload"]["other_id"]
-                        .to_string()
-                        .unquote();
+                    let other_id = json["payload"]["other_id"].to_string().unquote();
                     let xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
                     new_achievements = achievements.tally_xp_tick(
                         xp_type,
                         xp_numeric,
                         other_id,
                         timestamp,
-                        &formatted_time
+                        &formatted_time,
                     );
 
                     new_event = Event {

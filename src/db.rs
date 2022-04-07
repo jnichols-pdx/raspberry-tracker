@@ -43,8 +43,12 @@ impl DatabaseSync {
         &self,
         ws_out: mpsc::Sender<Message>,
         sl: Arc<RwLock<SessionList>>,
+        ws_logout_out: mpsc::Sender<Message>,
     ) -> CharacterList {
-        match self.rt.block_on(self.dbc.get_character_list(ws_out, sl)) {
+        match self
+            .rt
+            .block_on(self.dbc.get_character_list(ws_out, sl, ws_logout_out))
+        {
             Ok(c) => c,
             Err(e) => {
                 println!(" Error getting character list:");
@@ -173,8 +177,9 @@ impl DatabaseCore {
         &self,
         ws_out: mpsc::Sender<Message>,
         sl: Arc<RwLock<SessionList>>,
+        ws_logout_out: mpsc::Sender<Message>,
     ) -> Result<CharacterList, sqlx::Error> {
-        let mut characters = CharacterList::new(ws_out, sl);
+        let mut characters = CharacterList::new(ws_out, sl, ws_logout_out);
 
         let mut cursor = self.conn.fetch("SELECT * FROM characters;");
         while let Some(row) = cursor.try_next().await? {
