@@ -301,21 +301,27 @@ pub enum ExperienceType {
     Motion_Sensor_Spotter_Kill = 370,
     Kill_Player_Priority_Assist = 371,
     Kill_Player_High_Priority_Assist = 372,
-    Missing_373 = 373,
-    Missing_378 = 378, //Same time as kill assist on galaxy
+    Gunner_Kill_Share_Player = 373,
+    Missing_374 = 374,
+    Missing_375 = 375,
+    Gunner_Kill_Share_Galaxy = 378, //Same time as kill assist on galaxy
     Missing_379 = 379,
+    Missing_380 = 380, //Probably gunner kill, kill assist share, kill share or similar
+    Gunner_Kill_Share_Reaver = 384,
     Missing_386 = 386,
     Missing_387 = 387,
     Missing_388 = 388,
-    Missing_389 = 389,
+    Gunner_Kill_Assist_Share_Player = 389,
+    Gunner_Kill_Assist_Share_Galaxy = 394,
+    Gunner_Kill_Assist_Share_Lib = 395,
     Missing_396 = 396,
-    Missing_400 = 400,
+    Gunner_Kill_Assist_Share_Reaver = 400,
     Missing_402 = 402,
     Missing_403 = 403,
     Missing_404 = 404,
     Missing_405 = 405,
     Pass_Kill_Share_MANA_407 = 407,
-    Missing_421 = 421,
+    Missing_421 = 421, //May be Gunner kill share / kill assist share or similar against Scythe
     Shield_Regen_Tool_Kill = 437,
     Shield_Repair = 438,
     Squad_Shield_Repair = 439,
@@ -337,8 +343,7 @@ pub enum ExperienceType {
     Valkyrie_Kill_by_Galaxy_Gunner = 514,
     Player_Kill_by_Valkyrie_Gunner = 515,
     Missing_516 = 516,
-    Missing_517 = 517,
-    Missing_612 = 612,
+    Missing_517 = 517, //probably a gunner kill assist / kill assist share / kill share XP of some flavor
     Flash_Kill_by_Valkyrie_Gunner = 520,
     Sunderer_Kill_by_Valkyrie_Gunner = 521,
     Lightning_Kill_by_Valkyrie_Gunner = 522,
@@ -422,7 +427,9 @@ pub enum ExperienceType {
     Repair_Construction_Med = 606,
     KillAssist_Construction_Med = 607,
     Spot_Kill_Construction_Med = 609,
-    Squad_Spot_Kill_Construction_Med = 610,
+    Squad_Spot_Kill_Construction_Med = 610, 
+    Missing_611 = 611,
+    Missing_612 = 612,
     Vehicle_Ram_Kill_Construction_Small = 615,
     Kill_or_Destroy_Construction_Small = 616,
     Squad_Repair_Construction_Small = 617,
@@ -430,7 +437,8 @@ pub enum ExperienceType {
     KillAssist_Construction_Small = 619,
     Spot_Kill_Construction_Small = 621,
     Squad_Spot_Kill_Construction_Small = 622,
-    Missing624 = 624,
+    Missing_623 = 623,
+    Missing_624 = 624,
     Vehicle_Ram_Kill_Construction_Large = 627,
     Kill_or_Destroy_Construction_Large = 628,
     Squad_Repair_Construction_Large = 629,
@@ -438,6 +446,8 @@ pub enum ExperienceType {
     KillAssist_Construction_Large = 631,
     Spot_Kill_Construction_Large = 633,
     Squad_Spot_Kill_Construction_Large = 634,
+    Missing_635 = 635, //Gunner kill, kill share, kill assist share?  vs Construction?
+    Missing_636 = 636,
     Vehicle_Ram_Kill_Construction_Core = 639,
     Kill_or_Destroy_Construction_Core = 640,
     Squad_Repair_Construction_Core = 641,
@@ -1216,9 +1226,15 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
     Missing_1560 = 1560,
+
     Missing_1565 = 1565, //Probably Destroy Chimera from Harasser gunner?
     Missing_1567 = 1567,
     Missing_1568 = 1568,
+
+    Kill_Assist_Dervish = 1636,
+    Gunner_Kill_Share_Dervish = 1650,
+    Gunner_Kill_Assist_Share_Dervish = 1651,
+
 
     #[num_enum(default)]
     Unknown = 0,
@@ -1291,15 +1307,14 @@ impl ExperienceType {
     pub fn is_missing(&self) -> bool {
         matches!(
             self,
-            ExperienceType::Missing_373
-                | ExperienceType::Missing_378
+            ExperienceType::Missing_374
+                | ExperienceType::Missing_375
                 | ExperienceType::Missing_379
+                | ExperienceType::Missing_380
                 | ExperienceType::Missing_386
                 | ExperienceType::Missing_387
                 | ExperienceType::Missing_388
-                | ExperienceType::Missing_389
                 | ExperienceType::Missing_396
-                | ExperienceType::Missing_400
                 | ExperienceType::Missing_402
                 | ExperienceType::Missing_403
                 | ExperienceType::Missing_404
@@ -1307,7 +1322,12 @@ impl ExperienceType {
                 | ExperienceType::Missing_421
                 | ExperienceType::Missing_516
                 | ExperienceType::Missing_517
+                | ExperienceType::Missing_611
                 | ExperienceType::Missing_612
+                | ExperienceType::Missing_623
+                | ExperienceType::Missing_624
+                | ExperienceType::Missing_635
+                | ExperienceType::Missing_636
                 | ExperienceType::Missing_668
                 | ExperienceType::Missing_1560
                 | ExperienceType::Missing_1565
@@ -2430,16 +2450,22 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Containment_Site_Gate_Shield_Gen_Repair => {
                 write!(f, "Repair Gate Shield Generator XP")
             }
+            ExperienceType::Gunner_Kill_Assist_Share_Lib => write!(f, "Gunner Kill Assist (Liberator) Share XP"),
             ExperienceType::Unknown => write!(f, "??? XP"),
-            ExperienceType::Missing_373 => write!(f, "Missing (373) XP"),
-            ExperienceType::Missing_378 => write!(f, "Missing (378) XP"),
+            ExperienceType::Gunner_Kill_Share_Player => write!(f, "Gunner Kill Share (Infantry) XP"),
+            ExperienceType::Gunner_Kill_Share_Galaxy => write!(f, "Gunner Kill Share (Galaxy) XP"),
+            ExperienceType::Missing_374 => write!(f, "Missing (374) XP"),
+            ExperienceType::Missing_375 => write!(f, "Missing (375) XP"),
             ExperienceType::Missing_379 => write!(f, "Missing (379) XP"),
+            ExperienceType::Missing_380 => write!(f, "Missing (380) XP"),
+            ExperienceType::Gunner_Kill_Share_Reaver => write!(f, "Gunner Kill Share (Reaver) XP"),
             ExperienceType::Missing_386 => write!(f, "Missing (386) XP"),
             ExperienceType::Missing_387 => write!(f, "Missing (387) XP"),
             ExperienceType::Missing_388 => write!(f, "Missing (388) XP"),
-            ExperienceType::Missing_389 => write!(f, "Missing (389) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Player => write!(f, "Gunner Kill Assist (Infantry) Share XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Galaxy => write!(f, "Gunner Kill Assist (Galaxy) Share XP"),
             ExperienceType::Missing_396 => write!(f, "Missing (396) XP"),
-            ExperienceType::Missing_400 => write!(f, "Missing (400) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Reaver => write!(f, "Gunner Kill Assist (Reaver) Share XP"),
             ExperienceType::Missing_402 => write!(f, "Missing (402) XP"),
             ExperienceType::Missing_403 => write!(f, "Missing (403) XP"),
             ExperienceType::Missing_404 => write!(f, "Missing (404) XP"),
@@ -2450,12 +2476,20 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_421 => write!(f, "Missing (421) XP"),
             ExperienceType::Missing_516 => write!(f, "Missing (516) XP"),
             ExperienceType::Missing_517 => write!(f, "Missing (517) XP"),
+            ExperienceType::Missing_611 => write!(f, "Missing (611) XP"),
             ExperienceType::Missing_612 => write!(f, "Missing (612) XP"),
+            ExperienceType::Missing_623 => write!(f, "Missing (623) XP"),
+            ExperienceType::Missing_624 => write!(f, "Missing (624) XP"),
+            ExperienceType::Missing_635 => write!(f, "Missing (635) XP"),
+            ExperienceType::Missing_636 => write!(f, "Missing (636) XP"),
             ExperienceType::Missing_668 => write!(f, "Missing (668) XP"),
             ExperienceType::Missing_1560 => write!(f, "Missing (1560) XP"),
             ExperienceType::Missing_1565 => write!(f, "Missing (1565) XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
             ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
+            ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
+            ExperienceType::Gunner_Kill_Share_Dervish => write!(f, "Gunner Kill Share (Dervish) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Dervish => write!(f, "Gunner Kill Assist (Dervish) Share XP"),
             other => write!(f, "unused xp ({})", *other as i64),
         }
     }
