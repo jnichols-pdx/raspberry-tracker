@@ -28,3 +28,8 @@ egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-
 eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-grid-colored"}
 epi = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-grid-colored"}
 egui_extras = { git = "https://github.com/jnichols-pdx/egui/" , branch = "dynamic-grid-colored"}
+rodio = "0.15.0"
+bytes = "1.1"
+base64 = "0.13"
+rand = "0.8"
+rfd = "0.8"

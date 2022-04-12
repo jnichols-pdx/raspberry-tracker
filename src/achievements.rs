@@ -3,7 +3,11 @@ use crate::db::*;
 use crate::events::*;
 use crate::experience::*;
 use crate::weapons::*;
+use rand::prelude::*;
+use rodio::{Decoder, Sink};
+use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::io::Cursor;
 
 const COMBO_LIMIT: i64 = 5;
 const COMBO_MEND_LIMIT: i64 = 61;
@@ -11,8 +15,12 @@ const COMBO_RESUPPLY_LIMIT: i64 = 91;
 const RAGE_LIMIT: i64 = 10;
 
 pub struct AchievementEngine {
+    sound_sink: Sink,
+    soundsets: BTreeMap<String, HashMap<String, Vec<Vec<u8>>>>,
+    current_soundset: Option<String>,
+
     login_time: i64,
-    db: DatabaseCore,
+    db: DatabaseSync,
     killstreak: u32,
     combo_kills: u32,
     last_victim: String,
@@ -100,8 +108,13 @@ impl PlayerInteraction {
 
 #[allow(dead_code, unused_variables)]
 impl AchievementEngine {
-    pub fn new(db: DatabaseCore) -> Self {
+    pub fn new(mut db: DatabaseSync, sound_sink: Sink) -> Self {
+        let new_soundsets = db.load_soundsets_sync();
+        let current_soundset = db.get_soundset_sync();
         AchievementEngine {
+            sound_sink,
+            soundsets: new_soundsets,
+            current_soundset,
             login_time: 0,
             db,
             killstreak: 0,
@@ -253,25 +266,35 @@ impl AchievementEngine {
         datetime: &str,
     ) -> Option<Vec<Event>> {
         let mut results = Vec::new();
+        let mut announcements = Vec::new();
         match kind {
             ExperienceType::Revive => {
                 self.revive_count += 1;
                 match self.revive_count {
-                    5 => results.push(Event::achieved(
-                        "Cautious Practicioner",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
-                    15 => results.push(Event::achieved(
-                        "Master Medic",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
-                    30 => results.push(Event::achieved(
-                        "Shadow Healer",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
+                    5 => {
+                        results.push(Event::achieved(
+                            "Cautious Practicioner",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("CAUTIOUS_PRACTICIONER");
+                    }
+                    15 => {
+                        results.push(Event::achieved(
+                            "Master Medic",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("MASTER_MEDIC");
+                    }
+                    30 => {
+                        results.push(Event::achieved(
+                            "Shadow Healer",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("SHADOW_HEALER");
+                    }
                     _ => {}
                 }
                 self.revive_no_kills_count += 1;
@@ -281,31 +304,44 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("DO_NO_HARM");
                 }
 
                 if timestamp - self.last_revive_time < COMBO_LIMIT {
                     self.combo_revives += 1;
                     match self.combo_revives {
-                        2 => results.push(Event::achieved(
-                            "Sustaining Force",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
-                        4 => results.push(Event::achieved(
-                            "Rapid Fire Revival",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
-                        6 => results.push(Event::achieved(
-                            "Miracle Worker",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
-                        8 => results.push(Event::achieved(
-                            "Zombie Summoner",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
+                        2 => {
+                            results.push(Event::achieved(
+                                "Sustaining Force",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("SUSTAINING_FORCE");
+                        }
+                        4 => {
+                            results.push(Event::achieved(
+                                "Rapid Fire Revival",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("RAPID_FIRE_REVIVAL");
+                        }
+                        6 => {
+                            results.push(Event::achieved(
+                                "Miracle Worker",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("MIRACLE_WORKER");
+                        }
+                        8 => {
+                            results.push(Event::achieved(
+                                "Zombie Summoner",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("ZOMBIE_SUMMONER");
+                        }
                         _ => {}
                     }
                 } else {
@@ -322,6 +358,7 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("MINE_SWEEPER");
                 }
             }
             ExperienceType::Kill_Player_Assist
@@ -330,6 +367,7 @@ impl AchievementEngine {
                 self.assist_count += 1;
                 if self.assist_count % 8 == 0 {
                     results.push(Event::achieved("Side Kick", timestamp, datetime.to_owned()));
+                    announcements.push("SIDE_KICK");
                 }
             }
             //TODO: verify how these interact - do we ever see both for the same kill?
@@ -337,6 +375,7 @@ impl AchievementEngine {
                 self.savior_kills += 1;
                 if self.savior_kills % 3 == 0 {
                     results.push(Event::achieved("Overwatch", timestamp, datetime.to_owned()));
+                    announcements.push("OVERWATCH");
                 }
             }
             ExperienceType::Heal_Player | ExperienceType::Squad_Heal => {
@@ -348,18 +387,21 @@ impl AchievementEngine {
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("MAIN_HEALER");
                     } else if self.combo_heal_xp < 250 && new_total > 250 {
                         results.push(Event::achieved(
                             "Heals Are Real",
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("HEALS_REAL");
                     } else if self.combo_heal_xp < 500 && new_total > 500 {
                         results.push(Event::achieved(
                             "Life Force",
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("LIFE_FORCE");
                     }
                     self.combo_heal_xp = new_total;
                 } else {
@@ -378,18 +420,21 @@ impl AchievementEngine {
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("SUPPLY_DEMAND");
                     } else if self.combo_resupply_xp < 1000 && new_total > 1000 {
                         results.push(Event::achieved(
                             "Arms Dealer",
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("ARMS_DEALER");
                     } else if self.combo_resupply_xp < 2000 && new_total > 2000 {
                         results.push(Event::achieved(
                             "Merchant Of Death",
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("MERCHANT_OF_DEATH");
                     }
                     self.combo_resupply_xp = new_total;
                 } else {
@@ -401,14 +446,17 @@ impl AchievementEngine {
                     let new_total = self.combo_reshield_xp + amount;
                     if self.combo_reshield_xp < 250 && new_total > 250 {
                         results.push(Event::achieved("Bastion", timestamp, datetime.to_owned()));
+                        announcements.push("BASTION");
                     } else if self.combo_reshield_xp < 500 && new_total > 500 {
                         results.push(Event::achieved("Energizer", timestamp, datetime.to_owned()));
+                        announcements.push("ENERGIZER");
                     } else if self.combo_reshield_xp < 1000 && new_total > 1000 {
                         results.push(Event::achieved(
                             "Mend And Defend",
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("MEND_AND_DEFEND");
                     }
                     self.combo_reshield_xp = new_total;
                 } else {
@@ -423,6 +471,7 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("COUNTER_TERRORISTS");
                 }
             }
             ExperienceType::Motion_Detect => {
@@ -440,6 +489,7 @@ impl AchievementEngine {
                             timestamp,
                             datetime.to_owned(),
                         ));
+                        announcements.push("INTERLINKED");
                     }
                 }
             }
@@ -455,24 +505,29 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("PATCHWORKER");
                 } else if self.combo_repair_xp < 1000 && new_total > 1000 {
                     results.push(Event::achieved(
                         "Mechanized Mending",
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("MECHANIZED_MENDING");
                 } else if self.combo_repair_xp < 2000 && new_total > 2000 {
                     results.push(Event::achieved(
                         "Nanitesmith",
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("NANITESMITH");
                 }
                 self.combo_repair_xp = new_total;
             } else {
                 self.combo_repair_xp = amount;
             }
         }
+
+        self.announce(announcements);
 
         if !results.is_empty() {
             Some(results)
@@ -490,6 +545,7 @@ impl AchievementEngine {
         weapon_id: &str,
     ) -> Option<Vec<Event>> {
         let mut results = Vec::new();
+        let mut announcements = Vec::new();
         self.killstreak = 0;
         self.combo_kills = 0;
         self.deathstreak += 1;
@@ -560,21 +616,28 @@ impl AchievementEngine {
         let delta = self.last_death_time - self.last_kill_time;
         if (delta == 0 || delta == 1) && self.last_killer.eq(&self.last_victim) {
             results.push(Event::achieved("Mutual", timestamp, datetime.to_owned()));
+            announcements.push("MUTUAL");
         }
 
         //Death streaks - N deaths without getting a kill.
         //Repeats on each death after 10 in a row.
         match self.deathstreak {
-            6 => results.push(Event::achieved(
-                "Death Streak",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            7 => results.push(Event::achieved(
-                "Being Farmed",
-                timestamp,
-                datetime.to_owned(),
-            )),
+            6 => {
+                results.push(Event::achieved(
+                    "Death Streak",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("DEATH_STREAK");
+            }
+            7 => {
+                results.push(Event::achieved(
+                    "Being Farmed",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("BEING_FARMED");
+            }
             _ => {}
         }
         if self.deathstreak > 10 {
@@ -583,6 +646,7 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("DEATH_INSULT");
         }
 
         //Bad revive streaks - dying immediately after being revived is often bad.
@@ -591,21 +655,29 @@ impl AchievementEngine {
         if revive_delta < COMBO_LIMIT {
             self.bad_revive_streak += 1;
             match self.bad_revive_streak {
-                2 => results.push(Event::achieved(
-                    "Poor Choices",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                3 => results.push(Event::achieved(
-                    "Malpractice",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
+                2 => {
+                    results.push(Event::achieved(
+                        "Poor Choices",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("POOR_CHOICES");
+                }
+                3 => {
+                    results.push(Event::achieved(
+                        "Malpractice",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("MALPRACTICE");
+                }
                 _ => {}
             }
         } else {
             self.bad_revive_streak = 0;
         }
+
+        self.announce(announcements);
 
         if !results.is_empty() {
             Some(results)
@@ -631,6 +703,7 @@ impl AchievementEngine {
     ) -> Option<Vec<Event>> {
         println!("In tally kill");
         let mut results = Vec::new();
+        let mut announcements = Vec::new();
         self.killstreak += 1;
         self.deathstreak = 0;
         self.revive_no_kills_count = 0;
@@ -651,6 +724,7 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("FIRST_BLOOD");
         } else if login_delta <= 90 {
             self.login_time = 0; //Prevent triggering more than once per session
             results.push(Event::achieved(
@@ -658,50 +732,67 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("INSTANT_ACTION");
         }
 
         //Per player killstreak and Revenge achievements
-        let opponent = self
-            .opponents
-            .entry(victim_id.clone())
-            .or_insert_with(PlayerInteraction::new);
-        if opponent.player_kills >= 3 {
-            results.push(Event::achieved("Revenge", timestamp, datetime.to_owned()));
-        }
-        opponent.player_kills = 0;
-        opponent.deaths_to_player += 1;
-        opponent.latest_death_time = timestamp;
-        match opponent.deaths_to_player {
-            0 | 1 | 2 => {}
-            3 => results.push(Event::achieved(
-                "Repeat Customer",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            4 => results.push(Event::achieved(
-                "Think They'd Learn!",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            5 => results.push(Event::achieved(
-                "Domination",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            6 | 7 | 8 | 9 => {
-                results.push(Event::achieved("Recursion", timestamp, datetime.to_owned()))
+        {
+            let opponent = self
+                .opponents
+                .entry(victim_id.clone())
+                .or_insert_with(PlayerInteraction::new);
+            if opponent.player_kills >= 3 {
+                results.push(Event::achieved("Revenge", timestamp, datetime.to_owned()));
+                announcements.push("REVENGE");
             }
-            //At least 10:
-            _ => results.push(Event::achieved(
-                "Recursive Recursion",
-                timestamp,
-                datetime.to_owned(),
-            )),
+            opponent.player_kills = 0;
+            opponent.deaths_to_player += 1;
+            opponent.latest_death_time = timestamp;
+            match opponent.deaths_to_player {
+                0 | 1 | 2 => {}
+                3 => {
+                    results.push(Event::achieved(
+                        "Repeat Customer",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("REPEAT_CUSTOMER");
+                }
+                4 => {
+                    results.push(Event::achieved(
+                        "Think They'd Learn!",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("THINK_THEYD_LEARN");
+                }
+                5 => {
+                    results.push(Event::achieved(
+                        "Domination",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("DOMINATION");
+                }
+                6 | 7 | 8 | 9 => {
+                    results.push(Event::achieved("Recursion", timestamp, datetime.to_owned()));
+                    announcements.push("RECURSION");
+                }
+                //At least 10:
+                _ => {
+                    results.push(Event::achieved(
+                        "Recursive Recursion",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("RECURSIVE_RECURSION");
+                }
+            }
+            println!(
+                "Opponent {} now at {} deaths to player",
+                victim_id, opponent.deaths_to_player
+            );
         }
-        println!(
-            "Opponent {} now at {} deaths to player",
-            victim_id, opponent.deaths_to_player
-        );
 
         //Combo kills - where each previous kill was only moments before the next.
         if timestamp - self.last_kill_time < COMBO_LIMIT {
@@ -709,39 +800,63 @@ impl AchievementEngine {
             //May be overzealous. Might need a way to collapse these in the Event list?
             match self.combo_kills {
                 0 | 1 => {}
-                2 => results.push(Event::achieved(
-                    "Double Kill",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                3 => results.push(Event::achieved(
-                    "Triple Kill",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                4 => results.push(Event::achieved(
-                    "Multi Kill",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                5 => results.push(Event::achieved("Mega Kill", timestamp, datetime.to_owned())),
-                6 => results.push(Event::achieved(
-                    "Ultra Kill",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                7 => results.push(Event::achieved(
-                    "Monster Kill",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                8 => results.push(Event::achieved(
-                    "Luidcrous Kill",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
+                2 => {
+                    results.push(Event::achieved(
+                        "Double Kill",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("DOUBLE_KILL");
+                }
+                3 => {
+                    results.push(Event::achieved(
+                        "Triple Kill",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("TRIPLE_KILL");
+                }
+                4 => {
+                    results.push(Event::achieved(
+                        "Multi Kill",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("MULT_KILL");
+                }
+                5 => {
+                    results.push(Event::achieved("Mega Kill", timestamp, datetime.to_owned()));
+                    announcements.push("MEGA_KILL");
+                }
+                6 => {
+                    results.push(Event::achieved(
+                        "Ultra Kill",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("ULTRA_KILL");
+                }
+                7 => {
+                    results.push(Event::achieved(
+                        "Monster Kill",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("MONSTER_KILL");
+                }
+                8 => {
+                    results.push(Event::achieved(
+                        "Luidcrous Kill",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("LUDICROUS_KILL");
+                }
                 //At least 9:
-                _ => results.push(Event::achieved("Holy Shit", timestamp, datetime.to_owned())),
+                _ => {
+                    results.push(Event::achieved("Holy Shit", timestamp, datetime.to_owned()));
+                    announcements.push("HOLY_SHIT");
+                }
             }
         } else {
             self.combo_kills = 1;
@@ -752,12 +867,13 @@ impl AchievementEngine {
         //Mutual Kill, here the player was logged as dying before the opponent.
         let delta = self.last_kill_time - self.last_death_time;
         if (delta == 0 || delta == 1) && self.last_killer.eq(&self.last_victim) {
-            results.push(Event::achieved("Mutual", timestamp, datetime.to_owned()))
+            results.push(Event::achieved("Mutual", timestamp, datetime.to_owned()));
+            announcements.push("MUTUAL");
         }
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or landmine)
         //In this case the player was considered to have died before the opponent.
-        let weapon_category = self.db.get_weapon_category(weapon_id).await;
+        let weapon_category = self.db.dbc.get_weapon_category(weapon_id).await;
         if weapon_category == WeaponType::Explosive {
             self.last_explosive_kill_time = timestamp;
             let delta = timestamp - self.last_explosive_suicide_time;
@@ -767,6 +883,7 @@ impl AchievementEngine {
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("SUICIDE_BOMBER");
             }
         }
 
@@ -780,6 +897,7 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("TERRORISTS");
                 }
             } else {
                 self.last_c4_kill_time = timestamp;
@@ -792,12 +910,18 @@ impl AchievementEngine {
             if timestamp == self.last_frag_time {
                 self.same_time_frag_kills += 1;
                 match self.same_time_frag_kills {
-                    3 => results.push(Event::achieved(
-                        "Explosive Efficiency",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
-                    5 => results.push(Event::achieved("Fragasm", timestamp, datetime.to_owned())),
+                    3 => {
+                        results.push(Event::achieved(
+                            "Explosive Efficiency",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("EXPLOSIVE_EFFICIENCY");
+                    }
+                    5 => {
+                        results.push(Event::achieved("Fragasm", timestamp, datetime.to_owned()));
+                        announcements.push("FRAGASM");
+                    }
                     _ => {}
                 }
             } else {
@@ -808,60 +932,85 @@ impl AchievementEngine {
 
         //Kill streaks - N kills without dying.
         match self.killstreak {
-            5 => results.push(Event::achieved(
-                "Killing Spree",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            10 => results.push(Event::achieved(
-                "Dominating",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            20 => results.push(Event::achieved(
-                "Unstoppable",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            25 => results.push(Event::achieved(
-                "Wicked Sick",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            30 => results.push(Event::achieved("God Like", timestamp, datetime.to_owned())),
-            48 => results.push(Event::achieved(
-                "One Platoon",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            100 => results.push(Event::achieved(
-                "One Man Empire",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            250 => results.push(Event::achieved(
-                "One Man Mission",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            500 => results.push(Event::achieved(
-                "One Man Farm",
-                timestamp,
-                datetime.to_owned(),
-            )),
+            5 => {
+                results.push(Event::achieved(
+                    "Killing Spree",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("KILLING_SPREE");
+            }
+            10 => {
+                results.push(Event::achieved(
+                    "Dominating",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("DOMINATING");
+            }
+            20 => {
+                results.push(Event::achieved(
+                    "Unstoppable",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("UNSTOPPABLE");
+            }
+            25 => {
+                results.push(Event::achieved(
+                    "Wicked Sick",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("WICKED_SICK");
+            }
+            30 => {
+                results.push(Event::achieved("God Like", timestamp, datetime.to_owned()));
+                announcements.push("GOD_LIKE");
+            }
+            48 => {
+                results.push(Event::achieved(
+                    "One Platoon",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("ONE_PLATOON");
+            }
+            100 => {
+                results.push(Event::achieved(
+                    "One Man Empire",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("ONE_MAN_EMPIRE");
+            }
+            250 => {
+                results.push(Event::achieved(
+                    "One Man Mission",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("ONE_MAN_ONE_MISSION");
+            }
+            500 => {
+                results.push(Event::achieved(
+                    "One Man Farm",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("ONE_MAN_FARM");
+            }
             _ => {}
         }
 
-        //Headshot -- will be used for audio callout later, but this isn't strictly necessary to
-        //make a separate achievement 'event' in the event list. The kill line in the event list
-        //already includes the headshot indicator.
-        /*if headshot {
-
-        }*/
+        if headshot {
+            announcements.push("HEAD_SHOT");
+        }
 
         //Max down
         if their_class.is_max() {
             results.push(Event::achieved("Max Down", timestamp, datetime.to_owned()));
+            announcements.push("MAX_DOWN");
         }
 
         //Knife kills, individually and 3 in a row
@@ -872,12 +1021,14 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("HUMILIATION");
             if self.knife_kills_consecutive == 3 {
                 results.push(Event::achieved(
                     "Knife Fight",
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("KNIFE_FIGHT");
                 //consider resetting the consecutive count here - so every 3rd triggers this
                 //achievement?
             }
@@ -885,23 +1036,38 @@ impl AchievementEngine {
 
         //Consecutive Headshot kills
         match self.headshots_consecutive {
-            3 => results.push(Event::achieved("Accuracy", timestamp, datetime.to_owned())),
-            6 => results.push(Event::achieved(
-                "Impressive",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            9 => results.push(Event::achieved(
-                "Sharp Shooter",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            12 => results.push(Event::achieved("Marksman", timestamp, datetime.to_owned())),
-            16 => results.push(Event::achieved(
-                "Head Hunter",
-                timestamp,
-                datetime.to_owned(),
-            )),
+            3 => {
+                results.push(Event::achieved("Accuracy", timestamp, datetime.to_owned()));
+                announcements.push("ACCURACY");
+            }
+            6 => {
+                results.push(Event::achieved(
+                    "Impressive",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("IMPRESSIVE");
+            }
+            9 => {
+                results.push(Event::achieved(
+                    "Sharp Shooter",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("SHARP_SHOOTER");
+            }
+            12 => {
+                results.push(Event::achieved("Marksman", timestamp, datetime.to_owned()));
+                announcements.push("MARKSMAN");
+            }
+            16 => {
+                results.push(Event::achieved(
+                    "Head Hunter",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("HEAD_HUNTER");
+            }
             _ => {}
         }
         if self.headshots_consecutive >= 21 {
@@ -910,6 +1076,7 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("LOBOTOMIST");
         }
 
         //High Roller - kill 2x 'top BR' players in a row
@@ -925,6 +1092,7 @@ impl AchievementEngine {
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("HIGH_ROLLER");
             }
         } else {
             self.high_roller = 0;
@@ -938,6 +1106,7 @@ impl AchievementEngine {
             self.kdr_over_three = 0;
             if self.kdr_under_one == 20 {
                 results.push(Event::achieved("Easy Mode", timestamp, datetime.to_owned()));
+                announcements.push("EASY_MODE");
             }
         }
         if their_kdr >= 3.0 {
@@ -962,28 +1131,37 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("IMPRESS_MYSELF");
         }
         if self.kdr_over_two >= 5 {
             results.push(Event::achieved("Nightmare", timestamp, datetime.to_owned()));
+            announcements.push("NIGHTMARE");
         }
         if self.kdr_over_one >= 7 {
             results.push(Event::achieved("Hard Mode", timestamp, datetime.to_owned()));
+            announcements.push("HARD_MODE");
         }
 
         //Rocket killstreaks
         if weapon_category == WeaponType::Rocket_Launcher {
             self.rocket_kills += 1;
             match self.rocket_kills {
-                4 => results.push(Event::achieved(
-                    "Rocket Primary",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                8 => results.push(Event::achieved(
-                    "Master Juggler",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
+                4 => {
+                    results.push(Event::achieved(
+                        "Rocket Primary",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("ROCKET_PRIMARY");
+                }
+                8 => {
+                    results.push(Event::achieved(
+                        "Master Juggler",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("MASTER_JUGGLER");
+                }
                 _ => {}
             }
         }
@@ -993,6 +1171,7 @@ impl AchievementEngine {
             self.iced_kills += 1;
             if self.iced_kills > 0 && self.iced_kills % 3 == 0 {
                 results.push(Event::achieved("Iced", timestamp, datetime.to_owned()));
+                announcements.push("ICED");
             }
         }
 
@@ -1001,6 +1180,7 @@ impl AchievementEngine {
             self.fire_kills += 1;
             if self.fire_kills > 0 && self.fire_kills % 3 == 0 {
                 results.push(Event::achieved("Fire", timestamp, datetime.to_owned()));
+                announcements.push("FIRE");
             }
         }
 
@@ -1008,21 +1188,30 @@ impl AchievementEngine {
         if weapon_category == WeaponType::Pistol {
             self.pistol_kills += 1;
             match self.pistol_kills {
-                4 => results.push(Event::achieved(
-                    "Pistol Whipped",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                8 => results.push(Event::achieved(
-                    "Run and Handgun",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                12 => results.push(Event::achieved(
-                    "Sidearm Slayer",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
+                4 => {
+                    results.push(Event::achieved(
+                        "Pistol Whipped",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("PISTOL_WHIPPED");
+                }
+                8 => {
+                    results.push(Event::achieved(
+                        "Run and Handgun",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("RUN_AND_HANDGUN");
+                }
+                12 => {
+                    results.push(Event::achieved(
+                        "Sidearm Slayer",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("SIDEARM_SLAYER");
+                }
                 _ => {}
             }
         }
@@ -1036,6 +1225,7 @@ impl AchievementEngine {
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("COMMISSIONER");
             }
             if their_class.is_infil() {
                 results.push(Event::achieved(
@@ -1043,6 +1233,7 @@ impl AchievementEngine {
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("EXECUTIONER");
             }
         }
 
@@ -1051,13 +1242,14 @@ impl AchievementEngine {
             self.lancer_kills += 1;
             if self.lancer_kills == 7 {
                 results.push(Event::achieved("Care Bear", timestamp, datetime.to_owned()));
+                announcements.push("CARE_BEAR");
             }
         }
 
         //Max killstreak / melee achievements
         if your_class.is_max() {
             self.max_suit_kills += 1;
-            if self.db.get_weapon_category(weapon_id).await == WeaponType::Knife {
+            if self.db.dbc.get_weapon_category(weapon_id).await == WeaponType::Knife {
                 self.max_melee_kills += 1;
                 if self.max_melee_kills == 3 {
                     results.push(Event::achieved(
@@ -1065,42 +1257,61 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("EXPLODING_FIST");
                 }
             }
             match self.max_suit_kills {
-                15 => results.push(Event::achieved(
-                    "Juggernaught",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                30 => results.push(Event::achieved(
-                    "Maximum Damage",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
+                15 => {
+                    results.push(Event::achieved(
+                        "Juggernaught",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("JUGGERNAUGHT");
+                }
+                30 => {
+                    results.push(Event::achieved(
+                        "Maximum Damage",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("MAXIMUM_DAMAGE");
+                }
                 40 => {
                     match your_class {
-                        Class::NCMax => results.push(Event::achieved(
-                            "BOOM-Sticks",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
-                        Class::TRMax => results.push(Event::achieved(
-                            "DAKKA DAKKA",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
-                        Class::VSMax => results.push(Event::achieved(
-                            "Z.O.E. ZOE",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
+                        Class::NCMax => {
+                            results.push(Event::achieved(
+                                "BOOM-Sticks",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("BOOMSTICKS");
+                        }
+                        Class::TRMax => {
+                            results.push(Event::achieved(
+                                "DAKKA DAKKA",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("DAKKA");
+                        }
+                        Class::VSMax => {
+                            results.push(Event::achieved(
+                                "Z.O.E. ZOE",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("ZOE_ZOE");
+                        }
                         //Why limit ourselves to what Recursion has?
-                        Class::NSOMax => results.push(Event::achieved(
-                            "METAL is superior",
-                            timestamp,
-                            datetime.to_owned(),
-                        )),
+                        Class::NSOMax => {
+                            results.push(Event::achieved(
+                                "METAL is superior",
+                                timestamp,
+                                datetime.to_owned(),
+                            ));
+                            announcements.push("METAL_SUPERIOR");
+                        }
                         //Future max types?
                         _ => {}
                     }
@@ -1116,22 +1327,29 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("WELCOME_KILL");
         }
 
         //Mines vs Infantry kills
         if weapon_is_proxy_mine(weapon_id) {
             self.proxy_mine_kills += 1;
             match self.proxy_mine_kills {
-                2 => results.push(Event::achieved(
-                    "Present For Ya",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
-                4 => results.push(Event::achieved(
-                    "Watch Your Step",
-                    timestamp,
-                    datetime.to_owned(),
-                )),
+                2 => {
+                    results.push(Event::achieved(
+                        "Present For Ya",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("PRESENT");
+                }
+                4 => {
+                    results.push(Event::achieved(
+                        "Watch Your Step",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("WATCH_YOUR_STEP");
+                }
                 _ => {}
             }
         }
@@ -1149,6 +1367,7 @@ impl AchievementEngine {
                         datetime.to_owned(),
                     ));
                     self.pizza_awarded_time = timestamp;
+                    announcements.push("PIZZA_DELIVERY");
                 }
             } else if their_class.is_max() {
                 results.push(Event::achieved(
@@ -1157,6 +1376,7 @@ impl AchievementEngine {
                     datetime.to_owned(),
                 ));
                 self.pizza_awarded_time = timestamp;
+                announcements.push("PIZZA_DELIVERY"); //Customize?
             }
         }
 
@@ -1170,6 +1390,7 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            announcements.push("DECIMATION");
         }
 
         //Vehicular achievements
@@ -1180,9 +1401,13 @@ impl AchievementEngine {
             if vehicle == Vehicle::ManaAITurret {
                 self.mana_ai_kills += 1;
                 match self.mana_ai_kills {
-                    6 => results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned())),
+                    6 => {
+                        results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned()));
+                        announcements.push("LAWNMOWER");
+                    }
                     15 => {
-                        results.push(Event::achieved("Harvester", timestamp, datetime.to_owned()))
+                        results.push(Event::achieved("Harvester", timestamp, datetime.to_owned()));
+                        announcements.push("HARVESTER");
                     }
                     _ => {}
                 }
@@ -1193,6 +1418,7 @@ impl AchievementEngine {
                 self.mana_av_kills += 1;
                 if self.mana_av_kills == 12 {
                     results.push(Event::achieved("Precipice", timestamp, datetime.to_owned()));
+                    announcements.push("PRECIPICE");
                 }
             }
 
@@ -1200,7 +1426,12 @@ impl AchievementEngine {
             if vehicle == Vehicle::AIPhalanxTurret || vehicle == Vehicle::AIBuilderTower {
                 self.phalanx_ai_kills += 1;
                 if self.phalanx_ai_kills == 6 {
-                    results.push(Event::achieved("Lawnmower", timestamp, datetime.to_owned()));
+                    results.push(Event::achieved(
+                        "My Gun's Bigger",
+                        timestamp,
+                        datetime.to_owned(),
+                    ));
+                    announcements.push("GUN_BIGGER");
                 }
             }
 
@@ -1211,6 +1442,7 @@ impl AchievementEngine {
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("STEEL_RAIN");
             }
 
             //Roadkills
@@ -1223,15 +1455,18 @@ impl AchievementEngine {
                         timestamp,
                         datetime.to_owned(),
                     ));
+                    announcements.push("QUAD_DAMAGE");
                 } else {
                     results.push(Event::achieved("Roadkill", timestamp, datetime.to_owned()));
+                    announcements.push("ROAD_KILL");
                 }
                 if self.roadkills == 4 {
                     results.push(Event::achieved("Road Rage", timestamp, datetime.to_owned()));
+                    announcements.push("ROAD_RAGE");
                 }
             }
 
-            let weapon_cat = self.db.get_weapon_category(weapon_id).await;
+            let weapon_cat = self.db.dbc.get_weapon_category(weapon_id).await;
 
             //Tank vs Aircraft
             if weapon_cat.is_tank_primary()
@@ -1244,22 +1479,29 @@ impl AchievementEngine {
                     timestamp,
                     datetime.to_owned(),
                 ));
+                announcements.push("FLYSWATTER");
             }
 
             //Ground vehicle based killstreaks
             if vehicle.is_ground_vehicle() {
                 self.ground_vehicle_kills += 1;
                 match self.ground_vehicle_kills {
-                    15 => results.push(Event::achieved(
-                        "Armored Assault",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
-                    30 => results.push(Event::achieved(
-                        "Blitzkrieg",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
+                    15 => {
+                        results.push(Event::achieved(
+                            "Armored Assault",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("ARMORED_ASSAULT");
+                    }
+                    30 => {
+                        results.push(Event::achieved(
+                            "Blitzkrieg",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("BLITZKRIEG");
+                    }
                     _ => {}
                 }
             }
@@ -1271,21 +1513,30 @@ impl AchievementEngine {
             {
                 self.air_to_ground_kills += 1;
                 match self.air_to_ground_kills {
-                    15 => results.push(Event::achieved(
-                        "Death From Above",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
-                    40 => results.push(Event::achieved(
-                        "Bombardier",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
-                    60 => results.push(Event::achieved(
-                        "Scourge Of the Skies",
-                        timestamp,
-                        datetime.to_owned(),
-                    )),
+                    15 => {
+                        results.push(Event::achieved(
+                            "Death From Above",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("DEATH_FROM_ABOVE");
+                    }
+                    40 => {
+                        results.push(Event::achieved(
+                            "Bombardier",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("BOMBARDIER");
+                    }
+                    60 => {
+                        results.push(Event::achieved(
+                            "Scourge Of the Skies",
+                            timestamp,
+                            datetime.to_owned(),
+                        ));
+                        announcements.push("SCOURGE_OF_SKIES");
+                    }
                     _ => {}
                 }
             }
@@ -1299,17 +1550,32 @@ impl AchievementEngine {
                 self.air_to_air_destructions += 1;
                 self.last_air_to_air_time = timestamp;
                 match self.air_to_air_destructions {
-                    3 => results.push(Event::achieved("Ace", timestamp, datetime.to_owned())),
-                    8 => results.push(Event::achieved("Top Gun", timestamp, datetime.to_owned())),
-                    20 => results.push(Event::achieved("Superman", timestamp, datetime.to_owned())),
+                    3 => {
+                        results.push(Event::achieved("Ace", timestamp, datetime.to_owned()));
+                        announcements.push("ACE");
+                    }
+                    8 => {
+                        results.push(Event::achieved("Top Gun", timestamp, datetime.to_owned()));
+                        announcements.push("TOP_GUN");
+                    }
+                    20 => {
+                        results.push(Event::achieved("Superman", timestamp, datetime.to_owned()));
+                        announcements.push("SUPERMAN");
+                    }
                     _ => {}
                 }
             }
         } else {
             self.non_vehicle_kills += 1;
             match self.non_vehicle_kills {
-                40 => results.push(Event::achieved("Batman", timestamp, datetime.to_owned())),
-                50 => results.push(Event::achieved("Cheater", timestamp, datetime.to_owned())),
+                40 => {
+                    results.push(Event::achieved("Batman", timestamp, datetime.to_owned()));
+                    announcements.push("BATMAN");
+                }
+                50 => {
+                    results.push(Event::achieved("Cheater", timestamp, datetime.to_owned()));
+                    announcements.push("CHEATER");
+                }
                 _ => {}
             }
 
@@ -1318,6 +1584,8 @@ impl AchievementEngine {
                 results.push(Event::achieved("Fatality", timestamp, datetime.to_owned()));
             }
         }
+
+        self.announce(announcements);
 
         if !results.is_empty() {
             Some(results)
@@ -1328,28 +1596,39 @@ impl AchievementEngine {
 
     pub fn tally_teamkill(&mut self, timestamp: i64, datetime: &str) -> Option<Vec<Event>> {
         let mut results = Vec::new();
+        let mut announcements = Vec::new();
         //Should teamkills RESET beneficial streak counts?
         self.team_kills += 1;
 
         //Consecutive teamkills - BAD Planetman!
         match self.team_kills {
-            3 => results.push(Event::achieved(
-                "Team Killer",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            6 => results.push(Event::achieved(
-                "Prevent Friendly Fire!",
-                timestamp,
-                datetime.to_owned(),
-            )),
-            9 => results.push(Event::achieved(
-                "Whose Side?",
-                timestamp,
-                datetime.to_owned(),
-            )),
+            3 => {
+                results.push(Event::achieved(
+                    "Team Killer",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("TEAM_KILLER");
+            }
+            6 => {
+                results.push(Event::achieved(
+                    "Prevent Friendly Fire!",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("PREVENT_FF");
+            }
+            9 => {
+                results.push(Event::achieved(
+                    "Whose Side?",
+                    timestamp,
+                    datetime.to_owned(),
+                ));
+                announcements.push("WHOSE_SIDE");
+            }
             _ => {}
         }
+        self.announce(announcements);
         if !results.is_empty() {
             Some(results)
         } else {
@@ -1427,12 +1706,13 @@ impl AchievementEngine {
 
         //Suicide bomber (kill self and 1+ enemy with an Explosive like C-4 or Mine)
         //In this case the opponent was considered to have died before the player
-        match self.db.get_weapon_category(weapon_id).await {
+        match self.db.dbc.get_weapon_category(weapon_id).await {
             WeaponType::Explosive => {
                 self.last_explosive_suicide_time = timestamp;
                 let delta = timestamp - self.last_explosive_kill_time;
                 if delta == 0 || delta == 1 {
                     let bomber = Event::achieved("Suicide Bomber", timestamp, datetime.to_owned());
+                    self.announce(vec!["SUICIDE_BOMBER"]);
                     Some(vec![bomber])
                 } else {
                     None
@@ -1468,6 +1748,7 @@ impl AchievementEngine {
                 timestamp,
                 datetime.to_owned(),
             ));
+            self.announce(vec!["SHOOT_NEEDLE"]);
         }
 
         if their_vehicle.is_esf() {
@@ -1490,6 +1771,7 @@ impl AchievementEngine {
         datetime: &str,
     ) -> Option<Event> {
         let mut rage_event = None;
+        let mut rage_announcement = "";
         if let Some(opponent) = self.opponents.get(&character_id) {
             println!(
                 "{} had {} deaths_to_player at logout",
@@ -1528,8 +1810,10 @@ impl AchievementEngine {
                     }
 
                     let rage_message = if opponent.deaths_to_player >= 3 {
+                        rage_announcement = "SUBMISSION";
                         format!("Submission ({})", name)
                     } else {
+                        rage_announcement = "RAGE_QUIT";
                         format!("Rage Quit ({})", name)
                     };
                     println!("push here: {}", rage_message);
@@ -1544,6 +1828,61 @@ impl AchievementEngine {
         } else {
             println!("{} not in oppo list at logout", character_id)
         }
+        if !rage_announcement.is_empty() {
+            self.announce(vec![rage_announcement]);
+        }
         rage_event
+    }
+
+    fn announce(&self, achievements: Vec<&str>) {
+        if let Some(set_name) = &self.current_soundset {
+            if let Some(current_set) = self.soundsets.get(set_name) {
+                for achievement in achievements {
+                    if let Some(sounds) = current_set.get(achievement) {
+                        if sounds.len() > 1 {
+                            let mut rng = thread_rng();
+                            let picked = rng.gen_range(0..sounds.len());
+                            let buffered_sound = Cursor::new(sounds[picked].clone());
+                            let source = Decoder::new(buffered_sound).unwrap();
+                            self.sound_sink.append(source);
+                        } else {
+                            let buffered_sound = Cursor::new(sounds[0].clone());
+                            let source = Decoder::new(buffered_sound).unwrap();
+                            self.sound_sink.append(source);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn add_soundset(&mut self, set_name: String, sounds: HashMap<String, Vec<Vec<u8>>>) {
+        self.soundsets.insert(set_name.clone(), sounds);
+        self.db.set_soundset_sync(set_name.clone());
+        self.current_soundset = Some(set_name);
+    }
+
+    pub fn list_soundsets(&self) -> Vec<String> {
+        self.soundsets.keys().cloned().collect()
+    }
+
+    pub fn set_soundset(&mut self, chosen_set: Option<String>) -> bool {
+        if let Some(set_name) = chosen_set {
+            if self.soundsets.contains_key(&set_name) {
+                self.db.set_soundset_sync(set_name.clone());
+                self.current_soundset = Some(set_name);
+                true
+            } else {
+                false
+            }
+        } else {
+            self.current_soundset = None;
+            self.db.clear_soundset_sync();
+            true
+        }
+    }
+
+    pub fn active_soundset_name(&self) -> Option<String> {
+        self.current_soundset.clone()
     }
 }

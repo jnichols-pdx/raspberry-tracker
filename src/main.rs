@@ -8,6 +8,7 @@ mod experience;
 mod session;
 mod session_list;
 mod ui;
+mod vpack;
 mod weapons;
 
 //use std::env;
@@ -22,6 +23,7 @@ use crate::session::*;
 use crate::session_list::*;
 use futures_util::{SinkExt, StreamExt};
 use image::io::Reader as ImageReader;
+use rodio::{OutputStream, Sink};
 use sqlx::sqlite::SqlitePool;
 use std::io::Cursor;
 use std::sync::Arc;
@@ -38,6 +40,9 @@ fn main() {
     big_print_num("0.4.0");
     let rt = Runtime::new().unwrap();
     let rth = rt.handle();
+
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let sink = Sink::try_new(&stream_handle).unwrap();
 
     let (tx_to_websocket, rx_from_app) = mpsc::channel::<Message>(32);
     let (tx_to_logout_websocket, rx_logout_from_app) = mpsc::channel::<Message>(32);
@@ -69,12 +74,12 @@ fn main() {
     };
 
     let db = DatabaseCore::new(db_pool);
-    let achievements = AchievementEngine::new(db.clone());
-
     let mut sync_db = DatabaseSync {
         dbc: db,
         rt: rth.clone(),
     };
+
+    let achievements = Arc::new(RwLock::new(AchievementEngine::new(sync_db.clone(), sink)));
 
     sync_db.init_sync();
 
@@ -169,7 +174,7 @@ fn main() {
         session_list.clone(),
         rx_context_from_ui,
         sync_db.clone(),
-        achievements,
+        achievements.clone(),
         rx_logout_from_app,
         tx_to_logout_websocket,
     ));
@@ -186,6 +191,7 @@ fn main() {
                 x_size,
                 y_size,
                 Some(tx_context_to_ws),
+                achievements,
             ))
         }),
     );
@@ -199,7 +205,7 @@ async fn websocket_threads(
     session_list: Arc<RwLock<SessionList>>,
     rx_ui_context: oneshot::Receiver<egui::Context>,
     db: DatabaseSync,
-    achievements: AchievementEngine,
+    achievements: Arc<RwLock<AchievementEngine>>,
     rx_logouts_from_app: mpsc::Receiver<Message>,
     ws_logouts_out: mpsc::Sender<Message>,
 ) {
@@ -307,7 +313,7 @@ async fn parse_messages(
     session_list: Arc<RwLock<SessionList>>,
     ui_context: egui::Context,
     mut db: DatabaseSync,
-    mut achievements: AchievementEngine,
+    achievements: Arc<RwLock<AchievementEngine>>,
     ws_logouts_out: mpsc::Sender<Message>,
 ) {
     let mut parsing = true;
@@ -393,18 +399,21 @@ async fn parse_messages(
 
                             db.dbc.update_char_with_full(&bob).await;
 
+                            let timestamp = json["payload"]["timestamp"]
+                                .to_string()
+                                .unquote()
+                                .parse::<i64>()
+                                .unwrap_or(0);
                             {
-                                let timestamp = json["payload"]["timestamp"]
-                                    .to_string()
-                                    .unquote()
-                                    .parse::<i64>()
-                                    .unwrap_or(0);
                                 let mut session_list_rw = session_list.write().await;
                                 session_list_rw
                                     .push(Session::new_async(bob, timestamp, db.clone()).await);
-                                ui_context.request_repaint();
-                                achievements.reset(timestamp);
                             }
+                            {
+                                let mut achievements_rw = achievements.write().await;
+                                achievements_rw.reset(timestamp);
+                            }
+                            ui_context.request_repaint();
                         }
                     }
                 } else {
@@ -678,68 +687,71 @@ async fn parse_messages(
                     .parse::<u8>()
                     .unwrap_or(0)
                     > 0;
-
-                //Notify achievements progress tracker of what happened so apropriate achievements can be recorded.
-                match event_type {
-                    EventType::Death => {
-                        let killer_id = json["payload"]["attacker_character_id"]
-                            .to_string()
-                            .unquote();
-                        new_achievements = achievements.tally_death(
-                            timestamp,
-                            &formatted_time,
-                            killer_id,
-                            vehicle,
-                            &weapon_id,
-                        );
-                    }
-                    EventType::Suicide => {
-                        new_achievements = achievements
-                            .tally_suicide(&weapon_id, timestamp, &formatted_time)
-                            .await;
-                    }
-                    EventType::Kill => {
-                        let victim_id = json["payload"]["character_id"].to_string().unquote();
-                        let your_class = Class::from(
-                            json["payload"]["attacker_loadout_id"]
+                {
+                    let mut achievements_rw = achievements.write().await;
+                    //Notify achievements progress tracker of what happened so apropriate achievements can be recorded.
+                    match event_type {
+                        EventType::Death => {
+                            let killer_id = json["payload"]["attacker_character_id"]
                                 .to_string()
-                                .unquote()
-                                .parse::<i64>()
-                                .unwrap_or(0),
-                        );
-                        new_achievements = achievements
-                            .tally_kill(
+                                .unquote();
+                            new_achievements = achievements_rw.tally_death(
                                 timestamp,
                                 &formatted_time,
-                                victim_id,
+                                killer_id,
                                 vehicle,
                                 &weapon_id,
-                                headshot,
-                                ratio,
-                                class,
-                                your_class,
-                                br,
-                                asp,
-                            )
-                            .await;
+                            );
+                        }
+                        EventType::Suicide => {
+                            new_achievements = achievements_rw
+                                .tally_suicide(&weapon_id, timestamp, &formatted_time)
+                                .await;
+                        }
+                        EventType::Kill => {
+                            let victim_id = json["payload"]["character_id"].to_string().unquote();
+                            let your_class = Class::from(
+                                json["payload"]["attacker_loadout_id"]
+                                    .to_string()
+                                    .unquote()
+                                    .parse::<i64>()
+                                    .unwrap_or(0),
+                            );
+                            new_achievements = achievements_rw
+                                .tally_kill(
+                                    timestamp,
+                                    &formatted_time,
+                                    victim_id,
+                                    vehicle,
+                                    &weapon_id,
+                                    headshot,
+                                    ratio,
+                                    class,
+                                    your_class,
+                                    br,
+                                    asp,
+                                )
+                                .await;
+                        }
+                        EventType::DestroyVehicle => {
+                            let victim_id = json["payload"]["character_id"].to_string().unquote();
+                            new_achievements = achievements_rw
+                                .tally_vehicle_destroy(
+                                    &weapon_id,
+                                    vehicle,
+                                    Vehicle::from(materiel_num),
+                                    victim_id,
+                                    timestamp,
+                                    &formatted_time,
+                                )
+                                .await;
+                        }
+                        EventType::TeamKill => {
+                            new_achievements =
+                                achievements_rw.tally_teamkill(timestamp, &formatted_time);
+                        }
+                        _ => {}
                     }
-                    EventType::DestroyVehicle => {
-                        let victim_id = json["payload"]["character_id"].to_string().unquote();
-                        new_achievements = achievements
-                            .tally_vehicle_destroy(
-                                &weapon_id,
-                                vehicle,
-                                Vehicle::from(materiel_num),
-                                victim_id,
-                                timestamp,
-                                &formatted_time,
-                            )
-                            .await;
-                    }
-                    EventType::TeamKill => {
-                        new_achievements = achievements.tally_teamkill(timestamp, &formatted_time);
-                    }
-                    _ => {}
                 }
 
                 //Crashing something like an aircraft into terrain and killing yourself shouldn't
@@ -816,7 +828,8 @@ async fn parse_messages(
                     if let Some(current_session) = session_list_rw.active_session_mut() {
                         current_session.end(timestamp).await;
                         players_world = current_session.current_character().server.as_id_string();
-                        achievements.reset(0);
+                        let mut achievements_rw = achievements.write().await;
+                        achievements_rw.reset(0);
                     }
                     let _res_logout = ws_logouts_out
                         .send(Message::Text(clear_subscribe_logouts_string(
@@ -836,8 +849,9 @@ async fn parse_messages(
                         .format(&formatter)
                         .unwrap_or_else(|_| "?-?-? ?:?:?".into());
                     //Someone else logged out, send to achievement engine to check for rage quits.
+                    let mut achievements_rw = achievements.write().await;
                     if let Some(rage_event) =
-                        achievements.tally_logout(character_id, timestamp, &formatted_time)
+                        achievements_rw.tally_logout(character_id, timestamp, &formatted_time)
                     {
                         let mut session_list_rw = session_list.write().await;
                         if let Some(current_session) = session_list_rw.active_session_mut() {
@@ -1003,7 +1017,10 @@ async fn parse_messages(
                                 }
                             }
 
-                            achievements.tally_revive(timestamp);
+                            {
+                                let mut achievements_rw = achievements.write().await;
+                                achievements_rw.tally_revive(timestamp);
+                            }
 
                             new_event = Event {
                                 kind: EventType::Revived,
@@ -1036,13 +1053,16 @@ async fn parse_messages(
 
                     let other_id = json["payload"]["other_id"].to_string().unquote();
                     let xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
-                    new_achievements = achievements.tally_xp_tick(
-                        xp_type,
-                        xp_numeric,
-                        other_id,
-                        timestamp,
-                        &formatted_time,
-                    );
+                    {
+                        let mut achievements_rw = achievements.write().await;
+                        new_achievements = achievements_rw.tally_xp_tick(
+                            xp_type,
+                            xp_numeric,
+                            other_id,
+                            timestamp,
+                            &formatted_time,
+                        );
+                    }
 
                     new_event = Event {
                         kind: EventType::ExperienceTick,

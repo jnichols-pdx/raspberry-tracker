@@ -1,7 +1,9 @@
+use crate::achievements::*;
 use crate::character_list::*;
 use crate::common::*;
 use crate::db::*;
 use crate::session_list::*;
+use crate::vpack::*;
 use eframe::{egui, epi};
 use egui::*;
 use image::io::Reader as ImageReader;
@@ -21,9 +23,11 @@ pub struct TrackerApp {
     pub images: Option<Vec<TextureHandle>>,
     pub event_list_mode: EventViewMode,
     filter_text: String,
+    pub achievements: Arc<RwLock<AchievementEngine>>,
 }
 
 impl TrackerApp {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         char_list: Arc<RwLock<CharacterList>>,
@@ -32,6 +36,7 @@ impl TrackerApp {
         lastx: f32,
         lasty: f32,
         mut context_cb: Option<oneshot::Sender<egui::Context>>,
+        achievements: Arc<RwLock<AchievementEngine>>,
     ) -> Self {
         let initial_count;
         {
@@ -53,6 +58,7 @@ impl TrackerApp {
             images: None,
             event_list_mode,
             filter_text: "".to_string(),
+            achievements,
         };
 
         if let Some(callback) = context_cb.take() {
@@ -240,6 +246,55 @@ impl epi::App for TrackerApp {
                             } else if ui.button("Show Achievements Events").clicked() {
                                 self.event_list_mode.achievements = true;
                                 self.db.set_event_modes_sync(self.event_list_mode);
+                            }
+                        });
+                        ui.menu_button("Sounds", |ui| {
+                            let soundset_names;
+                            let current_soundset;
+                            {
+                                let achievements_ro = self.achievements.blocking_read();
+                                soundset_names = achievements_ro.list_soundsets();
+                                current_soundset = achievements_ro.active_soundset_name();
+                            }
+                            for soundset_name in soundset_names {
+                                let option_name;
+                                if let Some(ref active_name) = current_soundset {
+                                    if active_name.eq(&soundset_name) {
+                                        option_name = format!("{} ✔", soundset_name);
+                                    } else {
+                                        option_name = soundset_name.clone();
+                                    }
+                                } else {
+                                    option_name = soundset_name.clone();
+                                }
+                                if ui.button(option_name).clicked() {
+                                    let mut achievements_rw = self.achievements.blocking_write();
+                                    achievements_rw.set_soundset(Some(soundset_name));
+                                }
+                            }
+
+                            let none_name = if current_soundset.is_none() {
+                                "None ✔"
+                            } else {
+                                "None"
+                            };
+                            if ui.button(none_name).clicked() {
+                                let mut achievements_rw = self.achievements.blocking_write();
+                                achievements_rw.set_soundset(None);
+                            }
+
+                            ui.separator();
+
+                            if ui.button("Add Voicepack...").clicked() {
+                                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                    if let Ok((new_name, new_sounds)) =
+                                        import_rtst_vpk(&mut self.db, path)
+                                    {
+                                        let mut achievements_rw =
+                                            self.achievements.blocking_write();
+                                        achievements_rw.add_soundset(new_name, new_sounds);
+                                    }
+                                }
                             }
                         });
                     });

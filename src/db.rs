@@ -9,6 +9,7 @@ use futures_util::TryStreamExt;
 use sqlx::sqlite::SqlitePool;
 use sqlx::{Executor, Row};
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::runtime::Handle;
 use tokio::sync::{mpsc, RwLock};
@@ -81,6 +82,34 @@ impl DatabaseSync {
     }
     pub fn set_event_modes_sync(&mut self, new_mode: EventViewMode) {
         self.rt.block_on(self.dbc.set_event_modes(new_mode));
+    }
+    pub fn get_soundset_sync(&mut self) -> Option<String> {
+        self.rt.block_on(self.dbc.get_soundset())
+    }
+    pub fn set_soundset_sync(&mut self, new_set_name: String) {
+        self.rt.block_on(self.dbc.set_soundset(new_set_name));
+    }
+    pub fn clear_soundset_sync(&mut self) {
+        self.rt.block_on(self.dbc.clear_soundset());
+    }
+    pub fn store_voicepack_sync(
+        &mut self,
+        name: String,
+        filename: String,
+        author: String,
+        description: String,
+        keys_to_sounds_names: HashMap<String, Vec<(Vec<u8>, String)>>,
+    ) {
+        self.rt.block_on(self.dbc.store_voicepack(
+            name,
+            filename,
+            author,
+            description,
+            keys_to_sounds_names,
+        ));
+    }
+    pub fn load_soundsets_sync(&mut self) -> BTreeMap<String, HashMap<String, Vec<Vec<u8>>>> {
+        self.rt.block_on(self.dbc.load_soundsets())
     }
     pub fn init_sync(&mut self) {
         self.rt.block_on(self.dbc.init());
@@ -624,6 +653,122 @@ impl DatabaseCore {
                 println!("Error updating Event List View Modes in DB:");
                 println!("{:?}", err);
                 std::process::exit(-56);
+            }
+        }
+    }
+
+    pub async fn get_soundset(&mut self) -> Option<String> {
+        match sqlx::query("SELECT current_soundset FROM raspberrytracker")
+            .fetch_one(&self.conn)
+            .await
+        {
+            Ok(row) => row.get::<Option<String>, usize>(0),
+            Err(err) => {
+                println!("Error setting current soundset in DB:");
+                println!("{:?}", err);
+                std::process::exit(-63);
+            }
+        }
+    }
+
+    pub async fn set_soundset(&mut self, new_set_name: String) {
+        match sqlx::query("UPDATE raspberrytracker SET current_soundset = ?;")
+            .bind(new_set_name)
+            .execute(&self.conn)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Error setting current soundset in DB:");
+                println!("{:?}", err);
+                std::process::exit(-57);
+            }
+        }
+    }
+
+    pub async fn clear_soundset(&mut self) {
+        match sqlx::query("UPDATE raspberrytracker SET current_soundset = NULL;")
+            .execute(&self.conn)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Error saving 'no soundset' in DB:");
+                println!("{:?}", err);
+                std::process::exit(-58);
+            }
+        }
+    }
+
+    pub async fn load_soundsets(&mut self) -> BTreeMap<String, HashMap<String, Vec<Vec<u8>>>> {
+        let mut sets = BTreeMap::new();
+        let mut set_cursor = self.conn.fetch("SELECT id, name FROM soundsets;");
+        while let Some(set_row) = set_cursor.try_next().await.unwrap() {
+            let set_id: i64 = set_row.get(0);
+            let set_name: String = set_row.get(1);
+            let mut sounds = HashMap::new();
+
+            let mut cursor =
+                sqlx::query("SELECT achievement, audio FROM sounds WHERE parent_set IS ?;")
+                    .bind(set_id)
+                    .fetch(&self.conn);
+            while let Some(row) = cursor.try_next().await.unwrap() {
+                let achievement: String = row.get(0);
+                let sound_data: Vec<u8> = row.get(1);
+                let list = sounds.entry(achievement).or_insert_with(Vec::new);
+                list.push(sound_data);
+            }
+            sets.insert(set_name, sounds);
+        }
+        sets
+    }
+
+    pub async fn store_voicepack(
+        &mut self,
+        name: String,
+        filename: String,
+        author: String,
+        description: String,
+        keys_to_sounds_names: HashMap<String, Vec<(Vec<u8>, String)>>,
+    ) {
+        match sqlx::query("INSERT INTO soundsets VALUES (NULL,?,?,?,?) returning id;")
+            .bind(&name)
+            .bind(&filename)
+            .bind(&author)
+            .bind(&description)
+            .fetch_one(&self.conn)
+            .await
+        {
+            Ok(row) => {
+                let set_id = row.get::<i64, usize>(0);
+                println!("New soundset has DB ID: {}", set_id);
+
+                for (key, list) in keys_to_sounds_names {
+                    for (sound_data, filename) in list {
+                        match sqlx::query("INSERT INTO sounds VALUES (?,?,?,?);")
+                            .bind(set_id)
+                            .bind(filename)
+                            .bind(key.clone())
+                            .bind(sound_data)
+                            .execute(&self.conn)
+                            .await
+                        {
+                            Ok(_) => {}
+                            Err(err) => {
+                                println!("Error saving sound data in DB:");
+                                println!("{:?}", err);
+                                std::process::exit(-62);
+                            }
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                if let Some(db_err) = err.as_database_error() {
+                    println!("Error saving new soundset metadata in DB:");
+                    println!("{:?}", db_err);
+                    std::process::exit(-61);
+                }
             }
         }
     }
