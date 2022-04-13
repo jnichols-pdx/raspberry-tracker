@@ -661,7 +661,7 @@ impl Session {
                     ui.end_row();
                     if self.death_count > 0 {
                         ui.label(format!(
-                            "KDR {:.3}",
+                            "KDR {:.5}",
                             self.kill_count as f32 / self.death_count as f32
                         ));
                     } else {
@@ -710,7 +710,7 @@ impl Session {
                         };
 
                         ui.label(format!(
-                            "KDR (true) {:.3} ({:+.3})",
+                            "KDR (true) {:.5} ({:+.5})",
                             current_kdr,
                             current_kdr - init_kdr
                         ));
@@ -732,7 +732,7 @@ impl Session {
                             0.0
                         };
                         ui.label(format!(
-                            "KDR (rezzed) {:.3} ({:+.3})",
+                            "KDR (rezzed) {:.5} ({:+.5})",
                             current_r_kdr,
                             current_r_kdr - init_r_kdr
                         ));
