@@ -162,12 +162,14 @@ impl Event {
                     } else if let Some(vehicle) = self.vehicle {
                         match ui.ctx().texture_by_name(&vehicle.to_string()) {
                             Some(image) => {
-                                ui.image(image.id(), img_size);
+                                ui.image(image.id(), img_size)
+                                    .on_hover_text(vehicle.to_string());
                             }
                             None => {
                                 ui.vertical(|ui| {
                                     ui.add_space(1.5);
-                                    ui.label(egui::RichText::new(vehicle.to_string()).small());
+                                    ui.label(egui::RichText::new(vehicle.to_string()).small())
+                                        .on_hover_text(vehicle.to_string());
                                 });
                             }
                         };
@@ -178,14 +180,16 @@ impl Event {
                 //Player Name
                 ui.vertical(|ui| {
                     ui.add_space(1.5);
-                    ui.label(egui::RichText::new(&self.name).small().color(text_color));
+                    ui.label(egui::RichText::new(&self.name).small().color(text_color))
+                        .on_hover_text(&self.name);
                 });
             });
             row.col_clip(|ui| {
                 //Weapon
                 ui.vertical(|ui| {
                     ui.add_space(1.5);
-                    ui.label(egui::RichText::new(&self.weapon).small().color(text_color));
+                    ui.label(egui::RichText::new(&self.weapon).small().color(text_color))
+                        .on_hover_text(&self.weapon);
                 });
             });
             if minimal {
