@@ -162,8 +162,17 @@ impl Event {
                     } else if let Some(vehicle) = self.vehicle {
                         match ui.ctx().texture_by_name(&vehicle.to_string()) {
                             Some(image) => {
-                                ui.image(image.id(), img_size)
-                                    .on_hover_text(vehicle.to_string());
+                                ui.image(image.id(), img_size).on_hover_ui(|ui| {
+                                    ui.horizontal(|ui| {
+                                        //Screenspace is in Points, which aren't 1 to 1 with pixels
+                                        //in my desktop environment the Sunderer icon, which is
+                                        //18x32 pixels content in a 32x32 png, renders at that
+                                        //actual screen resolution when the image size is 21x22
+                                        //points. This MAY NOT HOLD across other user's desktops.
+                                        ui.image(image.id(), (21.0, 22.0));
+                                        ui.label(vehicle.to_string());
+                                    });
+                                });
                             }
                             None => {
                                 ui.vertical(|ui| {
@@ -328,7 +337,12 @@ impl EventList {
                                 event.weapon.to_lowercase().contains(filter_text)
                                     || event.name.to_lowercase().contains(filter_text)
                                     || event.class.to_string().to_lowercase().contains(filter_text)
-                                    || event.vehicle.unwrap_or(Vehicle::NoVehicle).to_string().to_lowercase().contains(filter_text)
+                                    || event
+                                        .vehicle
+                                        .unwrap_or(Vehicle::NoVehicle)
+                                        .to_string()
+                                        .to_lowercase()
+                                        .contains(filter_text)
                             } else {
                                 true
                             };
