@@ -169,6 +169,11 @@ impl Event {
                                         //18x32 pixels content in a 32x32 png, renders at that
                                         //actual screen resolution when the image size is 21x22
                                         //points. This MAY NOT HOLD across other user's desktops.
+                                        //
+                                        //In theory we could divide the image dimensions by
+                                        //Context.pixels_per_point() to get 'correct' on screen
+                                        //dimensions, however in testing this stretched icons
+                                        //horizontally by 1 pixel.
                                         ui.image(image.id(), (21.0, 22.0));
                                         ui.label(vehicle.to_string());
                                     });
