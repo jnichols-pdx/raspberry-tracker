@@ -327,6 +327,8 @@ impl EventList {
                             let not_filtered = if let Some(ref filter_text) = filter {
                                 event.weapon.to_lowercase().contains(filter_text)
                                     || event.name.to_lowercase().contains(filter_text)
+                                    || event.class.to_string().to_lowercase().contains(filter_text)
+                                    || event.vehicle.unwrap_or(Vehicle::NoVehicle).to_string().to_lowercase().contains(filter_text)
                             } else {
                                 true
                             };
