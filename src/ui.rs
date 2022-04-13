@@ -86,7 +86,6 @@ impl TrackerApp {
                                     name,
                                     ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
                                 ));
-                                //println!("Readied {}: {}", census_id, name);
                             }
                         };
                     };
@@ -115,6 +114,21 @@ impl TrackerApp {
         app_ui.load_image_bytes(
             "Glaive",
             include_bytes!("../Images/Glaive.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes(
+            "AIBuilderTower",
+            include_bytes!("../Images/AITower.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes(
+            "AVBuilderTower",
+            include_bytes!("../Images/AVTower.png"),
+            &cc.egui_ctx,
+        );
+        app_ui.load_image_bytes(
+            "AABuilderTower",
+            include_bytes!("../Images/AATower.png"),
             &cc.egui_ctx,
         );
         app_ui.load_image_bytes(
