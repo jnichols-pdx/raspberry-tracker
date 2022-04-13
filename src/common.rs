@@ -276,7 +276,7 @@ pub enum Vehicle {
     AIBuilderTower = 162,
 
     Glaive = 163,
-    AVPhalanxTurretAlt = 2006,
+    AVBuilderTurret = 2006, //TR Builder AV Turret (non tower)
     DropPodAlt = 2008,
     AIPhalanxTurretAlt = 2009,
     PocketFlash = 2010,
@@ -320,7 +320,7 @@ impl std::fmt::Display for Vehicle {
             Vehicle::Ant => write!(f, "Ant"),
             Vehicle::Deliverer => write!(f, "Deliverer"),
 
-            Vehicle::DropPod => write!(f, "DropPod"),
+            Vehicle::DropPod => write!(f, "Drop Pod"),
             Vehicle::Mosquito => write!(f, "Mosquito"),
             Vehicle::Scythe => write!(f, "Scythe"),
             Vehicle::Reaver => write!(f, "Reaver"),
@@ -330,24 +330,24 @@ impl std::fmt::Display for Vehicle {
             Vehicle::Liberator => write!(f, "Liberator"),
             Vehicle::Galaxy => write!(f, "Galaxy"),
             Vehicle::Lodestar => write!(f, "Lodestar"),
-            Vehicle::BastionFleetCarrier => write!(f, "BastionFleetCarrier"),
+            Vehicle::BastionFleetCarrier => write!(f, "Bastion Fleet Carrier"),
 
-            Vehicle::AIPhalanxTurret => write!(f, "AIPhalanxTurret"),
-            Vehicle::ManaAITurret => write!(f, "ManaAITurret"),
-            Vehicle::ManaAVTurret => write!(f, "ManaAVTurret"),
+            Vehicle::AIPhalanxTurret => write!(f, "AI Phalanx Turret"),
+            Vehicle::ManaAITurret => write!(f, "AI Mana Turret"),
+            Vehicle::ManaAVTurret => write!(f, "AV Mana Turret"),
             Vehicle::Spitfire => write!(f, "Spitfire"),
-            Vehicle::SpitfireAlt1 => write!(f, "Spitfire1"),
-            Vehicle::SpitfireAlt2 => write!(f, "Spitfire2"),
-            Vehicle::AAPhalanxTurret => write!(f, "AAPhalanxTurret"),
-            Vehicle::AVPhalanxTurret => write!(f, "AVPhalanxTurret"),
-            Vehicle::AVBuilderTower => write!(f, "AVBuilderTower"),
-            Vehicle::AABuilderTower => write!(f, "AABuilderTower"),
-            Vehicle::AIBuilderTower => write!(f, "AIBuilderTower"),
+            Vehicle::SpitfireAlt1 => write!(f, "Spitfire Alt1"),
+            Vehicle::SpitfireAlt2 => write!(f, "Spitfire Alt2"),
+            Vehicle::AAPhalanxTurret => write!(f, "AA Phalanx Turret"),
+            Vehicle::AVPhalanxTurret => write!(f, "AV Phalanx Turret"),
+            Vehicle::AVBuilderTower => write!(f, "AV Tower (Construction)"),
+            Vehicle::AABuilderTower => write!(f, "AA Tower (Construction)"),
+            Vehicle::AIBuilderTower => write!(f, "AI Tower (Construction)"),
 
             Vehicle::Glaive => write!(f, "Glaive"),
-            Vehicle::AVPhalanxTurretAlt => write!(f, "AVPhalanxTurret1"),
-            Vehicle::DropPodAlt => write!(f, "Droppod1"),
-            Vehicle::AIPhalanxTurretAlt => write!(f, "AIPhalanxTurret1"),
+            Vehicle::AVBuilderTurret => write!(f, "AV Turret (Construction)"),
+            Vehicle::DropPodAlt => write!(f, "DropPod Alt"),
+            Vehicle::AIPhalanxTurretAlt => write!(f, "AI Phalanx Turret Alt"),
             Vehicle::PocketFlash => write!(f, "PocketFlash"),
             Vehicle::Flail => write!(f, "Flail"),
 
@@ -355,7 +355,7 @@ impl std::fmt::Display for Vehicle {
             Vehicle::ReaverInterceptor => write!(f, "Reaver-Interceptor"),
             Vehicle::ScytheInterceptor => write!(f, "Scythe-Interceptor"),
             Vehicle::JavelinAlt1 => write!(f, "Javelin1"),
-            Vehicle::SpitfireALt3 => write!(f, "Spitfire3"),
+            Vehicle::SpitfireALt3 => write!(f, "Spitfire Alt3"),
             Vehicle::JavelinAlt2 => write!(f, "Javelin2"),
 
             Vehicle::ReclaimedSunderer => write!(f, "Sunderer-Reclaimed"),
@@ -586,7 +586,7 @@ impl std::fmt::Display for Class {
     }
 }
 
-pub fn master_images() -> std::array::IntoIter<(String, u32), 36> {
+pub fn master_images() -> std::array::IntoIter<(String, u32), 40> {
     [
         ("NC".to_owned(), 12),
         ("TR".into(), 18),
@@ -609,21 +609,25 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 36> {
         ("Vanguard".into(), 265),
         ("Scythe".into(), 266),
         ("Harasser".into(), 8852),
-        ("DropPod".into(), 12259),
+        ("Drop Pod".into(), 12259),
+        ("Drop Pod Alt".into(), 12259),
         ("Valkyrie".into(), 79711),
         ("Spitfire".into(), 82143),
+        ("Spitfire Alt1".into(), 82143),
+        ("Spitfire Alt2".into(), 82143),
+        ("Spitfire Alt3".into(), 82143),
         ("Ant".into(), 84726),
         ("Javelin".into(), 92332),
         ("Colossus".into(), 92799),
         ("Chimera".into(), 93602),
         ("Dervish".into(), 93605),
-        ("ManaAITurret".into(), 12260),
+        ("AI Mana Turret".into(), 12260),
         ("Orbital".into(), 86740),
-        ("AAPhalanxTurret".into(), 10946),
-        ("AIPhalanxTurret".into(), 10949),
-        ("AIPhalanxTurret1".into(), 10949),
-        ("AVPhalanxTurret".into(), 10952),
-        ("AVPhalanxTurret1".into(), 10952),
+        ("AA Phalanx Turret".into(), 10946),
+        ("AI Phalanx Turret".into(), 10949),
+        ("AI Phalanx Turret Alt".into(), 10949),
+        ("AV Phalanx Turret".into(), 10952),
+        ("AV Turret (Construction)".into(), 10952),
         /*
         ("".into(), ),
         */

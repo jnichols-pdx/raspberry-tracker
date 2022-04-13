@@ -106,7 +106,7 @@ impl TrackerApp {
             &cc.egui_ctx,
         );
         app_ui.load_image_bytes(
-            "ManaAVTurret",
+            "AV Mana Turret",
             include_bytes!("../Images/ManaAVTurret.png"),
             &cc.egui_ctx,
         );
@@ -117,22 +117,22 @@ impl TrackerApp {
             &cc.egui_ctx,
         );
         app_ui.load_image_bytes(
-            "AIBuilderTower",
+            "AI Tower (Construction)",
             include_bytes!("../Images/AITower.png"),
             &cc.egui_ctx,
         );
         app_ui.load_image_bytes(
-            "AVBuilderTower",
+            "AV Tower (Construction)",
             include_bytes!("../Images/AVTower.png"),
             &cc.egui_ctx,
         );
         app_ui.load_image_bytes(
-            "AABuilderTower",
+            "AA Tower (Construction)",
             include_bytes!("../Images/AATower.png"),
             &cc.egui_ctx,
         );
         app_ui.load_image_bytes(
-            "BastionFleetCarrier",
+            "Bastion Fleet Carrier",
             include_bytes!("../Images/BastionFleetCarrier.png"),
             &cc.egui_ctx,
         );
