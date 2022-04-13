@@ -13,6 +13,7 @@ const COMBO_LIMIT: i64 = 5;
 const COMBO_MEND_LIMIT: i64 = 61;
 const COMBO_RESUPPLY_LIMIT: i64 = 91;
 const RAGE_LIMIT: i64 = 10;
+const BAD_REVIVE_LIMIT: i64 = 3;
 
 pub struct AchievementEngine {
     sound_sink: Sink,
@@ -652,7 +653,7 @@ impl AchievementEngine {
         //Bad revive streaks - dying immediately after being revived is often bad.
         let revive_delta = self.last_death_time - self.last_revived_time;
 
-        if revive_delta < COMBO_LIMIT {
+        if revive_delta < BAD_REVIVE_LIMIT {
             self.bad_revive_streak += 1;
             match self.bad_revive_streak {
                 2 => {
