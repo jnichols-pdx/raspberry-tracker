@@ -24,7 +24,7 @@ impl std::fmt::Display for Faction {
             Faction::NC => write!(f, "NC"),
             Faction::TR => write!(f, "TR"),
             Faction::NSO => write!(f, "Robit"),
-            Faction::Unknown => write!(f, "???"),
+            Faction::Unknown => write!(f, "Unknown"),
         }
     }
 }
@@ -348,7 +348,7 @@ impl std::fmt::Display for Vehicle {
             Vehicle::AVBuilderTurret => write!(f, "AV Turret (Construction)"),
             Vehicle::DropPodAlt => write!(f, "DropPod Alt"),
             Vehicle::AIPhalanxTurretAlt => write!(f, "AI Phalanx Turret Alt"),
-            Vehicle::PocketFlash => write!(f, "PocketFlash"),
+            Vehicle::PocketFlash => write!(f, "Pocket Flash"),
             Vehicle::Flail => write!(f, "Flail"),
 
             Vehicle::MosquitoInterceptor => write!(f, "Mossy-Interceptor"),
@@ -368,7 +368,7 @@ impl std::fmt::Display for Vehicle {
             Vehicle::Pumpkin => write!(f, "Pumpkin"),
 
             Vehicle::NoVehicle => write!(f, "NONE"),
-            Vehicle::Unknown => write!(f, "???"),
+            Vehicle::Unknown => write!(f, "Unknown"),
         }
     }
 }
@@ -581,12 +581,12 @@ impl std::fmt::Display for Class {
             Class::NSOHeavyAssault => write!(f, "HeavyAssault"),
             Class::NSOMax => write!(f, "MAX"),
 
-            Class::Unknown => write!(f, "???"),
+            Class::Unknown => write!(f, "Unknown"),
         }
     }
 }
 
-pub fn master_images() -> std::array::IntoIter<(String, u32), 40> {
+pub fn master_images() -> std::array::IntoIter<(String, u32), 41> {
     [
         ("NC".to_owned(), 12),
         ("TR".into(), 18),
@@ -604,6 +604,7 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 40> {
         ("Mosquito".into(), 260),
         ("Prowler".into(), 261),
         ("Flash".into(), 262),
+        ("Pocket Flash".into(), 262),
         ("Reaver".into(), 263),
         ("Sunderer".into(), 264),
         ("Vanguard".into(), 265),
