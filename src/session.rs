@@ -774,13 +774,13 @@ impl Session {
                 });
 
             TableBuilder::new(ui)
-                .column(Size::RemainderMinimum(100.0)) //weapon name
-                .column(Size::Absolute(25.0)) //kills
-                .column(Size::Absolute(80.0)) //HS%
-                .column(Size::Absolute(80.0)) //Acc
-                .column(Size::Absolute(25.0)) //HS count
-                .column(Size::Absolute(25.0)) //Fired
-                .column(Size::Absolute(25.0)) //Hits
+                .column(Size::remainder()) //weapon name //formerly minimum 100
+                .column(Size::exact(25.0)) //kills
+                .column(Size::exact(80.0)) //HS%
+                .column(Size::exact(80.0)) //Acc
+                .column(Size::exact(25.0)) //HS count
+                .column(Size::exact(25.0)) //Fired
+                .column(Size::exact(25.0)) //Hits
                 .header(12.0, |mut header| {
                     header.col(|ui| {
                         ui.label(egui::RichText::new("Name").small());
@@ -791,10 +791,10 @@ impl Session {
                     header.col(|ui| {
                         ui.label(egui::RichText::new("HS%").small());
                     });
-                    header.col_clip(|ui| {
+                    header.col(|ui| {
                         ui.label(egui::RichText::new("Accuracy").small());
                     });
-                    header.col_clip(|ui| {
+                    header.col(|ui| {
                         ui.label(egui::RichText::new("HS").small());
                     });
                     header.col(|ui| {

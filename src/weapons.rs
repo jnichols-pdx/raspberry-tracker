@@ -168,7 +168,8 @@ impl WeaponStats {
         let red_color = Color32::from_rgb(255, 0, 0);
         let green_color = Color32::from_rgb(0, 255, 0);
 
-        body.row(25.0, Some(bg_color), |mut row| {
+        body.row(25.0, |mut row| {
+            row.set_bg_color(bg_color);
             row.col(|ui| {
                 //name
                 ui.vertical(|ui| {

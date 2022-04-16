@@ -100,14 +100,15 @@ impl Event {
             }
         };
 
-        body.row(17.0, Some(bg_color), |mut row| {
+        body.row(17.0, |mut row| {
+            row.set_bg_color(bg_color);
             if minimal {
-                row.col_clip(|_ui| {});
-                row.col_clip(|_ui| {});
-                row.col_clip(|_ui| {});
-                row.col_clip(|_ui| {});
+                row.col(|_ui| {});
+                row.col(|_ui| {});
+                row.col(|_ui| {});
+                row.col(|_ui| {});
             } else {
-                row.col_clip(|ui| {
+                row.col(|ui| {
                     //faction
                     match ui.ctx().texture_by_name(&self.faction.to_string()) {
                         Some(image) => {
@@ -125,7 +126,7 @@ impl Event {
                         }
                     };
                 });
-                row.col_clip(|ui| {
+                row.col(|ui| {
                     //BR
                     ui.vertical(|ui| {
                         ui.add_space(1.5);
@@ -144,14 +145,14 @@ impl Event {
                         }
                     });
                 });
-                row.col_clip(|ui| {
+                row.col(|ui| {
                     //Class
                     match ui.ctx().texture_by_name(&self.class.to_string()) {
                         Some(image) => ui.image(image.id(), img_size),
                         None => ui.label(""), // ui.label(egui::RichText::new(self.class.to_string()).small()),
                     };
                 });
-                row.col_clip(|ui| {
+                row.col(|ui| {
                     //Vehicle
                     //Override for orbital strike direct kills (can't track when players die from falling
                     //damage after being thrown airborn by orbital :( )
@@ -190,7 +191,7 @@ impl Event {
                     }
                 });
             }
-            row.col_clip(|ui| {
+            row.col(|ui| {
                 //Player Name
                 ui.vertical(|ui| {
                     ui.add_space(1.5);
@@ -198,7 +199,7 @@ impl Event {
                         .on_hover_text(&self.name);
                 });
             });
-            row.col_clip(|ui| {
+            row.col(|ui| {
                 //Weapon
                 ui.vertical(|ui| {
                     ui.add_space(1.5);
@@ -207,8 +208,8 @@ impl Event {
                 });
             });
             if minimal {
-                row.col_clip(|_ui| {});
-                row.col_clip(|_ui| {});
+                row.col(|_ui| {});
+                row.col(|_ui| {});
             } else {
                 row.col(|ui| {
                     //Headshot
@@ -226,7 +227,7 @@ impl Event {
                         };
                     }
                 });
-                row.col_clip(|ui| {
+                row.col(|ui| {
                     //KD ratio
                     ui.vertical(|ui| {
                         ui.add_space(1.5);
@@ -238,7 +239,7 @@ impl Event {
                     });
                 });
             }
-            row.col_clip(|ui| {
+            row.col(|ui| {
                 //Timestamp
                 ui.vertical(|ui| {
                     ui.add_space(1.5);
@@ -284,15 +285,15 @@ impl EventList {
             .min_width(387.0)
             .show(ctx, |ui| {
                 TableBuilder::new(ui)
-                    .column(Size::Absolute(20.0)) //Faction
-                    .column(Size::Absolute(30.0)) //BR
-                    .column(Size::Absolute(22.0)) //Class
-                    .column(Size::Absolute(20.0)) //Vehicle
-                    .column(Size::RemainderMinimum(100.0)) //playername
-                    .column(Size::RemainderMinimum(80.0)) //weapon
-                    .column(Size::Absolute(20.0)) //headshot
-                    .column(Size::Absolute(25.0)) //KD
-                    .column(Size::Absolute(70.0)) //Timestamp
+                    .column(Size::exact(20.0)) //Faction
+                    .column(Size::exact(30.0)) //BR
+                    .column(Size::exact(22.0)) //Class
+                    .column(Size::exact(20.0)) //Vehicle
+                    .column(Size::remainder()) //playername //formerly minimum 100
+                    .column(Size::remainder()) //weapon //formerly minimum 80
+                    .column(Size::exact(20.0)) //headshot
+                    .column(Size::exact(25.0)) //KD
+                    .column(Size::exact(70.0)) //Timestamp
                     .header(12.0, |mut header| {
                         header.col(|_ui| { //No header for first column
                         });
@@ -305,10 +306,10 @@ impl EventList {
                         header.col(|ui| {
                             ui.label(egui::RichText::new("Veh.").small());
                         });
-                        header.col_clip(|ui| {
+                        header.col(|ui| {
                             ui.label(egui::RichText::new("Player").small());
                         });
-                        header.col_clip(|ui| {
+                        header.col(|ui| {
                             ui.label(egui::RichText::new("Method").small());
                         });
                         header.col(|ui| {
