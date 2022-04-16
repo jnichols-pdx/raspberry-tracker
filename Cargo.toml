@@ -9,9 +9,6 @@ license = "Apache-2.0"
 
 [dependencies]
 tokio-tungstenite = { version = "0.17", features = ["native-tls"] }
-#egui = "0.17"
-#eframe = "0.17"
-#epi = "0.17"
 ureq = { version = "2.4.0", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 num_enum = "0.5"
@@ -28,6 +25,11 @@ egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-
 eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
 epi = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
 egui_extras = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
+#egui = { path = "/usr/src/egui/egui" }
+#egui_glow = { path = "/usr/src/egui/egui_glow" }
+#eframe = { path = "/usr/src/egui/eframe" }
+#epi = { path = "/usr/src/egui/epi" }
+#egui_extras = { path = "/usr/src/egui/egui_extras" }
 rodio = "0.15.0"
 bytes = "1.1"
 base64 = "0.13"

@@ -718,7 +718,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 [[package]]
 name = "eframe"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "egui",
  "egui-winit",
@@ -730,7 +730,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "ahash",
  "epaint",
@@ -741,7 +741,7 @@ dependencies = [
 [[package]]
 name = "egui-winit"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "arboard",
  "egui",
@@ -756,7 +756,7 @@ dependencies = [
 [[package]]
 name = "egui_extras"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "egui",
 ]
@@ -764,7 +764,7 @@ dependencies = [
 [[package]]
 name = "egui_glow"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "bytemuck",
  "egui",
@@ -781,7 +781,7 @@ dependencies = [
 [[package]]
 name = "egui_web"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "bytemuck",
  "egui",
@@ -804,7 +804,7 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 [[package]]
 name = "emath"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "bytemuck",
 ]
@@ -812,7 +812,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -826,7 +826,7 @@ dependencies = [
 [[package]]
 name = "epi"
 version = "0.17.0"
-source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#b4adece0056a314c657c620f5cd17fe759b1fda4"
+source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "egui",
  "glow",
