@@ -901,11 +901,23 @@ pub fn big_print_num(number: &str) {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct EventViewMode {
     pub kills_deaths: bool,
     pub experience: bool,
     pub revives: bool,
     pub vehicles: bool,
     pub achievements: bool,
+}
+
+impl Default for EventViewMode {
+    fn default() -> Self {
+        EventViewMode {
+            kills_deaths: true,
+            experience: true,
+            revives: true,
+            vehicles: true,
+            achievements: true,
+        }
+    }
 }

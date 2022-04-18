@@ -588,8 +588,12 @@ impl Session {
         self.end_time.is_none()
     }
 
-    pub fn ui(&self, ctx: &egui::Context, event_mode: EventViewMode, filter: Option<String>) {
-        self.events.ui(ctx, event_mode, filter);
+    pub fn update_filters(&mut self, event_mode: EventViewMode, filter: Option<String>) {
+        self.events.update_filters(event_mode, filter);
+    }
+
+    pub fn ui(&self, ctx: &egui::Context) {
+        self.events.ui(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel is the region left after adding TopPanel's and SidePanel's

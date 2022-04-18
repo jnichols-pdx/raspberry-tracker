@@ -277,11 +277,19 @@ impl Event {
 #[derive(Clone)]
 pub struct EventList {
     events: Vec<Event>,
+    visible_events: Vec<usize>,
+    last_view_mode: EventViewMode,
+    last_filter: Option<String>,
 }
 
 impl EventList {
     pub fn new() -> Self {
-        EventList { events: Vec::new() }
+        EventList {
+            events: Vec::new(),
+            visible_events: Vec::new(),
+            last_view_mode: EventViewMode::default(),
+            last_filter: None,
+        }
     }
 
     pub fn push(&mut self, event: Event) {
@@ -300,7 +308,53 @@ impl EventList {
         }
     }
 
-    pub fn ui(&self, ctx: &egui::Context, event_mode: EventViewMode, filter: Option<String>) {
+    pub fn update_filters(&mut self, event_mode: EventViewMode, filter: Option<String>) {
+        if event_mode != self.last_view_mode || filter != self.last_filter {
+            self.last_view_mode = event_mode;
+            self.last_filter = filter;
+            self.compute_visible();
+        }
+    }
+
+    fn compute_visible(&mut self) {
+        self.visible_events.clear();
+        for (index, event) in self.events.iter().enumerate() {
+            let shown = match event.kind {
+                EventType::Death
+                | EventType::Kill
+                | EventType::TeamKill
+                | EventType::TeamDeath
+                | EventType::Suicide => self.last_view_mode.kills_deaths,
+                EventType::DestroyVehicle
+                | EventType::LoseVehicle
+                | EventType::DestroyVehicleFF
+                | EventType::LoseVehicleFF => self.last_view_mode.vehicles,
+                EventType::ExperienceTick => self.last_view_mode.experience,
+                EventType::Achievement => self.last_view_mode.achievements,
+                EventType::Revived => self.last_view_mode.revives,
+                EventType::Unknown => true,
+            };
+            let not_filtered = if let Some(ref filter_text) = self.last_filter {
+                event.weapon.to_lowercase().contains(filter_text)
+                    || event.name.to_lowercase().contains(filter_text)
+                    || event.class.to_string().to_lowercase().contains(filter_text)
+                    || event
+                        .vehicle
+                        .unwrap_or(Vehicle::NoVehicle)
+                        .to_string()
+                        .to_lowercase()
+                        .contains(filter_text)
+            } else {
+                true
+            };
+
+            if shown && not_filtered {
+                self.visible_events.push(index);
+            }
+        }
+    }
+
+    pub fn ui(&self, ctx: &egui::Context) {
         egui::SidePanel::right("events_panel")
             .min_width(387.0)
             .show(ctx, |ui| {
@@ -343,39 +397,8 @@ impl EventList {
                         });
                     })
                     .body(|mut body| {
-                        for event in self.events.iter().rev() {
-                            let shown = match event.kind {
-                                EventType::Death
-                                | EventType::Kill
-                                | EventType::TeamKill
-                                | EventType::TeamDeath
-                                | EventType::Suicide => event_mode.kills_deaths,
-                                EventType::DestroyVehicle
-                                | EventType::LoseVehicle
-                                | EventType::DestroyVehicleFF
-                                | EventType::LoseVehicleFF => event_mode.vehicles,
-                                EventType::ExperienceTick => event_mode.experience,
-                                EventType::Achievement => event_mode.achievements,
-                                EventType::Revived => event_mode.revives,
-                                EventType::Unknown => true,
-                            };
-                            let not_filtered = if let Some(ref filter_text) = filter {
-                                event.weapon.to_lowercase().contains(filter_text)
-                                    || event.name.to_lowercase().contains(filter_text)
-                                    || event.class.to_string().to_lowercase().contains(filter_text)
-                                    || event
-                                        .vehicle
-                                        .unwrap_or(Vehicle::NoVehicle)
-                                        .to_string()
-                                        .to_lowercase()
-                                        .contains(filter_text)
-                            } else {
-                                true
-                            };
-
-                            if shown && not_filtered {
-                                event.ui(&mut body);
-                            }
+                        for event_index in self.visible_events.iter().rev() {
+                            self.events[*event_index].ui(&mut body);
                         }
                     });
 

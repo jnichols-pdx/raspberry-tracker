@@ -349,14 +349,28 @@ impl epi::App for TrackerApp {
             let mut char_list_rw = self.char_list.blocking_write();
             char_list_rw.ui(ctx, &self.db);
         } else {
-            let session_list_ro = self.session_list.blocking_read();
-            if let Some(session) = session_list_ro.selected() {
-                let filter_opt = if self.filter_text.is_empty() {
-                    None
-                } else {
-                    Some(self.filter_text.to_lowercase())
-                };
-                session.ui(ctx, self.event_list_mode, filter_opt);
+            {
+                //Updating the list of visible events / event filters requires write access, and
+                //should only result in lengthy operations when the visible options, filters, or
+                //currently selected session change.
+                let mut session_list_rw = self.session_list.blocking_write();
+                if let Some(session) = session_list_rw.selected_mut() {
+                    let filter_opt = if self.filter_text.is_empty() {
+                        None
+                    } else {
+                        Some(self.filter_text.to_lowercase())
+                    };
+                    session.update_filters(self.event_list_mode, filter_opt);
+                }
+            }
+            {
+                //Displaying the actual list however is repeated each refresh and has the potential
+                //to be a lengthy operation each time. Use a read only access to reduce possible
+                //contention.
+                let session_list_ro = self.session_list.blocking_read();
+                if let Some(session) = session_list_ro.selected() {
+                    session.ui(ctx);
+                }
             }
         }
     }

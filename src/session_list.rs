@@ -79,6 +79,14 @@ impl SessionList {
         self.sessions.push(new_session);
     }
 
+    pub fn selected_mut(&mut self) -> Option<&mut Session> {
+        if self.selected.is_some() {
+            self.sessions.get_mut(self.selected.unwrap())
+        } else {
+            None
+        }
+    }
+
     pub fn selected(&self) -> Option<&Session> {
         if self.selected.is_some() {
             self.sessions.get(self.selected.unwrap())
