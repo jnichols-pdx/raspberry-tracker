@@ -1,6 +1,7 @@
 use crate::common::*;
 use egui::Color32;
 use egui_extras::{Size, TableBuilder};
+use std::collections::VecDeque;
 
 #[derive(Clone)]
 pub struct Event {
@@ -273,7 +274,7 @@ impl Event {
 #[derive(Clone)]
 pub struct EventList {
     events: Vec<Event>,
-    visible_events: Vec<usize>,
+    visible_events: VecDeque<usize>,
     last_view_mode: EventViewMode,
     last_filter: Option<String>,
 }
@@ -282,7 +283,7 @@ impl EventList {
     pub fn new() -> Self {
         EventList {
             events: Vec::new(),
-            visible_events: Vec::new(),
+            visible_events: VecDeque::new(),
             last_view_mode: EventViewMode::default(),
             last_filter: None,
         }
@@ -317,10 +318,9 @@ impl EventList {
         } else {
             true
         };
-
         self.events.push(event);
         if shown && not_filtered {
-            self.visible_events.push(self.events.len() -1);
+            self.visible_events.push_front(self.events.len() -1);
         }
     }
 
@@ -377,10 +377,9 @@ impl EventList {
             };
 
             if shown && not_filtered {
-                self.visible_events.push(index);
+                self.visible_events.push_front(index);
             }
         }
-        self.visible_events.reverse();
     }
 
     pub fn ui(&self, ctx: &egui::Context) {
