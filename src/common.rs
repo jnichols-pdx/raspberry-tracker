@@ -62,6 +62,21 @@ impl std::fmt::Display for World {
     }
 }
 
+fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
+    let mut resp = ureq::get(request).call()?;
+    //retry up to two more times
+    if resp.status() != 200 {
+        println!("Retry 1");
+        resp = ureq::get(request).call()?;
+    }
+    if resp.status() != 200 {
+        println!("Retry 2");
+        resp = ureq::get(request).call()?;
+    }
+
+    Ok(resp)
+}
+
 pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error> {
     let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))
                 .call()?
@@ -96,11 +111,17 @@ pub fn lookup_character_asp(char_id: &str) -> Result<u8, ureq::Error> {
 }
 
 pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
-    let resp = ureq::get(&*format!(
+
+    /*let resp = ureq::get(&*format!(
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
         new_id))
         .call()?
-        .into_json()?;
+        .into_json()?;*/
+
+    let resp = census_request(&*format!(
+        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
+        new_id))?
+    .into_json()?;
 
     Ok(resp)
 }
