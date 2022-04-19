@@ -38,6 +38,7 @@ checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
  "getrandom",
  "once_cell",
+ "serde",
  "version_check",
 ]
 
@@ -735,6 +736,8 @@ dependencies = [
  "ahash",
  "epaint",
  "nohash-hasher",
+ "ron",
+ "serde",
  "tracing",
 ]
 
@@ -748,6 +751,7 @@ dependencies = [
  "epi",
  "glow",
  "instant",
+ "serde",
  "tracing",
  "webbrowser",
  "winit",
@@ -807,6 +811,7 @@ version = "0.17.0"
 source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
  "bytemuck",
+ "serde",
 ]
 
 [[package]]
@@ -821,6 +826,7 @@ dependencies = [
  "emath",
  "nohash-hasher",
  "parking_lot 0.12.0",
+ "serde",
 ]
 
 [[package]]
@@ -828,8 +834,11 @@ name = "epi"
 version = "0.17.0"
 source = "git+https://github.com/jnichols-pdx/egui/?branch=colored-table#07a5dd1fb65556cf535e830527bb3f2a4118d8f5"
 dependencies = [
+ "directories-next",
  "egui",
  "glow",
+ "ron",
+ "serde",
  "tracing",
 ]
 
@@ -2413,6 +2422,17 @@ dependencies = [
  "hound",
  "lewton",
  "minimp3",
+]
+
+[[package]]
+name = "ron"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b861ecaade43ac97886a512b360d01d66be9f41f3c61088b42cedf92e03d678"
+dependencies = [
+ "base64",
+ "bitflags",
+ "serde",
 ]
 
 [[package]]

@@ -16,8 +16,6 @@ pub struct TrackerApp {
     pub char_list: Arc<RwLock<CharacterList>>,
     pub session_list: Arc<RwLock<SessionList>>,
     pub db: DatabaseSync,
-    pub lastx: f32,
-    pub lasty: f32,
     pub size_changed: bool,
     pub session_count: usize,
     pub images: Option<Vec<TextureHandle>>,
@@ -27,14 +25,11 @@ pub struct TrackerApp {
 }
 
 impl TrackerApp {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         cc: &eframe::CreationContext<'_>,
         char_list: Arc<RwLock<CharacterList>>,
         session_list: Arc<RwLock<SessionList>>,
         db: DatabaseSync,
-        lastx: f32,
-        lasty: f32,
         mut context_cb: Option<oneshot::Sender<egui::Context>>,
         achievements: Arc<RwLock<AchievementEngine>>,
     ) -> Self {
@@ -51,8 +46,6 @@ impl TrackerApp {
             char_list,
             session_list,
             db,
-            lastx,
-            lasty,
             size_changed: false,
             session_count: initial_count,
             images: None,
@@ -174,25 +167,6 @@ impl epi::App for TrackerApp {
                 self.in_character_ui = false;
                 self.session_count = session_list_ro.len();
             }
-        }
-        //can access "window size" via ctx.available_rect();
-        let mut newchange = false;
-        //println!("{:?}",ctx.available_rect());
-        let thisrect = ctx.available_rect();
-        if self.lastx != thisrect.max.x {
-            self.size_changed = true;
-            newchange = true;
-            self.lastx = thisrect.max.x
-        }
-        if self.lasty != thisrect.max.y {
-            self.size_changed = true;
-            newchange = true;
-            self.lasty = thisrect.max.y
-        }
-        if self.size_changed && !newchange {
-            self.size_changed = false;
-            self.db
-                .set_window_specs_sync(self.lastx as f64, self.lasty as f64);
         }
 
         egui::TopBottomPanel::top("menubar").show(ctx, |ui| {

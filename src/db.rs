@@ -58,13 +58,6 @@ impl DatabaseSync {
             }
         }
     }
-    pub fn get_window_specs_sync(&self) -> (f32, f32) {
-        //x_y_size {
-        self.rt.block_on(self.dbc.get_window_specs())
-    }
-    pub fn set_window_specs_sync(&self, x: f64, y: f64) {
-        self.rt.block_on(self.dbc.set_window_specs(x, y));
-    }
     pub fn exist_or_download_image_sync(&mut self, name: &str, census_id: u32) -> bool {
         self.rt
             .block_on(self.dbc.exist_or_download_image(name, census_id))
@@ -230,46 +223,6 @@ impl DatabaseCore {
         }
 
         Ok(characters)
-    }
-
-    pub async fn get_window_specs(&self) -> (f32, f32) {
-        //x_y_size {
-        let x_size: f32;
-        let y_size: f32;
-        {
-            match self
-                .conn
-                .fetch_one("SELECT * FROM windows WHERE name LIKE 'main' LIMIT 1;")
-                .await
-            {
-                Ok(row) => {
-                    x_size = row.get(1);
-                    y_size = row.get(2);
-                }
-                Err(e) => {
-                    println!("Error getting window size from DB:");
-                    println!("{:?}", e);
-                    std::process::exit(-6);
-                }
-            }
-        }
-        (x_size, y_size)
-    }
-
-    pub async fn set_window_specs(&self, x: f64, y: f64) {
-        match sqlx::query("UPDATE windows SET width = ?, height = ? WHERE name LIKE 'main';")
-            .bind(x)
-            .bind(y)
-            .execute(&self.conn)
-            .await
-        {
-            Ok(_) => {}
-            Err(e) => {
-                println!("Error updating window size in DB:");
-                println!("{:?}", e);
-                std::process::exit(-7);
-            }
-        }
     }
 
     pub async fn get_weapon_category(&mut self, weapon_id: &str) -> WeaponType {

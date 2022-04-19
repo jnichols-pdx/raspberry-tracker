@@ -145,13 +145,6 @@ fn main() {
     }
 
     let mut native_options = eframe::NativeOptions::default();
-    let (x_size, y_size) = sync_db.get_window_specs_sync();
-
-    println!("setting window as {} x {} ", x_size, y_size);
-    native_options.initial_window_size = Some(egui::Vec2 {
-        x: x_size,
-        y: y_size,
-    });
 
     if let Ok(image) = ImageReader::with_format(
         Cursor::new(include_bytes!("../Images/RaspberryTrackerIcon.png")),
@@ -188,8 +181,6 @@ fn main() {
                 character_list,
                 session_list,
                 sync_db,
-                x_size,
-                y_size,
                 Some(tx_context_to_ws),
                 achievements,
             ))
