@@ -729,7 +729,7 @@ impl AchievementEngine {
         } else if login_delta <= 90 {
             self.login_time = 0; //Prevent triggering more than once per session
             results.push(Event::achieved(
-                "Insant Action",
+                "Instant Action",
                 timestamp,
                 datetime.to_owned(),
             ));
