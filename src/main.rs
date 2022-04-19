@@ -79,9 +79,9 @@ fn main() {
         rt: rth.clone(),
     };
 
-    let achievements = Arc::new(RwLock::new(AchievementEngine::new(sync_db.clone(), sink)));
-
     sync_db.init_sync();
+
+    let achievements = Arc::new(RwLock::new(AchievementEngine::new(sync_db.clone(), sink)));
 
     let session_list = Arc::new(RwLock::new(sync_db.get_sessions_sync()));
 
