@@ -63,25 +63,29 @@ impl std::fmt::Display for World {
 }
 
 fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
-    let mut resp = ureq::get(request).call()?;
+    let request_url = format!(
+        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/{}",
+        request
+    );
+    let mut resp = ureq::get(&request_url).call()?;
     //retry up to two more times
     if resp.status() != 200 {
         println!("Retry 1");
-        resp = ureq::get(request).call()?;
+        resp = ureq::get(&request_url).call()?;
     }
     if resp.status() != 200 {
         println!("Retry 2");
-        resp = ureq::get(request).call()?;
+        resp = ureq::get(&request_url).call()?;
     }
 
     Ok(resp)
 }
 
 pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error> {
-    /*let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))
-                .call()?
-                .into_json()?;*/
-    let resp: serde_json::Value = census_request(&format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?name.first_lower={}&c:show=character_id", new_char.to_lowercase()))?
+    let resp: serde_json::Value = census_request(&format!(
+        "/character/?name.first_lower={}&c:show=character_id",
+        new_char.to_lowercase()
+    ))?
     .into_json()?;
 
     if resp["error"].is_null() {
@@ -100,11 +104,7 @@ pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error
 }
 
 pub fn lookup_character_asp(char_id: &str) -> Result<u8, ureq::Error> {
-    /*let resp: serde_json::Value = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon,battle_rank,name,faction_id,head_id",
-        char_id))
-        .call()?
-        .into_json()?;*/
-    let resp: serde_json::Value = census_request(&format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon,battle_rank,name,faction_id,head_id",
+    let resp: serde_json::Value = census_request(&format!("/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon,battle_rank,name,faction_id,head_id",
         char_id))?
         .into_json()?;
 
@@ -116,15 +116,8 @@ pub fn lookup_character_asp(char_id: &str) -> Result<u8, ureq::Error> {
 }
 
 pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
-
-    /*let resp = ureq::get(&*format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
-        new_id))
-        .call()?
-        .into_json()?;*/
-
     let resp = census_request(&format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
+        "/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
         new_id))?
     .into_json()?;
 
@@ -132,10 +125,8 @@ pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::
 }
 
 pub fn lookup_full_stats(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
-    /*let resp = ureq::get(&*format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/single_character_by_id?character_id={}", new_id)).call()?.into_json()?;*/
-    let resp = census_request(&format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/single_character_by_id?character_id={}", new_id))?.into_json()?;
+    let resp =
+        census_request(&format!("/single_character_by_id?character_id={}", new_id))?.into_json()?;
 
     Ok(resp)
 }
@@ -158,33 +149,22 @@ pub fn clear_subscribe_logouts_string(world_id: &str) -> String {
 }
 
 pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
-    /*let resp = ureq::get(&*format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/item/?item_id={}",
-        new_id
-    ))
-    .call()?
-    .into_json()?;*/
-    let resp = census_request(&format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/item/?item_id={}",
-        new_id
-    ))?
-    .into_json()?;
-
+    let resp = census_request(&format!("/item/?item_id={}", new_id))?.into_json()?;
     Ok(resp)
 }
 
 pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Error> {
-
-    /*let resp = ureq::get(&*format!(
+    let image_url = format!(
         "http://census.daybreakgames.com/files/ps2/images/static/{}.png",
         census_id
-    ))
-    .call()?;*/
+    );
+    let mut resp = ureq::get(&image_url).call()?;
 
-    let resp = census_request(&format!(
-        "http://census.daybreakgames.com/files/ps2/images/static/{}.png",
-        census_id
-    ))?;
+    if resp.status() != 200 {
+        println!("Image Retry");
+        resp = ureq::get(&image_url).call()?;
+    }
+
     if resp.status() == 200 {
         println!("{:?}", resp);
         let mut image_bytes: Vec<u8> = Vec::with_capacity(1024);
@@ -198,12 +178,12 @@ pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Er
 }
 
 pub fn is_online(char_id: &str) -> Result<bool, ureq::Error> {
-    /*let resp = ureq::get(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/characters_online_status/?character_id={}", char_id))
-        .call()?;*/
-    let resp = census_request(&*format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/characters_online_status/?character_id={}", char_id))?;
+    let resp = census_request(&*format!(
+        "/characters_online_status/?character_id={}",
+        char_id
+    ))?;
     if resp.status() == 200 {
         let json: serde_json::Value = resp.into_json()?;
-        //println!("Online check: {:?}", json);
         let status = &json["characters_online_status_list"][0]["online_status"];
         Ok(status.is_string() && status != "0")
     } else {
