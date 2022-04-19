@@ -577,12 +577,17 @@ async fn parse_messages(
 
                         //Attacker id of 0 indicates an out-of-bounds death, either off the map or
                         //entering an opposing team's spawn area.
-                        if json["payload"]["attacker_character_id"].to_string().unquote().eq("0") {
+                        if json["payload"]["attacker_character_id"]
+                            .to_string()
+                            .unquote()
+                            .eq("0")
+                        {
                             event_type = EventType::Suicide;
                             if let Some(outfit_alias) = player_char.outfit {
                                 if outfit_alias.is_empty() {
                                     if let Some(outfit_name) = player_char.outfit_full {
-                                        name = format!("[{}] {}", outfit_name, player_char.full_name);
+                                        name =
+                                            format!("[{}] {}", outfit_name, player_char.full_name);
                                     } else {
                                         name = player_char.full_name.to_owned();
                                     }

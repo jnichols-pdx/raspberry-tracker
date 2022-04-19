@@ -320,7 +320,7 @@ impl EventList {
         };
         self.events.push(event);
         if shown && not_filtered {
-            self.visible_events.push_front(self.events.len() -1);
+            self.visible_events.push_front(self.events.len() - 1);
         }
     }
 
