@@ -289,7 +289,39 @@ impl EventList {
     }
 
     pub fn push(&mut self, event: Event) {
+        let shown = match event.kind {
+            EventType::Death
+            | EventType::Kill
+            | EventType::TeamKill
+            | EventType::TeamDeath
+            | EventType::Suicide => self.last_view_mode.kills_deaths,
+            EventType::DestroyVehicle
+            | EventType::LoseVehicle
+            | EventType::DestroyVehicleFF
+            | EventType::LoseVehicleFF => self.last_view_mode.vehicles,
+            EventType::ExperienceTick => self.last_view_mode.experience,
+            EventType::Achievement => self.last_view_mode.achievements,
+            EventType::Revived => self.last_view_mode.revives,
+            EventType::Unknown => true,
+        };
+        let not_filtered = if let Some(ref filter_text) = self.last_filter {
+            event.weapon.to_lowercase().contains(filter_text)
+                || event.name.to_lowercase().contains(filter_text)
+                || event.class.to_string().to_lowercase().contains(filter_text)
+                || event
+                    .vehicle
+                    .unwrap_or(Vehicle::NoVehicle)
+                    .to_string()
+                    .to_lowercase()
+                    .contains(filter_text)
+        } else {
+            true
+        };
+
         self.events.push(event);
+        if shown && not_filtered {
+            self.visible_events.push(self.events.len() -1);
+        }
     }
 
     pub fn len(&self) -> u32 {
