@@ -574,44 +574,82 @@ async fn parse_messages(
                         }
                     } else {
                         //Unrecognized character ID was attacker
-                        //Died to other player
-                        match lookup_new_char_details(
-                            &json["payload"]["attacker_character_id"]
-                                .to_string()
-                                .unquote(),
-                        ) {
-                            Err(whut) => {
-                                //Failed to pull details from census, fallback to the most common
-                                //player death type.
-                                event_type = EventType::Death;
-                                println!("{}", whut);
-                            }
-                            Ok(details) => {
-                                if !vehicle_destroyed {
-                                    println!("YOUR KILLER:");
+
+                        //Attacker id of 0 indicates an out-of-bounds death, either off the map or
+                        //entering an opposing team's spawn area.
+                        if json["payload"]["attacker_character_id"].to_string().unquote().eq("0") {
+                            event_type = EventType::Suicide;
+                            if let Some(outfit_alias) = player_char.outfit {
+                                if outfit_alias.is_empty() {
+                                    if let Some(outfit_name) = player_char.outfit_full {
+                                        name = format!("[{}] {}", outfit_name, player_char.full_name);
+                                    } else {
+                                        name = player_char.full_name.to_owned();
+                                    }
                                 } else {
-                                    println!("YOUR RIDE'S DESTROYER:");
+                                    name = format!("[{}] {}", outfit_alias, player_char.full_name);
                                 }
-                                println!("{:?}", details);
-                                let faction_num = details["character_list"][0]["faction_id"]
+                            } else {
+                                name = player_char.full_name.to_owned();
+                            }
+                            class = Class::from(
+                                json["payload"]["character_loadout_id"]
                                     .to_string()
                                     .unquote()
                                     .parse::<i64>()
-                                    .unwrap_or(0);
-                                faction = Faction::from(faction_num);
-                                if faction == player_char.faction {
-                                    event_type = EventType::TeamDeath;
-                                } else {
+                                    .unwrap_or(0),
+                            );
+                            br = player_char.br;
+                            asp = player_char.asp;
+                            faction = player_char.faction;
+
+                            let session_list_ro = session_list.read().await;
+                            if let Some(session) = session_list_ro.active_session() {
+                                ratio = session.current_true_kdr();
+                            } else {
+                                ratio = -1.0;
+                            }
+                            weapon_name = "Out Of Bounds".to_owned();
+                        } else {
+                            //Died to other player
+                            match lookup_new_char_details(
+                                &json["payload"]["attacker_character_id"]
+                                    .to_string()
+                                    .unquote(),
+                            ) {
+                                Err(whut) => {
+                                    //Failed to pull details from census, fallback to the most common
+                                    //player death type.
                                     event_type = EventType::Death;
+                                    println!("{}", whut);
                                 }
-                                class = Class::from(
-                                    json["payload"]["attacker_loadout_id"]
+                                Ok(details) => {
+                                    if !vehicle_destroyed {
+                                        println!("YOUR KILLER:");
+                                    } else {
+                                        println!("YOUR RIDE'S DESTROYER:");
+                                    }
+                                    println!("{:?}", details);
+                                    let faction_num = details["character_list"][0]["faction_id"]
                                         .to_string()
                                         .unquote()
                                         .parse::<i64>()
-                                        .unwrap_or(0),
-                                );
-                                deets = Some(details["character_list"][0].clone());
+                                        .unwrap_or(0);
+                                    faction = Faction::from(faction_num);
+                                    if faction == player_char.faction {
+                                        event_type = EventType::TeamDeath;
+                                    } else {
+                                        event_type = EventType::Death;
+                                    }
+                                    class = Class::from(
+                                        json["payload"]["attacker_loadout_id"]
+                                            .to_string()
+                                            .unquote()
+                                            .parse::<i64>()
+                                            .unwrap_or(0),
+                                    );
+                                    deets = Some(details["character_list"][0].clone());
+                                }
                             }
                         }
                     }
@@ -682,6 +720,7 @@ async fn parse_messages(
                         continue;
                     }
                 }
+
                 let headshot = json["payload"]["is_headshot"]
                     .to_string()
                     .unquote()
