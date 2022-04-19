@@ -489,7 +489,7 @@ async fn parse_messages(
                 }
                 let player_char = some_player_char.unwrap();
 
-                let mut event_type = EventType::Unknown;
+                let mut event_type;
                 let mut br = 0;
                 let mut asp = 0;
                 let mut name = "Unknown".to_owned();
@@ -538,7 +538,12 @@ async fn parse_messages(
                         match lookup_new_char_details(
                             &json["payload"]["character_id"].to_string().unquote(),
                         ) {
-                            Err(whut) => println!("{}", whut),
+                            Err(whut) => {
+                                //Failed to pull details from census, fallback to the most common
+                                //kill type.
+                                event_type = EventType::Kill;
+                                println!("{}", whut);
+                            }
                             Ok(details) => {
                                 if !vehicle_destroyed {
                                     println!("YOUR VICTIM:");
@@ -575,7 +580,12 @@ async fn parse_messages(
                                 .to_string()
                                 .unquote(),
                         ) {
-                            Err(whut) => println!("{}", whut),
+                            Err(whut) => {
+                                //Failed to pull details from census, fallback to the most common
+                                //player death type.
+                                event_type = EventType::Death;
+                                println!("{}", whut);
+                            }
                             Ok(details) => {
                                 if !vehicle_destroyed {
                                     println!("YOUR KILLER:");
