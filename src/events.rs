@@ -57,7 +57,7 @@ impl Event {
                 text_color = Color32::from_rgb(255, 255, 255);
             }
             EventType::Suicide => {
-                bg_color = Color32::from_rgb(0, 0, 80);
+                bg_color = Color32::from_rgb(0, 0, 0);
                 text_color = Color32::from_rgb(255, 255, 255);
             }
             EventType::TeamKill => {
