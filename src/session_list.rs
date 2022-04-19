@@ -159,7 +159,7 @@ impl SessionList {
                                     )
                                 } else {
                                     format!(
-                                        "{} {}",
+                                        "{} {}     ",
                                         session.current_character().name_with_outfit(),
                                         session.duration_string()
                                     )
