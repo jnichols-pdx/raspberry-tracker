@@ -67,18 +67,38 @@ fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
         "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/{}",
         request
     );
-    let mut resp = ureq::get(&request_url).call()?;
-    //retry up to two more times
-    if resp.status() != 200 {
-        println!("Retry 1");
-        resp = ureq::get(&request_url).call()?;
-    }
-    if resp.status() != 200 {
-        println!("Retry 2");
-        resp = ureq::get(&request_url).call()?;
+    let mut tries = 1;
+    let mut response = None;
+    let mut last_err = None;
+    while tries <= 3 {
+        let attempt = ureq::get(&request_url).call();
+        match attempt {
+            Ok(ureq_response) => {
+                if ureq_response.status() == 200 {
+                    response = Some(ureq_response);
+                    last_err = None;
+                    break;
+                } else {
+                    println!("Attempt #{}, HTTP code {}", tries, ureq_response.status());
+                    last_err = None;
+                    response = Some(ureq_response); //return non 200 status as well
+                }
+            }
+            Err(e) => {
+                println!("Attempt #{}, Ureq Error:", tries);
+                println!("{:?}", e);
+                last_err = Some(e);
+            }
+        }
+        tries += 1;
     }
 
-    Ok(resp)
+    if let Some(final_err) = last_err {
+        println!("Census request failed 3 times, giving up.");
+        Err(final_err)
+    } else {
+        Ok(response.unwrap())
+    }
 }
 
 pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error> {
