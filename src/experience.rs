@@ -1230,6 +1230,7 @@ pub enum ExperienceType {
     Missing_1565 = 1565, //Probably Destroy Chimera from Harasser gunner?
     Missing_1567 = 1567,
     Missing_1568 = 1568,
+    Missing_1571 = 1571, //Probably chimera gunner / passsenger assist xp?
 
     Kill_Assist_Dervish = 1636,
     Gunner_Kill_Share_Dervish = 1650,
@@ -1332,6 +1333,7 @@ impl ExperienceType {
                 | ExperienceType::Missing_1565
                 | ExperienceType::Missing_1567
                 | ExperienceType::Missing_1568
+                | ExperienceType::Missing_1571
         )
     }
 }
@@ -2496,6 +2498,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_1565 => write!(f, "Missing (1565) XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
             ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
+            ExperienceType::Missing_1571 => write!(f, "Missing (1571) XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
             ExperienceType::Gunner_Kill_Share_Dervish => {
                 write!(f, "Gunner Kill Share (Dervish) XP")

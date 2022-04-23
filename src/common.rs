@@ -97,6 +97,10 @@ fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
         println!("Census request failed 3 times, giving up.");
         Err(final_err)
     } else {
+        if tries > 1 {
+            //May not be status 200, so cannot assume this is a "success"
+            println!("Returning census response on attempt #{}", tries);
+        }
         Ok(response.unwrap())
     }
 }
