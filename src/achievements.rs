@@ -641,7 +641,7 @@ impl AchievementEngine {
             }
             _ => {}
         }
-        if self.deathstreak > 10 {
+        if self.deathstreak >= 10 {
             results.push(Event::achieved(
                 &format!("Death Insult {}", self.deathstreak),
                 timestamp,
