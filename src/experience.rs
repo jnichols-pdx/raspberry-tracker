@@ -1227,7 +1227,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
     Missing_1560 = 1560,
 
-    Missing_1565 = 1565, //Probably Destroy Chimera from Harasser gunner?
+    Vehicle_Destruction_Chimera= 1565,
     Missing_1567 = 1567,
     Missing_1568 = 1568,
     Missing_1571 = 1571, //Probably chimera gunner / passsenger assist xp?
@@ -1330,7 +1330,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_636
                 | ExperienceType::Missing_668
                 | ExperienceType::Missing_1560
-                | ExperienceType::Missing_1565
                 | ExperienceType::Missing_1567
                 | ExperienceType::Missing_1568
                 | ExperienceType::Missing_1571
@@ -2495,7 +2494,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_636 => write!(f, "Missing (636) XP"),
             ExperienceType::Missing_668 => write!(f, "Missing (668) XP"),
             ExperienceType::Missing_1560 => write!(f, "Missing (1560) XP"),
-            ExperienceType::Missing_1565 => write!(f, "Missing (1565) XP"),
+            ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
             ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
             ExperienceType::Missing_1571 => write!(f, "Missing (1571) XP"),
