@@ -314,9 +314,9 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Player = 389,
     Gunner_Kill_Assist_Share_Galaxy = 394,
     Gunner_Kill_Assist_Share_Lib = 395,
-    Missing_396 = 396,
+    Gunner_Kill_Assist_Share_Lightning = 396,
     Gunner_Kill_Assist_Share_Reaver = 400,
-    Missing_402 = 402,
+    Gunner_Kill_Assist_Share_Sunderer = 402,
     Missing_403 = 403,
     Missing_404 = 404,
     Missing_405 = 405,
@@ -1314,8 +1314,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_386
                 | ExperienceType::Missing_387
                 | ExperienceType::Missing_388
-                | ExperienceType::Missing_396
-                | ExperienceType::Missing_402
                 | ExperienceType::Missing_403
                 | ExperienceType::Missing_404
                 | ExperienceType::Missing_405
@@ -2470,11 +2468,15 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Galaxy => {
                 write!(f, "Gunner Kill Assist (Galaxy) Share XP")
             }
-            ExperienceType::Missing_396 => write!(f, "Missing (396) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Lightning => {
+                write!(f, "Gunner Kill Assist (Lightning) Share XP")
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Reaver => {
                 write!(f, "Gunner Kill Assist (Reaver) Share XP")
             }
-            ExperienceType::Missing_402 => write!(f, "Missing (402) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Sunderer => {
+                write!(f, "Gunner Kill Assist (Sunderer) Share XP")
+            }
             ExperienceType::Missing_403 => write!(f, "Missing (403) XP"),
             ExperienceType::Missing_404 => write!(f, "Missing (404) XP"),
             ExperienceType::Missing_405 => write!(f, "Missing (405) XP"),
