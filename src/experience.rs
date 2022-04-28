@@ -342,8 +342,8 @@ pub enum ExperienceType {
     Valkyrie_Kill_by_Liberator_Gunner = 513,
     Valkyrie_Kill_by_Galaxy_Gunner = 514,
     Player_Kill_by_Valkyrie_Gunner = 515,
-    Missing_516 = 516,
-    Missing_517 = 517, //probably a gunner kill assist / kill assist share / kill share XP of some flavor
+    Gunner_Kill_Share_Valkyrie = 516,
+    Gunner_Kill_Assist_Share_Valkyrie = 517, //probably a gunner kill assist / kill assist share / kill share XP of some flavor
     Flash_Kill_by_Valkyrie_Gunner = 520,
     Sunderer_Kill_by_Valkyrie_Gunner = 521,
     Lightning_Kill_by_Valkyrie_Gunner = 522,
@@ -1227,7 +1227,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
     Missing_1560 = 1560,
 
-    Vehicle_Destruction_Chimera= 1565,
+    Vehicle_Destruction_Chimera = 1565,
     Missing_1567 = 1567,
     Missing_1568 = 1568,
     Missing_1571 = 1571, //Probably chimera gunner / passsenger assist xp?
@@ -1320,8 +1320,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_404
                 | ExperienceType::Missing_405
                 | ExperienceType::Missing_421
-                | ExperienceType::Missing_516
-                | ExperienceType::Missing_517
                 | ExperienceType::Missing_611
                 | ExperienceType::Missing_612
                 | ExperienceType::Missing_623
@@ -2484,8 +2482,12 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Passenger Kill Share - Engineer Turret")
             }
             ExperienceType::Missing_421 => write!(f, "Missing (421) XP"),
-            ExperienceType::Missing_516 => write!(f, "Missing (516) XP"),
-            ExperienceType::Missing_517 => write!(f, "Missing (517) XP"),
+            ExperienceType::Gunner_Kill_Share_Valkyrie => {
+                write!(f, "Gunner Kill Share (Valkyrie) XP")
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_Valkyrie => {
+                write!(f, "Gunner Kill Assist (Valkyrie) Share XP")
+            }
             ExperienceType::Missing_611 => write!(f, "Missing (611) XP"),
             ExperienceType::Missing_612 => write!(f, "Missing (612) XP"),
             ExperienceType::Missing_623 => write!(f, "Missing (623) XP"),
