@@ -308,9 +308,10 @@ pub enum ExperienceType {
     Missing_379 = 379,
     Missing_380 = 380, //Probably gunner kill, kill assist share, kill share or similar
     Gunner_Kill_Share_Reaver = 384,
+    Gunner_Kill_Share_Scythe = 385,
     Missing_386 = 386,
     Missing_387 = 387,
-    Missing_388 = 388,
+    Gunner_Kill_Share_Harasser = 388,
     Gunner_Kill_Assist_Share_Player = 389,
     Gunner_Kill_Assist_Share_Galaxy = 394,
     Gunner_Kill_Assist_Share_Lib = 395,
@@ -446,8 +447,8 @@ pub enum ExperienceType {
     KillAssist_Construction_Large = 631,
     Spot_Kill_Construction_Large = 633,
     Squad_Spot_Kill_Construction_Large = 634,
-    Missing_635 = 635, //Gunner kill, kill share, kill assist share?  vs Construction?
-    Missing_636 = 636,
+    Gunner_Kill_Share_Construction = 635,
+    Gunner_Kill_Assist_Share_Construction = 636,
     Vehicle_Ram_Kill_Construction_Core = 639,
     Kill_or_Destroy_Construction_Core = 640,
     Squad_Repair_Construction_Core = 641,
@@ -1232,7 +1233,9 @@ pub enum ExperienceType {
     Missing_1568 = 1568,
     Missing_1571 = 1571, //Probably chimera gunner / passsenger assist xp?
 
+    Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
+    Missing_1646 = 1646, //Triggered after dervish kill from galaxy gun turret
     Gunner_Kill_Share_Dervish = 1650,
     Gunner_Kill_Assist_Share_Dervish = 1651,
 
@@ -1313,7 +1316,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_380
                 | ExperienceType::Missing_386
                 | ExperienceType::Missing_387
-                | ExperienceType::Missing_388
                 | ExperienceType::Missing_403
                 | ExperienceType::Missing_405
                 | ExperienceType::Missing_421
@@ -1321,13 +1323,12 @@ impl ExperienceType {
                 | ExperienceType::Missing_612
                 | ExperienceType::Missing_623
                 | ExperienceType::Missing_624
-                | ExperienceType::Missing_635
-                | ExperienceType::Missing_636
                 | ExperienceType::Missing_668
                 | ExperienceType::Missing_1560
                 | ExperienceType::Missing_1567
                 | ExperienceType::Missing_1568
                 | ExperienceType::Missing_1571
+                | ExperienceType::Missing_1646
         )
     }
 }
@@ -2458,9 +2459,12 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_379 => write!(f, "Missing (379) XP"),
             ExperienceType::Missing_380 => write!(f, "Missing (380) XP"),
             ExperienceType::Gunner_Kill_Share_Reaver => write!(f, "Gunner Kill Share (Reaver) XP"),
+            ExperienceType::Gunner_Kill_Share_Scythe => write!(f, "Gunner Kill Share (Scythe) XP"),
             ExperienceType::Missing_386 => write!(f, "Missing (386) XP"),
             ExperienceType::Missing_387 => write!(f, "Missing (387) XP"),
-            ExperienceType::Missing_388 => write!(f, "Missing (388) XP"),
+            ExperienceType::Gunner_Kill_Share_Harasser => {
+                write!(f, "Gunner Kill Share (Harasser) XP")
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Player => {
                 write!(f, "Gunner Kill Assist (Infantry) Share XP")
             }
@@ -2495,15 +2499,21 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_612 => write!(f, "Missing (612) XP"),
             ExperienceType::Missing_623 => write!(f, "Missing (623) XP"),
             ExperienceType::Missing_624 => write!(f, "Missing (624) XP"),
-            ExperienceType::Missing_635 => write!(f, "Missing (635) XP"),
-            ExperienceType::Missing_636 => write!(f, "Missing (636) XP"),
+            ExperienceType::Gunner_Kill_Share_Construction => {
+                write!(f, "Gunner Kill Share (Construction) XP")
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_Construction => {
+                write!(f, "Gunner Kill Assist (Construction) Share XP")
+            }
             ExperienceType::Missing_668 => write!(f, "Missing (668) XP"),
             ExperienceType::Missing_1560 => write!(f, "Missing (1560) XP"),
             ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
             ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
             ExperienceType::Missing_1571 => write!(f, "Missing (1571) XP"),
+            ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
+            ExperienceType::Missing_1646 => write!(f, "Missing (1646) XP"),
             ExperienceType::Gunner_Kill_Share_Dervish => {
                 write!(f, "Gunner Kill Share (Dervish) XP")
             }
