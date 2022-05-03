@@ -153,14 +153,15 @@ impl Session {
                         let wi = WeaponInitial::new();
                         weapons_initial.insert(weapon_id.clone(), wi);
                     }
+
                     if let Some(ws) = weapons_initial.get_mut(&weapon_id) {
                         match stat["stat_name"].as_str() {
                             Some("weapon_hit_count") => {
-                                ws.hits =
+                                ws.hits +=
                                     stat["value"].to_string().unquote().parse::<u64>().unwrap();
                             }
                             Some("weapon_fire_count") => {
-                                ws.fired =
+                                ws.fired +=
                                     stat["value"].to_string().unquote().parse::<u64>().unwrap();
                             }
                             Some(_) | None => {}
@@ -891,18 +892,19 @@ impl Session {
                                 Some("weapon_hit_count") => {
                                     let hits =
                                         stat["value"].to_string().unquote().parse::<u64>().unwrap();
-                                    self.weapons.update_latest_hits(&weapon_id, hits);
+                                    self.weapons.accumulate_latest_hits(&weapon_id, hits);
                                 }
                                 Some("weapon_fire_count") => {
                                     let fired =
                                         stat["value"].to_string().unquote().parse::<u64>().unwrap();
-                                    self.weapons.update_latest_fired(&weapon_id, fired);
+                                    self.weapons.accumulate_latest_fired(&weapon_id, fired);
                                 }
                                 Some(_) | None => {}
                             }
                         }
                     }
 
+                    self.weapons.update_from_accumulators();
                     self.weapons
                         .update_db_entries(&self.db.dbc, self.db_id.unwrap())
                         .await;

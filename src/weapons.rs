@@ -9,7 +9,7 @@ pub struct Weapon {
     pub category: WeaponType,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct WeaponInitial {
     pub fired: u64,
     pub hits: u64,
@@ -34,7 +34,7 @@ impl Default for WeaponInitial {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct WeaponStats {
     weapon_id: String,
     name: String,
@@ -43,11 +43,14 @@ pub struct WeaponStats {
     initial: WeaponInitial,
     latest_hits: u64,
     latest_fired: u64,
+    hit_accumulator: u64,
+    fired_accumulator: u64,
     dirty: bool,
+    kind: WeaponType,
 }
 
 impl WeaponStats {
-    pub fn new(name: &str, id: &str, initial: WeaponInitial) -> Self {
+    pub fn new(name: &str, id: &str, initial: WeaponInitial, kind: WeaponType) -> Self {
         WeaponStats {
             weapon_id: id.to_owned(),
             name: name.to_owned(),
@@ -56,7 +59,10 @@ impl WeaponStats {
             initial,
             latest_hits: initial.hits,
             latest_fired: initial.fired,
+            hit_accumulator: 0,
+            fired_accumulator: 0,
             dirty: true,
+            kind,
         }
     }
 
@@ -68,6 +74,7 @@ impl WeaponStats {
         headshots: u32,
         hits: u64,
         fired: u64,
+        kind: WeaponType,
     ) -> Self {
         WeaponStats {
             weapon_id: id.to_owned(),
@@ -77,7 +84,10 @@ impl WeaponStats {
             initial,
             latest_hits: hits,
             latest_fired: fired,
+            hit_accumulator: hits,
+            fired_accumulator: fired,
             dirty: false,
+            kind,
         }
     }
 
@@ -101,14 +111,27 @@ impl WeaponStats {
         self.latest_hits - self.initial.hits
     }
 
-    pub fn update_latest_hits(&mut self, new_lifetime_hits: u64) {
-        self.latest_hits = new_lifetime_hits;
-        self.dirty = true;
+    pub fn accumulate_latest_hits(&mut self, new_lifetime_hits: u64) {
+        self.hit_accumulator += new_lifetime_hits;
+        println!("w {} hits now: {}", self.name, self.hit_accumulator);
     }
 
-    pub fn update_latest_fired(&mut self, new_lifetime_fired: u64) {
-        self.latest_fired = new_lifetime_fired;
-        self.dirty = true;
+    pub fn accumulate_latest_fired(&mut self, new_lifetime_fired: u64) {
+        self.fired_accumulator += new_lifetime_fired;
+        println!("w {} fired now: {}", self.name, self.fired_accumulator);
+    }
+
+    pub fn update_from_accumulators(&mut self) {
+        if self.fired_accumulator > self.latest_fired {
+            self.dirty = true;
+            self.latest_fired = self.fired_accumulator;
+        }
+        if self.hit_accumulator > self.latest_hits {
+            self.dirty = true;
+            self.latest_hits = self.hit_accumulator;
+        }
+        self.hit_accumulator = 0;
+        self.fired_accumulator = 0;
     }
 
     fn session_hsr(&self) -> f32 {
@@ -174,7 +197,11 @@ impl WeaponStats {
                 //name
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
-                    ui.label(egui::RichText::new(&self.name).small().color(text_color));
+                    if self.kind.is_vehicle_mount() {
+                        ui.label(egui::RichText::new(format!("{} ({})", &self.name, &self.kind)).small().color(text_color));
+                    } else {
+                        ui.label(egui::RichText::new(&self.name).small().color(text_color));
+                    }
                 });
             });
             row.col(|ui| {
@@ -353,15 +380,21 @@ impl WeaponSet {
         }
     }
 
-    pub fn update_latest_hits(&mut self, target_id: &str, hit_count: u64) {
+    pub fn accumulate_latest_hits(&mut self, target_id: &str, hit_count: u64) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
-            weapon.update_latest_hits(hit_count);
+            weapon.accumulate_latest_hits(hit_count);
         }
     }
 
-    pub fn update_latest_fired(&mut self, target_id: &str, fire_count: u64) {
+    pub fn accumulate_latest_fired(&mut self, target_id: &str, fire_count: u64) {
         if let Some(weapon) = self.weapons.get_mut(target_id) {
-            weapon.update_latest_fired(fire_count);
+            weapon.accumulate_latest_fired(fire_count);
+        }
+    }
+
+    pub fn update_from_accumulators(&mut self) {
+        for (_, weapon) in self.weapons.iter_mut() {
+            weapon.update_from_accumulators();
         }
     }
 
