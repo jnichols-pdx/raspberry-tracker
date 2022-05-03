@@ -504,6 +504,7 @@ impl DatabaseCore {
                 name: row.get(7),
                 weapon: row.get(8),
                 weapon_id: row.get(9),
+                weapon_kind: WeaponType::Unknown, //Not used by Event list, only weapon stats.
                 headshot: row.get::<bool, usize>(10),
                 kdr: row.get::<f32, usize>(11),
                 timestamp: row.get::<i64, usize>(12),
@@ -522,7 +523,7 @@ impl DatabaseCore {
         let mut weapon_set = WeaponSet::new();
 
         let mut cursor =
-            sqlx::query("SELECT * FROM weaponstats WHERE session IS ? ORDER BY ordering ASC;")
+            sqlx::query("SELECT * FROM weaponstats JOIN weapons ON weaponstats.weapon_id = weapons.id WHERE session IS ? ORDER BY ordering ASC;")
                 .bind(session_id)
                 .fetch(&self.conn);
 
@@ -541,6 +542,8 @@ impl DatabaseCore {
                 headshots: row.get::<i64, usize>(11) as u64,
             };
 
+            let category_id = row.get::<i64, usize>(14);
+
             let new_weaponstat = WeaponStats::new_historical(
                 row.get(3), //name
                 row.get(2), //weapon_id
@@ -549,6 +552,7 @@ impl DatabaseCore {
                 row.get::<u32, usize>(5),        //headshots
                 row.get::<i64, usize>(6) as u64, //hits
                 row.get::<i64, usize>(7) as u64, //shots fired
+                WeaponType::from(category_id),
             );
 
             weapon_set.push(new_weaponstat);

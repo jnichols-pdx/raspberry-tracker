@@ -542,8 +542,12 @@ impl Session {
                             None => WeaponInitial::new(),
                         };
 
-                        let mut new_stat =
-                            WeaponStats::new(&event.weapon, &event.weapon_id, initial);
+                        let mut new_stat = WeaponStats::new(
+                            &event.weapon,
+                            &event.weapon_id,
+                            initial,
+                            event.weapon_kind,
+                        );
                         new_stat.add_kill(event.headshot);
                         new_stat
                             .save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc)
@@ -562,7 +566,12 @@ impl Session {
                             None => WeaponInitial::new(),
                         };
 
-                        let new_stat = WeaponStats::new(&event.weapon, &event.weapon_id, initial);
+                        let new_stat = WeaponStats::new(
+                            &event.weapon,
+                            &event.weapon_id,
+                            initial,
+                            event.weapon_kind,
+                        );
                         new_stat
                             .save_to_db(self.weapons.len(), self.db_id.unwrap(), &self.db.dbc)
                             .await;

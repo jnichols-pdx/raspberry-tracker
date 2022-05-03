@@ -66,6 +66,7 @@ impl WeaponStats {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new_historical(
         name: &str,
         id: &str,
@@ -198,7 +199,11 @@ impl WeaponStats {
                 ui.vertical(|ui| {
                     ui.add_space(5.0);
                     if self.kind.is_vehicle_mount() {
-                        ui.label(egui::RichText::new(format!("{} ({})", &self.name, &self.kind)).small().color(text_color));
+                        ui.label(
+                            egui::RichText::new(format!("{} ({})", &self.name, &self.kind))
+                                .small()
+                                .color(text_color),
+                        );
                     } else {
                         ui.label(egui::RichText::new(&self.name).small().color(text_color));
                     }

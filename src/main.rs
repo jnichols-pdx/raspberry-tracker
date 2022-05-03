@@ -456,6 +456,7 @@ async fn parse_messages(
                 } else {
                     db.dbc.get_weapon_name(&weapon_id).await
                 };
+                let weapon_kind = db.dbc.get_weapon_category(&weapon_id).await;
 
                 let mut new_achievements = None;
 
@@ -817,6 +818,7 @@ async fn parse_messages(
                     name,
                     weapon: weapon_name,
                     weapon_id,
+                    weapon_kind,
                     headshot,
                     kdr: ratio,
                     timestamp,
@@ -1076,6 +1078,7 @@ async fn parse_messages(
                                 name,
                                 weapon: "Revived You".to_owned(),
                                 weapon_id: "0".to_owned(),
+                                weapon_kind: WeaponType::Unknown,
                                 headshot: false,
                                 kdr,
                                 timestamp,
@@ -1118,6 +1121,7 @@ async fn parse_messages(
                         name: xp_type.to_string(),
                         weapon: format!("+{}", xp_amount),
                         weapon_id: "0".to_owned(),
+                        weapon_kind: WeaponType::Unknown,
                         headshot: false,
                         kdr: 0.0,
                         timestamp,
