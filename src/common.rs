@@ -724,7 +724,7 @@ pub enum WeaponType {
     Prowler_Top = 123,
     Prowler_Primary = 124,
     Reaver_Nose = 125,
-    Reaver_Wingmoutn = 126,
+    Reaver_Wingmount = 126,
     Scythe_Nose = 127,
     Scythe_Wingmount = 128,
     Sunderer_Front = 129,
@@ -763,6 +763,113 @@ impl WeaponType {
                 | WeaponType::Vanguard_Primary
                 | WeaponType::Colossus_Primary
         )
+    }
+
+    pub fn is_vehicle_mount(&self) -> bool {
+        matches!(
+            self,
+            WeaponType::Flash_Primary
+                | WeaponType::Galaxy_L
+                | WeaponType::Galaxzxy_Tail
+                | WeaponType::Galaxy_R
+                | WeaponType::Galaxy_Top
+                | WeaponType::Harasser_Top
+                | WeaponType::Liberator_Belly
+                | WeaponType::Liberator_Nose
+                | WeaponType::Liberator_Tail
+                | WeaponType::Lightning_Primary
+                | WeaponType::Magrider_Top
+                | WeaponType::Magrider_Primary
+                | WeaponType::Mosquito_Nose
+                | WeaponType::Mosquito_Wingmount
+                | WeaponType::Prowler_Top
+                | WeaponType::Prowler_Primary
+                | WeaponType::Reaver_Nose
+                | WeaponType::Reaver_Wingmount
+                | WeaponType::Scythe_Nose
+                | WeaponType::Scythe_Wingmount
+                | WeaponType::Sunderer_Front
+                | WeaponType::Sunderer_Rear
+                | WeaponType::Vanguard_Top
+                | WeaponType::Vanguard_Primary
+                | WeaponType::Valkyrie_Nose
+                | WeaponType::Ant_Top
+                | WeaponType::Bastion_AA_Turret
+                | WeaponType::Bastion_Pilot_Bombard
+                | WeaponType::Bastion_Missiles
+                | WeaponType::Colossus_Primary
+                | WeaponType::Colossus_FR
+                | WeaponType::Colossus_FL
+                | WeaponType::Colossus_RR
+                | WeaponType::Colossus_RL
+        )
+    }
+}
+
+impl std::fmt::Display for WeaponType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WeaponType::Knife => write!(f, "Knife"),
+            WeaponType::Pistol => write!(f, "Pistol"),
+            WeaponType::Shotgun => write!(f, "Shotgun"),
+            WeaponType::SMG => write!(f, "Sub Machinegun"),
+            WeaponType::LMG => write!(f, "Light Machinegun"),
+            WeaponType::AR => write!(f, "Assault Rifle"),
+            WeaponType::Carbine => write!(f, "Carbine"),
+            WeaponType::AV_MAX_L => write!(f, "MAX Left AV"),
+            WeaponType::AI_MAX_L => write!(f, "MAX Left AI"),
+            WeaponType::Sniper_Rifle => write!(f, "Sniper Rifle"),
+            WeaponType::Scout_Rifle => write!(f, "Scout Rifle"),
+            WeaponType::Rocket_Launcher => write!(f, "Rocket Launcher"),
+            WeaponType::Heavy_Weapon => write!(f, "Heavy Weapon"),
+            WeaponType::MAX_Flamethrower => write!(f, "MAX Flamethrower"),
+            WeaponType::MAX_Flak => write!(f, "MAX Flak"),
+            WeaponType::Grenade => write!(f, "Grenade"),
+            WeaponType::Explosive => write!(f, "Explosive"),
+            WeaponType::Battle_Rifle => write!(f, "Battle Rifle"),
+            WeaponType::AA_MAX_R => write!(f, "MAX Right AA"),
+            WeaponType::AV_MAX_R => write!(f, "MAX Right AV"),
+            WeaponType::AI_MAX_R => write!(f, "MAX Right AI"),
+            WeaponType::AA_MAX_L => write!(f, "MAX Left AA"),
+            WeaponType::Crossbow => write!(f, "Crossbow"),
+            WeaponType::Flash_Primary => write!(f, "Flash Primary"),
+            WeaponType::Galaxy_L => write!(f, "Galaxy Left"),
+            WeaponType::Galaxzxy_Tail => write!(f, "Galaxy Tail"),
+            WeaponType::Galaxy_R => write!(f, "Galaxy Right"),
+            WeaponType::Galaxy_Top => write!(f, "Galaxy Top"),
+            WeaponType::Harasser_Top => write!(f, "Harasser Top"),
+            WeaponType::Liberator_Belly => write!(f, "Liberator Belly"),
+            WeaponType::Liberator_Nose => write!(f, "Liberator Nose"),
+            WeaponType::Liberator_Tail => write!(f, "Liberator Tail"),
+            WeaponType::Lightning_Primary => write!(f, "Lightning Primary"),
+            WeaponType::Magrider_Top => write!(f, "Magrider Top"),
+            WeaponType::Magrider_Primary => write!(f, "Magrider Primary"),
+            WeaponType::Mosquito_Nose => write!(f, "Mosquito Nose"),
+            WeaponType::Mosquito_Wingmount => write!(f, "Mosquito Wing"),
+            WeaponType::Prowler_Top => write!(f, "Prowler Top"),
+            WeaponType::Prowler_Primary => write!(f, "Prowler Primary"),
+            WeaponType::Reaver_Nose => write!(f, "Reaver Nose"),
+            WeaponType::Reaver_Wingmount => write!(f, "Reaver Wing"),
+            WeaponType::Scythe_Nose => write!(f, "Scythe Nose"),
+            WeaponType::Scythe_Wingmount => write!(f, "Scythe Wing"),
+            WeaponType::Sunderer_Front => write!(f, "Sunderer Front"),
+            WeaponType::Sunderer_Rear => write!(f, "Sunderer Rear"),
+            WeaponType::Vanguard_Top => write!(f, "Vanguard Top"),
+            WeaponType::Vanguard_Primary => write!(f, "Vanguard Primary"),
+            WeaponType::Valkyrie_Nose => write!(f, "Valkyrie Nose"),
+            WeaponType::Ant_Top => write!(f, "ANT Top"),
+            WeaponType::Rocklet_Rifle => write!(f, "Rocklet Rifle"),
+            WeaponType::Hybrid_Rifle => write!(f, "Hybrid Rifle"),
+            WeaponType::Bastion_AA_Turret => write!(f, "Bastion AA"),
+            WeaponType::Bastion_Pilot_Bombard => write!(f, "Bastion Bombardment"),
+            WeaponType::Bastion_Missiles => write!(f, "Bastion Missile"),
+            WeaponType::Colossus_Primary => write!(f, ""),
+            WeaponType::Colossus_FR => write!(f, "Colossus Front Right"),
+            WeaponType::Colossus_FL => write!(f, "Colossue Front Left"),
+            WeaponType::Colossus_RR => write!(f, "Colossue Rear Right"),
+            WeaponType::Colossus_RL => write!(f, "Colossue Rear Left"),
+            WeaponType::Unknown => write!(f, "Unknown"),
+        }
     }
 }
 
