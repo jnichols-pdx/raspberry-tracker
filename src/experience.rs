@@ -429,8 +429,8 @@ pub enum ExperienceType {
     KillAssist_Construction_Med = 607,
     Spot_Kill_Construction_Med = 609,
     Squad_Spot_Kill_Construction_Med = 610,
-    Missing_611 = 611,
-    Missing_612 = 612,
+    Gunner_Kill_Share_Construction_Med = 611,
+    Gunner_Kill_Assist_Share_Construction_Med = 612,
     Vehicle_Ram_Kill_Construction_Small = 615,
     Kill_or_Destroy_Construction_Small = 616,
     Squad_Repair_Construction_Small = 617,
@@ -438,8 +438,8 @@ pub enum ExperienceType {
     KillAssist_Construction_Small = 619,
     Spot_Kill_Construction_Small = 621,
     Squad_Spot_Kill_Construction_Small = 622,
-    Missing_623 = 623,
-    Missing_624 = 624,
+    Gunner_Kill_Share_Construction_Small = 623,
+    Gunner_Kill_Assist_Share_Construction_Small = 624,
     Vehicle_Ram_Kill_Construction_Large = 627,
     Kill_or_Destroy_Construction_Large = 628,
     Squad_Repair_Construction_Large = 629,
@@ -447,8 +447,8 @@ pub enum ExperienceType {
     KillAssist_Construction_Large = 631,
     Spot_Kill_Construction_Large = 633,
     Squad_Spot_Kill_Construction_Large = 634,
-    Gunner_Kill_Share_Construction = 635,
-    Gunner_Kill_Assist_Share_Construction = 636,
+    Gunner_Kill_Share_Construction_Large = 635,
+    Gunner_Kill_Assist_Share_Construction_Large = 636,
     Vehicle_Ram_Kill_Construction_Core = 639,
     Kill_or_Destroy_Construction_Core = 640,
     Squad_Repair_Construction_Core = 641,
@@ -1319,10 +1319,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_403
                 | ExperienceType::Missing_405
                 | ExperienceType::Missing_421
-                | ExperienceType::Missing_611
-                | ExperienceType::Missing_612
-                | ExperienceType::Missing_623
-                | ExperienceType::Missing_624
                 | ExperienceType::Missing_668
                 | ExperienceType::Missing_1560
                 | ExperienceType::Missing_1567
@@ -2495,15 +2491,23 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Valkyrie => {
                 write!(f, "Gunner Kill Assist (Valkyrie) Share XP")
             }
-            ExperienceType::Missing_611 => write!(f, "Missing (611) XP"),
-            ExperienceType::Missing_612 => write!(f, "Missing (612) XP"),
-            ExperienceType::Missing_623 => write!(f, "Missing (623) XP"),
-            ExperienceType::Missing_624 => write!(f, "Missing (624) XP"),
-            ExperienceType::Gunner_Kill_Share_Construction => {
-                write!(f, "Gunner Kill Share (Construction) XP")
+            ExperienceType::Gunner_Kill_Share_Construction_Med => {
+                write!(f, "Gunnmer Kill Share (Construction - Medium) XP")
             }
-            ExperienceType::Gunner_Kill_Assist_Share_Construction => {
-                write!(f, "Gunner Kill Assist (Construction) Share XP")
+            ExperienceType::Gunner_Kill_Assist_Share_Construction_Med => {
+                write!(f, "Gunnmer Kill Assist (Construction - Medium) Share XP")
+            }
+            ExperienceType::Gunner_Kill_Share_Construction_Small => {
+                write!(f, "Gunnmer Kill Share (Construction - Small) XP")
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_Construction_Small => {
+                write!(f, "Gunnmer Kill Assist (Construction - Small) Share XP")
+            }
+            ExperienceType::Gunner_Kill_Share_Construction_Large => {
+                write!(f, "Gunnmer Kill Share (Construction - Large) XP")
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_Construction_Large => {
+                write!(f, "Gunnmer Kill Assist (Construction - Large) Share XP")
             }
             ExperienceType::Missing_668 => write!(f, "Missing (668) XP"),
             ExperienceType::Missing_1560 => write!(f, "Missing (1560) XP"),
