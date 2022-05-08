@@ -320,7 +320,7 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Sunderer = 402,
     Missing_403 = 403,
     Gunner_Kill_Assist_Share_Harasser = 404,
-    Missing_405 = 405,
+    Passenger_Kill_Share_Player = 405,
     Pass_Kill_Share_MANA_407 = 407,
     Missing_421 = 421, //May be Gunner kill share / kill assist share or similar against Scythe
     Shield_Regen_Tool_Kill = 437,
@@ -1318,7 +1318,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_386
                 | ExperienceType::Missing_387
                 | ExperienceType::Missing_403
-                | ExperienceType::Missing_405
                 | ExperienceType::Missing_421
                 | ExperienceType::Missing_668
                 | ExperienceType::Missing_1560
@@ -2481,7 +2480,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Harasser => {
                 write!(f, "Gunner Kill Assist (Harasser) Share XP")
             }
-            ExperienceType::Missing_405 => write!(f, "Missing (405) XP"),
+            ExperienceType::Passenger_Kill_Share_Player => {
+                write!(f, "Passenger Kill Share (Infantry) XP")
+            }
             ExperienceType::Pass_Kill_Share_MANA_407 => {
                 write!(f, "Passenger Kill Share - Engineer Turret")
             }
