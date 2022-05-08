@@ -1236,6 +1236,7 @@ pub enum ExperienceType {
     Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
     Missing_1646 = 1646, //Triggered after dervish kill from galaxy gun turret
+    Fighter_Superiority_Bonus = 1649,
     Gunner_Kill_Share_Dervish = 1650,
     Gunner_Kill_Assist_Share_Dervish = 1651,
 
@@ -2518,6 +2519,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
             ExperienceType::Missing_1646 => write!(f, "Missing (1646) XP"),
+            ExperienceType::Fighter_Superiority_Bonus => write!(f, "Fighter Superiority Bonus XP"),
             ExperienceType::Gunner_Kill_Share_Dervish => {
                 write!(f, "Gunner Kill Share (Dervish) XP")
             }
