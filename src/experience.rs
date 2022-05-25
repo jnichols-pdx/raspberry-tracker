@@ -474,7 +474,7 @@ pub enum ExperienceType {
     Squad_Spot_Kill_ANT = 664,
     ANT_Damage_Infantry_vs_Vehicle = 665,
     ANT_Kill_by_Harasser_Gunner = 666,
-    Missing_668 = 668,
+    Gunner_Kill_Assist_Share_Ant = 668,
     ANT_Kill_by_Valkyrie_Gunner = 671,
     Chain_Expl_Assist_ANT = 672,
     Bounty_Kill_Cashed_In_Alt = 673,
@@ -1229,7 +1229,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy = 1547,
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
-    Missing_1560 = 1560,
+    Kill_Assist_Chimera = 1560,
 
     Vehicle_Destruction_Chimera = 1565,
     Missing_1567 = 1567,
@@ -1322,8 +1322,6 @@ impl ExperienceType {
                 | ExperienceType::Missing_387
                 | ExperienceType::Missing_403
                 | ExperienceType::Missing_421
-                | ExperienceType::Missing_668
-                | ExperienceType::Missing_1560
                 | ExperienceType::Missing_1567
                 | ExperienceType::Missing_1568
                 | ExperienceType::Missing_1571
@@ -2523,8 +2521,8 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Construction_Large => {
                 write!(f, "Gunner Kill Assist (Construction - Large) Share XP")
             }
-            ExperienceType::Missing_668 => write!(f, "Missing (668) XP"),
-            ExperienceType::Missing_1560 => write!(f, "Missing (1560) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Ant=> write!(f, "Gunner Kill Assist (Ant) Share XP"),
+            ExperienceType::Kill_Assist_Chimera=> write!(f, "Kill Assist Chimera XP"),
             ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
             ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
