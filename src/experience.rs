@@ -1133,7 +1133,9 @@ pub enum ExperienceType {
     Vehicle_Passenger_Kill_Share_Hardlight_Barrier_HIVE_XP_Target = 1391,
     Vehicle_Driver_Kill_Assist_Share_Hardlight_Barrier_HIVE_XP_Target = 1392,
     */
-    Hardlight_Cover_Blocking_Exp_placeholder_until_code_is_done = 1393,
+    Missing_1380 = 1380,
+    //Hardlight_Cover_Blocking_Exp_placeholder_until_code_is_done = 1393,
+    Draw_Fire_Assist = 1393,
     Draw_Fire_Award = 1394,
     Flash_Damage_Infantry_vs_Vehicle = 1395,
     Harasser_Damage_Infantry_vs_Vehicle = 1396,
@@ -1229,6 +1231,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy = 1547,
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
+    Missing_1553 = 1553, //Destroy Anvil?
     Kill_Assist_Chimera = 1560,
 
     Vehicle_Destruction_Chimera = 1565,
@@ -1239,6 +1242,7 @@ pub enum ExperienceType {
     Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
     Missing_1646 = 1646, //Triggered after dervish kill from galaxy gun turret
+    Dervish_Damage = 1657,
     Fighter_Superiority_Bonus = 1649,
     Gunner_Kill_Share_Dervish = 1650,
     Gunner_Kill_Assist_Share_Dervish = 1651,
@@ -1322,6 +1326,8 @@ impl ExperienceType {
                 | ExperienceType::Missing_387
                 | ExperienceType::Missing_403
                 | ExperienceType::Missing_421
+                | ExperienceType::Missing_1380
+                | ExperienceType::Missing_1553
                 | ExperienceType::Missing_1567
                 | ExperienceType::Missing_1568
                 | ExperienceType::Missing_1571
@@ -2225,13 +2231,15 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Squad_Repair_Hardlight_Barrier => {
                 write!(f, "Repair Squad Hardlight Barrier XP")
             }
+            ExperienceType::Missing_1380 => write!(f, "Missing (1380) XP"),
             //ExperienceType::Hardlight_Cover_Blocking_Exp_placeholder_until_code_is_done => write!(f, ""),
+            ExperienceType::Draw_Fire_Assist => write!(f, "Draw Fire Assist XP"),
             ExperienceType::Draw_Fire_Award => write!(f, "Draw Fire XP"),
             ExperienceType::Flash_Damage_Infantry_vs_Vehicle => {
                 write!(f, "Vehicle Damage (Flash) XP`")
             }
             ExperienceType::Harasser_Damage_Infantry_vs_Vehicle => {
-                write!(f, "Vehcile Damage (Harasser) XP")
+                write!(f, "Vehicle Damage (Harasser) XP")
             }
             ExperienceType::Router_Kill => write!(f, "Destroy Router XP"),
             //ExperienceType::Generic_Npc_Spawn => write!(f, ""),
@@ -2425,7 +2433,9 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Bastion Gunner Kill (Bastion Component) XP")
             }
             ExperienceType::Bastion_Component_Damage => write!(f, "Vehicle Damage (Bastion) XP"),
-            //ExperienceType::Destroy_Lightning_Arrester => write!(f, "Destroy Lightning Arrestor XP"),
+            ExperienceType::Destroy_Lightning_Arrester => {
+                write!(f, "Destroy Lightning Arrestor XP")
+            }
             //ExperienceType::Lightning_Arrester_Absorb_Xp => write!(f, ""),
             //ExperienceType::Convoy_Periodic_Update => write!(f, ""),
             //ExperienceType::Convoy_Convoy_Complete => write!(f, ""),
@@ -2521,8 +2531,11 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Construction_Large => {
                 write!(f, "Gunner Kill Assist (Construction - Large) Share XP")
             }
-            ExperienceType::Gunner_Kill_Assist_Share_Ant=> write!(f, "Gunner Kill Assist (Ant) Share XP"),
-            ExperienceType::Kill_Assist_Chimera=> write!(f, "Kill Assist Chimera XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Ant => {
+                write!(f, "Gunner Kill Assist (Ant) Share XP")
+            }
+            ExperienceType::Missing_1553 => write!(f, "Missing (1553) XP"),
+            ExperienceType::Kill_Assist_Chimera => write!(f, "Kill Assist Chimera XP"),
             ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
             ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
@@ -2530,6 +2543,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
             ExperienceType::Missing_1646 => write!(f, "Missing (1646) XP"),
+            ExperienceType::Dervish_Damage => write!(f, "Vehicle Damage (Dervish) XP"),
             ExperienceType::Fighter_Superiority_Bonus => write!(f, "Fighter Superiority Bonus XP"),
             ExperienceType::Gunner_Kill_Share_Dervish => {
                 write!(f, "Gunner Kill Share (Dervish) XP")
