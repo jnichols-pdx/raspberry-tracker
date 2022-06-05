@@ -395,7 +395,7 @@ impl std::fmt::Display for Vehicle {
             Vehicle::PocketFlash => write!(f, "Pocket Flash"),
             Vehicle::Flail => write!(f, "Flail"),
 
-            Vehicle::MosquitoInterceptor => write!(f, "Mossy-Interceptor"),
+            Vehicle::MosquitoInterceptor => write!(f, "Mosquito-Interceptor"),
             Vehicle::ReaverInterceptor => write!(f, "Reaver-Interceptor"),
             Vehicle::ScytheInterceptor => write!(f, "Scythe-Interceptor"),
             Vehicle::JavelinAlt1 => write!(f, "Javelin1"),
@@ -630,7 +630,7 @@ impl std::fmt::Display for Class {
     }
 }
 
-pub fn master_images() -> std::array::IntoIter<(String, u32), 41> {
+pub fn master_images() -> std::array::IntoIter<(String, u32), 44> {
     [
         ("NC".to_owned(), 12),
         ("TR".into(), 18),
@@ -646,13 +646,16 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 41> {
         ("Lightning".into(), 258),
         ("Magrider".into(), 259),
         ("Mosquito".into(), 260),
+        ("Mosquito-Interceptor".into(), 260),
         ("Prowler".into(), 261),
         ("Flash".into(), 262),
         ("Pocket Flash".into(), 262),
         ("Reaver".into(), 263),
+        ("Reaver-Interceptor".into(), 263),
         ("Sunderer".into(), 264),
         ("Vanguard".into(), 265),
         ("Scythe".into(), 266),
+        ("Scythe-Interceptor".into(), 266),
         ("Harasser".into(), 8852),
         ("Drop Pod".into(), 12259),
         ("Drop Pod Alt".into(), 12259),
