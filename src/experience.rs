@@ -306,7 +306,7 @@ pub enum ExperienceType {
     Missing_375 = 375,
     Gunner_Kill_Share_Galaxy = 378, //Same time as kill assist on galaxy
     Missing_379 = 379,
-    Missing_380 = 380, //Probably gunner kill, kill assist share, kill share or similar
+    Gunner_Kill_Share_Lightning = 380,
     Gunner_Kill_Share_Reaver = 384,
     Gunner_Kill_Share_Scythe = 385,
     Missing_386 = 386,
@@ -320,7 +320,7 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Reaver = 400,
     Gunner_Kill_Assist_Share_Scythe = 401,
     Gunner_Kill_Assist_Share_Sunderer = 402,
-    Missing_403 = 403,
+    Gunner_Kill_Assist_Share_Vanguard = 403,
     Gunner_Kill_Assist_Share_Harasser = 404,
     Passenger_Kill_Share_Player = 405,
     Pass_Kill_Share_MANA_407 = 407,
@@ -1323,9 +1323,7 @@ impl ExperienceType {
             ExperienceType::Missing_374
                 | ExperienceType::Missing_375
                 | ExperienceType::Missing_379
-                | ExperienceType::Missing_380
                 | ExperienceType::Missing_386
-                | ExperienceType::Missing_403
                 | ExperienceType::Missing_1380
                 | ExperienceType::Missing_1553
                 | ExperienceType::Missing_1567
@@ -2464,7 +2462,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Missing_374 => write!(f, "Missing (374) XP"),
             ExperienceType::Missing_375 => write!(f, "Missing (375) XP"),
             ExperienceType::Missing_379 => write!(f, "Missing (379) XP"),
-            ExperienceType::Missing_380 => write!(f, "Missing (380) XP"),
+            ExperienceType::Gunner_Kill_Share_Lightning => {
+                write!(f, "Gunner Kill Share (Lightning) XP")
+            }
             ExperienceType::Gunner_Kill_Share_Reaver => write!(f, "Gunner Kill Share (Reaver) XP"),
             ExperienceType::Gunner_Kill_Share_Scythe => write!(f, "Gunner Kill Share (Scythe) XP"),
             ExperienceType::Missing_386 => write!(f, "Missing (386) XP"),
@@ -2495,7 +2495,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Sunderer => {
                 write!(f, "Gunner Kill Assist (Sunderer) Share XP")
             }
-            ExperienceType::Missing_403 => write!(f, "Missing (403) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Vanguard => {
+                write!(f, "Gunner Kill Assist (Vanguard) Share XP")
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Harasser => {
                 write!(f, "Gunner Kill Assist (Harasser) Share XP")
             }
@@ -2506,16 +2508,16 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Passenger Kill Share - Engineer Turret")
             }
             ExperienceType::Gunner_Kill_Assist_Share_Infantry_To_Pilot => {
-                write!(f, "Pilot??? Kill Assist (Infantry) Share XP")  //421
+                write!(f, "Pilot??? Kill Assist (Infantry) Share XP") //421
             }
             ExperienceType::Passenger_Kill_Assist_Share_Galaxy => {
                 write!(f, "Passenger??? Kill Assist (Galaxy) Share XP")
             }
             ExperienceType::Gunner_Kill_Assist_Share_Scythe_To_Pilot => {
-                write!(f, "Pilot??? Kill Assist (Scythe) Share XP")  //433
+                write!(f, "Pilot??? Kill Assist (Scythe) Share XP") //433
             }
             ExperienceType::Gunner_Kill_Assist_Share_Sunderer_To_Pilot => {
-                write!(f, "Pilot??? Kill Assist (Sunderer) Share XP")  //434
+                write!(f, "Pilot??? Kill Assist (Sunderer) Share XP") //434
             }
             ExperienceType::Gunner_Kill_Share_Valkyrie => {
                 write!(f, "Gunner Kill Share (Valkyrie) XP")
