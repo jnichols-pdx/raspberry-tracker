@@ -316,6 +316,7 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Galaxy = 394,
     Gunner_Kill_Assist_Share_Lib = 395,
     Gunner_Kill_Assist_Share_Lightning = 396,
+    Gunner_Kill_Assist_Share_Mosquito = 398,
     Gunner_Kill_Assist_Share_Prowler = 399,
     Gunner_Kill_Assist_Share_Reaver = 400,
     Gunner_Kill_Assist_Share_Scythe = 401,
@@ -445,6 +446,7 @@ pub enum ExperienceType {
     Squad_Spot_Kill_Construction_Small = 622,
     Gunner_Kill_Share_Construction_Small = 623,
     Gunner_Kill_Assist_Share_Construction_Small = 624,
+    Passenger_Kill_Share_Construction_Small = 625,
     Vehicle_Ram_Kill_Construction_Large = 627,
     Kill_or_Destroy_Construction_Large = 628,
     Squad_Repair_Construction_Large = 629,
@@ -454,6 +456,7 @@ pub enum ExperienceType {
     Squad_Spot_Kill_Construction_Large = 634,
     Gunner_Kill_Share_Construction_Large = 635,
     Gunner_Kill_Assist_Share_Construction_Large = 636,
+    Passenger_Kill_Share_Construction_Large = 637,
     Vehicle_Ram_Kill_Construction_Core = 639,
     Kill_or_Destroy_Construction_Core = 640,
     Squad_Repair_Construction_Core = 641,
@@ -2486,6 +2489,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Prowler => {
                 write!(f, "Gunner Kill Assist (Prowler) Share XP")
             }
+            ExperienceType::Gunner_Kill_Assist_Share_Mosquito => {
+                write!(f, "Gunner Kill Assist (Mosquito) Share XP")
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Reaver => {
                 write!(f, "Gunner Kill Assist (Reaver) Share XP")
             }
@@ -2534,6 +2540,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Share_Construction_Small => {
                 write!(f, "Gunner Kill Share (Construction - Small) XP")
             }
+            ExperienceType::Passenger_Kill_Share_Construction_Small => {
+                write!(f, "Passenger Kill Share (Construction - Small) XP")
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Construction_Small => {
                 write!(f, "Gunner Kill Assist (Construction - Small) Share XP")
             }
@@ -2542,6 +2551,9 @@ impl std::fmt::Display for ExperienceType {
             }
             ExperienceType::Gunner_Kill_Assist_Share_Construction_Large => {
                 write!(f, "Gunner Kill Assist (Construction - Large) Share XP")
+            }
+            ExperienceType::Passenger_Kill_Share_Construction_Large => {
+                write!(f, "Passenger Kill Share (Construction - Large) XP")
             }
             ExperienceType::Gunner_Kill_Assist_Share_Ant => {
                 write!(f, "Gunner Kill Assist (Ant) Share XP")
