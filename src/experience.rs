@@ -17,6 +17,7 @@ pub enum ExperienceType {
     Control_Point_Defend = 15,
     Control_Point_Attack = 16,
     Facility_Captured_Not_Used = 19,
+    Facility_Defense = 20,
     Destroy_Secondary_Objective = 21,
     Destroy_SecondaryObjectiveAssist = 22,
     Vehicle_Destruction_Flash = 24,
@@ -1237,6 +1238,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
     Missing_1553 = 1553, //Destroy Anvil?
+    Vehicle_Damage_Chimera = 1557,
     Kill_Assist_Chimera = 1560,
 
     Vehicle_Destruction_Chimera = 1565,
@@ -1247,6 +1249,7 @@ pub enum ExperienceType {
     Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
     Missing_1646 = 1646, //Triggered after dervish kill from galaxy gun turret
+    Surface_To_Air_Dervish = 1647,
     Dervish_Damage = 1657,
     Fighter_Superiority_Bonus = 1649,
     Gunner_Kill_Share_Dervish = 1650,
@@ -1353,6 +1356,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Control_Point_Defend => write!(f, "Control Point Defend XP"),
             ExperienceType::Control_Point_Attack => write!(f, "Control Point Attack XP"),
             ExperienceType::Facility_Captured_Not_Used => write!(f, "Facility Capture XP"),
+            ExperienceType::Facility_Defense => write!(f, "Facility Defense XP"),
             ExperienceType::Destroy_Secondary_Objective => {
                 write!(f, "Destroy Secondary Objective XP")
             }
@@ -2559,6 +2563,7 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Gunner Kill Assist (Ant) Share XP")
             }
             ExperienceType::Missing_1553 => write!(f, "Missing (1553) XP"),
+            ExperienceType::Vehicle_Damage_Chimera => write!(f, "Vehicle Damage (Chimera) XP"),
             ExperienceType::Kill_Assist_Chimera => write!(f, "Kill Assist Chimera XP"),
             ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
             ExperienceType::Missing_1567 => write!(f, "Missing (1567) XP"),
@@ -2567,6 +2572,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
             ExperienceType::Missing_1646 => write!(f, "Missing (1646) XP"),
+            ExperienceType::Surface_To_Air_Dervish => write!(f, "Anti-air Damage (Dervish) XP"),
             ExperienceType::Dervish_Damage => write!(f, "Vehicle Damage (Dervish) XP"),
             ExperienceType::Fighter_Superiority_Bonus => write!(f, "Fighter Superiority Bonus XP"),
             ExperienceType::Gunner_Kill_Share_Dervish => {
