@@ -342,6 +342,8 @@ pub enum Vehicle {
     ReclaimedVanguard = 2134,
     ReclaimedProwler = 2135,
 
+    Corsair = 2142,
+
     #[num_enum(default)]
     NoVehicle = 0,
 
@@ -411,6 +413,8 @@ impl std::fmt::Display for Vehicle {
 
             Vehicle::Pumpkin => write!(f, "Pumpkin"),
 
+            Vehicle::Corsair => write!(f, "Corsair"),
+
             Vehicle::NoVehicle => write!(f, "NONE"),
             Vehicle::Unknown => write!(f, "Unknown"),
         }
@@ -457,6 +461,7 @@ impl Vehicle {
                 | Vehicle::ReclaimedMagrider
                 | Vehicle::ReclaimedVanguard
                 | Vehicle::ReclaimedProwler
+                | Vehicle::Corsair
         )
     }
 
@@ -537,6 +542,10 @@ impl Vehicle {
                 | Vehicle::ReclaimedVanguard
                 | Vehicle::ReclaimedProwler
         )
+    }
+
+    pub fn is_boat(&self) -> bool {
+        matches!(self, Vehicle::Corsair)
     }
 }
 
@@ -630,7 +639,7 @@ impl std::fmt::Display for Class {
     }
 }
 
-pub fn master_images() -> std::array::IntoIter<(String, u32), 44> {
+pub fn master_images() -> std::array::IntoIter<(String, u32), 45> {
     [
         ("NC".to_owned(), 12),
         ("TR".into(), 18),
@@ -676,6 +685,7 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 44> {
         ("AI Phalanx Turret Alt".into(), 10949),
         ("AV Phalanx Turret".into(), 10952),
         ("AV Turret (Construction)".into(), 10952),
+        ("Corsair".into(), 95012),
         /*
         ("".into(), ),
         */
