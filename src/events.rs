@@ -115,7 +115,6 @@ impl Event {
                 ui.vertical(|ui| {
                     match ui.ctx().texture_by_name(&self.faction.to_string()) {
                         Some(image) => {
-                            ui.add_space(1.0);
                             ui.horizontal(|ui| {
                                 ui.add_space(2.0);
                                 ui.image(image.id(), img_size);
