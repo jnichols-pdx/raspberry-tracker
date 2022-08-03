@@ -153,7 +153,7 @@ fn main() {
     .decode()
     {
         let image_buffer = image.to_rgba8();
-        native_options.icon_data = Some(eframe::epi::IconData {
+        native_options.icon_data = Some(eframe::IconData {
             rgba: image_buffer.into_raw(),
             width: image.width(),
             height: image.height(),

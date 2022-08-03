@@ -4,7 +4,7 @@ use crate::common::*;
 use crate::db::*;
 use crate::session_list::*;
 use crate::vpack::*;
-use eframe::{egui, epi};
+use eframe::egui;
 use egui::*;
 use image::io::Reader as ImageReader;
 use std::io::Cursor;
@@ -78,6 +78,7 @@ impl TrackerApp {
                                 list.push(cc.egui_ctx.load_texture(
                                     name,
                                     ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
+                                    egui::TextureFilter::Linear,
                                 ));
                             }
                         };
@@ -151,6 +152,7 @@ impl TrackerApp {
                 list.push(ctx.load_texture(
                     image_name,
                     ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
+                    egui::TextureFilter::Linear,
                 ));
                 println!("Readied Custom : {}", image_name);
             }
@@ -158,9 +160,9 @@ impl TrackerApp {
     }
 }
 
-impl epi::App for TrackerApp {
+impl eframe::App for TrackerApp {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut epi::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         {
             let session_list_ro = self.session_list.blocking_read();
             if self.session_count < session_list_ro.len() {
@@ -171,7 +173,7 @@ impl epi::App for TrackerApp {
 
         egui::TopBottomPanel::top("menubar").show(ctx, |ui| {
             // thin topmost panel for menubar
-            ui.with_layout(egui::Layout::right_to_left(), |ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if !self.in_character_ui {
                     ui.horizontal(|ui| {
                         ui.text_edit_singleline(&mut self.filter_text);
@@ -179,7 +181,7 @@ impl epi::App for TrackerApp {
                     });
                 }
                 egui::menu::bar(ui, |ui| {
-                    ui.with_layout(egui::Layout::left_to_right(), |ui| {
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         ui.menu_button("File", |ui| {
                             if ui.button("Quit").clicked() {
                                 frame.quit();
