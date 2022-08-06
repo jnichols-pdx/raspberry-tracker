@@ -23,12 +23,10 @@ time-tz = { version = "0.5", features = [ "system" ] }
 egui = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
 egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table" }
 eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table", features = ["default", "persistence"] }
-#epi = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
 egui_extras = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
 #egui = { path = "/usr/src/egui/egui" }
 #egui_glow = { path = "/usr/src/egui/egui_glow" }
 #eframe = { path = "/usr/src/egui/eframe", features = ["default", "persistence"] }
-#epi = { path = "/usr/src/egui/epi" }
 #egui_extras = { path = "/usr/src/egui/egui_extras" }
 rodio = "0.15.0"
 bytes = "1.1"
