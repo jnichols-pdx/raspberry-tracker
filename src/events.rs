@@ -41,11 +41,12 @@ impl Event {
         }
     }
 
-    pub fn ui(&self, row: &mut egui_extras::TableRow) {
+    pub fn ui(&self, row: &mut egui_extras::TableRow, is_target: bool) -> bool {
         let img_size = (15.0, 15.0);
         let bg_color;
         let text_color;
         let mut minimal = false;
+        let mut clicked = false;
         match self.kind {
             EventType::Death => {
                 bg_color = Color32::from_rgb(80, 0, 0);
@@ -103,18 +104,24 @@ impl Event {
             }
         };
 
-        row.set_bg_color(bg_color);
-        if minimal {
-            row.col(|_ui| {});
-            row.col(|_ui| {});
-            row.col(|_ui| {});
-            row.col(|_ui| {});
+        if is_target {
+            row.set_bg_color(Color32::from_rgb(255, 255, 255));
         } else {
-            row.col(|ui| {
+            row.set_bg_color(bg_color);
+        }
+        if minimal {
+            clicked = row.col(|_ui| {}).clicked() || clicked;
+            row.set_bg_color(bg_color);
+            clicked = row.col(|_ui| {}).clicked() || clicked;
+            clicked = row.col(|_ui| {}).clicked() || clicked;
+            clicked = row.col(|_ui| {}).clicked() || clicked;
+        } else {
+            clicked = row.col(|ui| {
                 //faction
                 ui.vertical(|ui| {
                     match ui.ctx().texture_by_name(&self.faction.to_string()) {
                         Some(image) => {
+                            ui.add_space(1.0);
                             ui.horizontal(|ui| {
                                 ui.add_space(2.0);
                                 ui.image(image.id(), img_size);
@@ -130,8 +137,11 @@ impl Event {
                         }
                     };
                 });
-            });
-            row.col(|ui| {
+            }).clicked() || clicked;
+
+            row.set_bg_color(bg_color);
+
+            clicked = row.col(|ui| {
                 //BR
                 ui.vertical(|ui| {
                     ui.add_space(3.5);
@@ -149,8 +159,8 @@ impl Event {
                         );
                     }
                 });
-            });
-            row.col(|ui| {
+            }).clicked() || clicked;
+            clicked = row.col(|ui| {
                 //Class
                 ui.horizontal(|ui| {
                     ui.add_space(3.0);
@@ -162,8 +172,8 @@ impl Event {
                         };
                     });
                 });
-            });
-            row.col(|ui| {
+            }).clicked() || clicked;
+            clicked = row.col(|ui| {
                 //Vehicle
                 ui.horizontal(|ui| {
                     ui.add_space(2.0);
@@ -205,29 +215,29 @@ impl Event {
                         }
                     });
                 });
-            });
+            }).clicked() || clicked;
         }
-        row.col(|ui| {
+        clicked = row.col(|ui| {
             //Player Name
             ui.vertical(|ui| {
                 ui.add_space(3.5);
                 ui.label(egui::RichText::new(&self.name).small().color(text_color))
                     .on_hover_text(&self.name);
             });
-        });
-        row.col(|ui| {
+        }).clicked() || clicked;
+        clicked = row.col(|ui| {
             //Weapon
             ui.vertical(|ui| {
                 ui.add_space(3.5);
                 ui.label(egui::RichText::new(&self.weapon).small().color(text_color))
                     .on_hover_text(&self.weapon);
             });
-        });
+        }).clicked() || clicked;
         if minimal {
-            row.col(|_ui| {});
-            row.col(|_ui| {});
+            clicked = row.col(|_ui| {}).clicked() || clicked;
+            clicked = row.col(|_ui| {}).clicked() || clicked;
         } else {
-            row.col(|ui| {
+            clicked = row.col(|ui| {
                 //Headshot
                 ui.horizontal(|ui| {
                     ui.add_space(2.0);
@@ -245,8 +255,8 @@ impl Event {
                         }
                     });
                 });
-            });
-            row.col(|ui| {
+            }).clicked() || clicked;
+            clicked = row.col(|ui| {
                 //KD ratio
                 ui.vertical(|ui| {
                     ui.add_space(3.5);
@@ -256,9 +266,9 @@ impl Event {
                             .color(text_color),
                     );
                 });
-            });
+            }).clicked() || clicked;
         }
-        row.col(|ui| {
+        clicked = row.col(|ui| {
             //Timestamp
             ui.vertical(|ui| {
                 ui.add_space(3.5);
@@ -268,7 +278,9 @@ impl Event {
                         .color(text_color),
                 );
             });
-        });
+        }).clicked() || clicked;
+
+        clicked
     }
 }
 
@@ -278,6 +290,8 @@ pub struct EventList {
     visible_events: VecDeque<usize>,
     last_view_mode: EventViewMode,
     last_filter: Option<String>,
+    focus_id: Option<i64>,
+    need_refocus: bool,
 }
 
 impl EventList {
@@ -287,6 +301,8 @@ impl EventList {
             visible_events: VecDeque::new(),
             last_view_mode: EventViewMode::default(),
             last_filter: None,
+            focus_id: None,
+            need_refocus: false,
         }
     }
 
@@ -342,6 +358,9 @@ impl EventList {
             self.last_view_mode = event_mode;
             self.last_filter = filter;
             self.compute_visible();
+            if self.focus_id.is_some() {
+                self.need_refocus = true;
+            }
         }
     }
 
@@ -383,7 +402,25 @@ impl EventList {
         }
     }
 
-    pub fn ui(&self, ctx: &egui::Context) {
+    pub fn ui(&mut self, ctx: &egui::Context) {
+        let scroll_offset;
+        if self.need_refocus && self.focus_id.is_some() {
+            let index_u: usize = self.focus_id.unwrap() as usize;
+            if let Ok(focus_pos) = self.visible_events.binary_search_by(|x| index_u.cmp(x)) {
+                let above = 5;
+                if focus_pos < above {
+                    scroll_offset = Some(0.0);
+                } else {
+                    let spacing_y = ctx.style().spacing.item_spacing.y;
+                    scroll_offset = Some((focus_pos - 5) as f32 * (17.0 + spacing_y));
+                }
+            } else {
+                scroll_offset = None;
+            }
+            self.need_refocus = false;
+        } else {
+            scroll_offset = None;
+        }
         egui::SidePanel::right("events_panel")
             .min_width(387.0)
             .show(ctx, |ui| {
@@ -425,9 +462,20 @@ impl EventList {
                             ui.label(egui::RichText::new("Time").small());
                         });
                     })
-                    .body(|body| {
+                    .body(scroll_offset, |body| {
+                        let target_id = self.focus_id.unwrap_or(-1);
                         body.rows(17.0, self.visible_events.len(), |row_index, mut row| {
-                            self.events[self.visible_events[row_index]].ui(&mut row);
+                            let source_id = self.visible_events[row_index];
+                            let is_target = target_id == source_id as i64;
+                            if self.events[source_id].ui(&mut row, is_target) {
+                                //clicked
+                                let new_focused_id = self.visible_events[row_index];
+                                if target_id == new_focused_id as i64 {
+                                    self.focus_id = None;
+                                } else {
+                                    self.focus_id = Some(new_focused_id as i64);
+                                }
+                            }
                         });
                     });
 

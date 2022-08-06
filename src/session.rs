@@ -602,7 +602,7 @@ impl Session {
         self.events.update_filters(event_mode, filter);
     }
 
-    pub fn ui(&self, ctx: &egui::Context) {
+    pub fn ui(&mut self, ctx: &egui::Context) {
         self.events.ui(ctx);
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -818,7 +818,7 @@ impl Session {
                         ui.label(egui::RichText::new("Hits").small());
                     });
                 })
-                .body(|mut body| {
+                .body(None, |mut body| {
                     for weapon in self.weapons.iter().rev() {
                         weapon.ui(&mut body);
                     }

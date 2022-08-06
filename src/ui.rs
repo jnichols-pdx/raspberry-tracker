@@ -341,10 +341,9 @@ impl eframe::App for TrackerApp {
             }
             {
                 //Displaying the actual list however is repeated each refresh and has the potential
-                //to be a lengthy operation each time. Use a read only access to reduce possible
-                //contention.
-                let session_list_ro = self.session_list.blocking_read();
-                if let Some(session) = session_list_ro.selected() {
+                //to be a lengthy operation each time.
+                let mut session_list_rw = self.session_list.blocking_write();
+                if let Some(session) = session_list_rw.selected_mut() {
                     session.ui(ctx);
                 }
             }
