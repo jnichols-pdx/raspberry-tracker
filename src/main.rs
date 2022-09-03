@@ -24,7 +24,8 @@ use crate::session_list::*;
 use futures_util::{SinkExt, StreamExt};
 use image::io::Reader as ImageReader;
 use rodio::{OutputStream, Sink};
-use sqlx::sqlite::SqlitePool;
+use sqlx::sqlite::{SqlitePool,SqliteJournalMode,SqliteConnectOptions};
+use std::str::FromStr;
 use std::io::Cursor;
 use std::sync::Arc;
 use time::OffsetDateTime;
@@ -49,6 +50,7 @@ fn main() {
     let (tx_context_to_ws, rx_context_from_ui) = oneshot::channel::<egui::Context>();
 
     let db_url;
+    let db_options : SqliteConnectOptions;
     if let Some(dir_gen) =
         directories_next::ProjectDirs::from("com", "JTNBrickWorks", "Raspberry Tracker")
     {
@@ -56,19 +58,40 @@ fn main() {
         if let Ok(()) = std::fs::create_dir_all(&data_dir) {
             let db_path = data_dir.join("tracker_data.sqlite");
             db_url = format!("sqlite:{}?mode=rwc", db_path.to_string_lossy());
+            db_options = match SqliteConnectOptions::from_str(&db_url) {
+                Ok(sql_opts) => sql_opts.journal_mode(SqliteJournalMode::Wal),
+                Err(err) => {
+                    println!("DB PREP ERROR: {:?}", err);
+                    std::process::exit(-3);
+                }
+            };
         } else {
             println!("couldn't find/make db directory, using ram instead.");
             db_url = "sqlite::memory:".to_owned();
+            db_options =  match SqliteConnectOptions::from_str(&db_url) {
+                Ok(sql_opts) => sql_opts,
+                Err(err) => {
+                    println!("DB PREP ERROR: {:?}", err);
+                    std::process::exit(-3);
+                }
+            };
         }
     } else {
         println!("unable to determine platform directories, using ram instead.");
         db_url = "sqlite::memory:".to_owned();
+        db_options = match SqliteConnectOptions::from_str(&db_url) {
+            Ok(sql_opts) => sql_opts,
+            Err(err) => {
+                println!("DB PREP ERROR: {:?}", err);
+                std::process::exit(-3);
+            }
+        };
     }
 
-    let db_pool = match rt.block_on(SqlitePool::connect(&db_url)) {
+    let db_pool = match rt.block_on(SqlitePool::connect_with(db_options.read_only(false))) {
         Ok(pool) => pool,
         Err(err) => {
-            println!("DB OPEN ERRROR: {:?}", err);
+            println!("DB OPEN ERROR: {:?}", err);
             std::process::exit(-2);
         }
     };
