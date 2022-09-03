@@ -327,6 +327,7 @@ pub enum ExperienceType {
     Passenger_Kill_Share_Player = 405,
     Pass_Kill_Share_MANA_407 = 407,
     Passenger_Kill_Share_Reaver = 416,
+    Passenger_Kill_Share_Scythe = 417,
     Gunner_Kill_Assist_Share_Infantry_To_Pilot = 421,
     Gunner_Kill_Assist_Share_Phalanx_To_Pilot = 424,
     Passenger_Kill_Assist_Share_Galaxy = 426,
@@ -1265,6 +1266,7 @@ pub enum ExperienceType {
     Gunner_Kill_Share_Dervish = 1650,
     Gunner_Kill_Assist_Share_Dervish = 1651,
 
+    Vehicle_Destruction_Corsair = 1989,
     Kill_Assist_Corsair = 1992,
     Gunner_Kill_Assist_Share_Corsair_Alt = 2005,
     Gunner_Kill_Assist_Share_Corsair = 2006,
@@ -2543,6 +2545,10 @@ impl std::fmt::Display for ExperienceType {
                 //416
                 write!(f, "Passenger Kill Share (Reaver XP)")
             }
+            ExperienceType::Passenger_Kill_Share_Scythe => {
+                //417
+                write!(f, "Passenger Kill Share (Scythe XP)")
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Infantry_To_Pilot => {
                 write!(f, "Gunner Kill Assist To Pilot(Infantry) Share XP") //421
             }
@@ -2642,6 +2648,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Dervish => {
                 write!(f, "Gunner Kill Assist (Dervish) Share XP")
             }
+            ExperienceType::Vehicle_Destruction_Corsair => write!(f, "Destroy Corsair XP"),
             ExperienceType::Kill_Assist_Corsair => write!(f, "Kill Assist Corsair XP"),
             ExperienceType::Gunner_Kill_Assist_Share_Corsair_Alt => {
                 write!(f, "Gunner Kill Assist (Corsair) Share XPa") //2005
