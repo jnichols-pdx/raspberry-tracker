@@ -296,7 +296,7 @@ impl eframe::App for TrackerApp {
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("Version 0.40");
+                    ui.label("Version 0.4.2");
                     egui::warn_if_debug_build(ui);
                 });
             });
