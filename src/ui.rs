@@ -184,8 +184,7 @@ impl eframe::App for TrackerApp {
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         ui.menu_button("File", |ui| {
                             if ui.button("Quit").clicked() {
-                                self.db.rt.block_on(self.db.dbc.conn.close());
-                                frame.quit();
+                                frame.close();
                             }
                         });
                         ui.menu_button("View", |ui| {

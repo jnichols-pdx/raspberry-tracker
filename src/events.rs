@@ -424,8 +424,12 @@ impl EventList {
         egui::SidePanel::right("events_panel")
             .min_width(387.0)
             .show(ctx, |ui| {
-                TableBuilder::new(ui)
-                    .column(Size::exact(20.0)) //Faction
+                let mut bob = TableBuilder::new(ui);
+                if let Some(offset) = scroll_offset {
+                    bob = bob.vertical_scroll_offset(offset);
+                }
+
+                bob.column(Size::exact(20.0)) //Faction
                     .column(Size::exact(30.0)) //BR
                     .column(Size::exact(22.0)) //Class
                     .column(Size::exact(20.0)) //Vehicle
@@ -462,7 +466,7 @@ impl EventList {
                             ui.label(egui::RichText::new("Time").small());
                         });
                     })
-                    .body(scroll_offset, |body| {
+                    .body(|body| {
                         let target_id = self.focus_id.unwrap_or(-1);
                         body.rows(17.0, self.visible_events.len(), |row_index, mut row| {
                             let source_id = self.visible_events[row_index];

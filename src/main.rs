@@ -104,6 +104,15 @@ fn main() {
 
     sync_db.init_sync();
 
+    let shutdown_db = sync_db.clone();
+    ctrlc::set_handler(move || {
+        println!(""); //move next output below '^C' echoed to terminal.
+        println!("Closing database");
+        shutdown_db.rt.block_on(shutdown_db.dbc.conn.close());
+        println!("Goodbye! (SIGINT)");
+        std::process::exit(0);
+    }).expect("Error setting Ctrl-C handler");
+
     let achievements = Arc::new(RwLock::new(AchievementEngine::new(sync_db.clone(), sink)));
 
     let session_list = Arc::new(RwLock::new(sync_db.get_sessions_sync()));
@@ -195,6 +204,8 @@ fn main() {
         tx_to_logout_websocket,
     ));
 
+    let gui_sync_db = sync_db.clone();
+
     eframe::run_native(
         "Raspberry Tracker",
         native_options,
@@ -203,12 +214,15 @@ fn main() {
                 cc,
                 character_list,
                 session_list,
-                sync_db,
+                gui_sync_db,
                 Some(tx_context_to_ws),
                 achievements,
             ))
         }),
     );
+    println!("Closing database");
+    sync_db.rt.block_on(sync_db.dbc.conn.close());
+    println!("Goodbye!");
 }
 
 #[allow(clippy::too_many_arguments)]

@@ -818,7 +818,7 @@ impl Session {
                         ui.label(egui::RichText::new("Hits").small());
                     });
                 })
-                .body(None, |mut body| {
+                .body(|mut body| {
                     for weapon in self.weapons.iter().rev() {
                         weapon.ui(&mut body);
                     }
