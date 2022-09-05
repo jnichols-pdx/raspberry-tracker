@@ -89,6 +89,9 @@ impl TrackerApp {
         }
 
         app_ui.load_image_bytes("Robit", include_bytes!("../Images/NSO.png"), &cc.egui_ctx);
+        app_ui.load_image_bytes("Robit-VS", include_bytes!("../Images/NSO-VS.png"), &cc.egui_ctx);
+        app_ui.load_image_bytes("Robit-NC", include_bytes!("../Images/NSO-NC.png"), &cc.egui_ctx);
+        app_ui.load_image_bytes("Robit-TR", include_bytes!("../Images/NSO-TR.png"), &cc.egui_ctx);
         app_ui.load_image_bytes(
             "Headshot",
             include_bytes!("../Images/Headshot.png"),

@@ -12,6 +12,9 @@ pub enum Faction {
     NC = 2,
     TR = 3,
     NSO = 4,
+    NSO_VS = 997,
+    NSO_NC = 998,
+    NSO_TR = 999,
 
     #[num_enum(default)]
     Unknown = 0,
@@ -24,7 +27,36 @@ impl std::fmt::Display for Faction {
             Faction::NC => write!(f, "NC"),
             Faction::TR => write!(f, "TR"),
             Faction::NSO => write!(f, "Robit"),
+            Faction::NSO_VS => write!(f, "Robit-VS"),
+            Faction::NSO_NC => write!(f, "Robit-NC"),
+            Faction::NSO_TR => write!(f, "Robit-TR"),
             Faction::Unknown => write!(f, "Unknown"),
+        }
+    }
+}
+
+//Distinct from Faction, as this determines what faction an NSO
+//player is currently hired out to, and which team (Alpha, Omega, Observer)
+//a player is on the Nexus continent during outfit wars.
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[repr(i64)]
+pub enum Team {
+    VS = 1, //Nexus Observer
+    NC = 2, //Nexus Omega
+    TR = 3, //Nexus Alpha
+
+    #[num_enum(default)]
+    Unknown = 0,
+}
+
+impl std::fmt::Display for Team {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Team::VS => write!(f, "VS"),
+            Team::NC => write!(f, "NC"),
+            Team::TR => write!(f, "TR"),
+            Team::Unknown => write!(f, "Unknown"),
         }
     }
 }
