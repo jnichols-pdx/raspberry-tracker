@@ -116,169 +116,198 @@ impl Event {
             clicked = row.col(|_ui| {}).clicked() || clicked;
             clicked = row.col(|_ui| {}).clicked() || clicked;
         } else {
-            clicked = row.col(|ui| {
-                //faction
-                ui.vertical(|ui| {
-                    match ui.ctx().texture_by_name(&self.faction.to_string()) {
-                        Some(image) => {
-                            ui.add_space(1.0);
-                            ui.horizontal(|ui| {
-                                ui.add_space(2.0);
-                                ui.image(image.id(), img_size);
-                            });
-                        }
-                        None => {
-                            ui.add_space(3.5);
+            clicked = row
+                .col(|ui| {
+                    //faction
+                    ui.vertical(|ui| {
+                        match ui.ctx().texture_by_name(&self.faction.to_string()) {
+                            Some(image) => {
+                                ui.add_space(1.0);
+                                ui.horizontal(|ui| {
+                                    ui.add_space(2.0);
+                                    ui.image(image.id(), img_size);
+                                });
+                            }
+                            None => {
+                                ui.add_space(3.5);
+                                ui.label(
+                                    egui::RichText::new(self.faction.to_string())
+                                        .small()
+                                        .color(text_color),
+                                );
+                            }
+                        };
+                    });
+                })
+                .clicked()
+                || clicked;
+
+            row.set_bg_color(bg_color);
+
+            clicked = row
+                .col(|ui| {
+                    //BR
+                    ui.vertical(|ui| {
+                        ui.add_space(3.5);
+                        if self.asp > 0 {
                             ui.label(
-                                egui::RichText::new(self.faction.to_string())
+                                egui::RichText::new(format!("{}~{}", self.br, self.asp))
+                                    .small()
+                                    .color(text_color),
+                            );
+                        } else {
+                            ui.label(
+                                egui::RichText::new(format!("{}", self.br))
                                     .small()
                                     .color(text_color),
                             );
                         }
-                    };
-                });
-            }).clicked() || clicked;
-
-            row.set_bg_color(bg_color);
-
-            clicked = row.col(|ui| {
-                //BR
+                    });
+                })
+                .clicked()
+                || clicked;
+            clicked = row
+                .col(|ui| {
+                    //Class
+                    ui.horizontal(|ui| {
+                        ui.add_space(3.0);
+                        ui.vertical(|ui| {
+                            ui.add_space(1.0);
+                            match ui.ctx().texture_by_name(&self.class.to_string()) {
+                                Some(image) => ui.image(image.id(), img_size),
+                                None => ui.label(""), // ui.label(egui::RichText::new(self.class.to_string()).small()),
+                            };
+                        });
+                    });
+                })
+                .clicked()
+                || clicked;
+            clicked = row
+                .col(|ui| {
+                    //Vehicle
+                    ui.horizontal(|ui| {
+                        ui.add_space(2.0);
+                        ui.vertical(|ui| {
+                            //Override for orbital strike direct kills (can't track when players die from falling
+                            //damage after being thrown airborn by orbital :( )
+                            if self.weapon == "Orbital Strike Uplink" {
+                                if let Some(image) = ui.ctx().texture_by_name("Orbital") {
+                                    ui.add_space(1.0);
+                                    ui.image(image.id(), img_size);
+                                };
+                            } else if let Some(vehicle) = self.vehicle {
+                                match ui.ctx().texture_by_name(&vehicle.to_string()) {
+                                    Some(image) => {
+                                        ui.add_space(1.0);
+                                        ui.image(image.id(), img_size).on_hover_ui(|ui| {
+                                            ui.horizontal(|ui| {
+                                                //Screenspace is in Points, which aren't 1 to 1 with pixels
+                                                //in my desktop environment the Sunderer icon, which is
+                                                //18x32 pixels content in a 32x32 png, renders at that
+                                                //actual screen resolution when the image size is 21x22
+                                                //points. This MAY NOT HOLD across other user's desktops.
+                                                //
+                                                //In theory we could divide the image dimensions by
+                                                //Context.pixels_per_point() to get 'correct' on screen
+                                                //dimensions, however in testing this stretched icons
+                                                //horizontally by 1 pixel.
+                                                ui.image(image.id(), (21.0, 22.0));
+                                                ui.label(vehicle.to_string());
+                                            });
+                                        });
+                                    }
+                                    None => {
+                                        ui.add_space(1.5);
+                                        ui.label(egui::RichText::new(vehicle.to_string()).small())
+                                            .on_hover_text(vehicle.to_string());
+                                    }
+                                };
+                            }
+                        });
+                    });
+                })
+                .clicked()
+                || clicked;
+        }
+        clicked = row
+            .col(|ui| {
+                //Player Name
                 ui.vertical(|ui| {
                     ui.add_space(3.5);
-                    if self.asp > 0 {
-                        ui.label(
-                            egui::RichText::new(format!("{}~{}", self.br, self.asp))
-                                .small()
-                                .color(text_color),
-                        );
-                    } else {
-                        ui.label(
-                            egui::RichText::new(format!("{}", self.br))
-                                .small()
-                                .color(text_color),
-                        );
-                    }
+                    ui.label(egui::RichText::new(&self.name).small().color(text_color))
+                        .on_hover_text(&self.name);
                 });
-            }).clicked() || clicked;
-            clicked = row.col(|ui| {
-                //Class
-                ui.horizontal(|ui| {
-                    ui.add_space(3.0);
-                    ui.vertical(|ui| {
-                        ui.add_space(1.0);
-                        match ui.ctx().texture_by_name(&self.class.to_string()) {
-                            Some(image) => ui.image(image.id(), img_size),
-                            None => ui.label(""), // ui.label(egui::RichText::new(self.class.to_string()).small()),
-                        };
-                    });
+            })
+            .clicked()
+            || clicked;
+        clicked = row
+            .col(|ui| {
+                //Weapon
+                ui.vertical(|ui| {
+                    ui.add_space(3.5);
+                    ui.label(egui::RichText::new(&self.weapon).small().color(text_color))
+                        .on_hover_text(&self.weapon);
                 });
-            }).clicked() || clicked;
-            clicked = row.col(|ui| {
-                //Vehicle
-                ui.horizontal(|ui| {
-                    ui.add_space(2.0);
-                    ui.vertical(|ui| {
-                        //Override for orbital strike direct kills (can't track when players die from falling
-                        //damage after being thrown airborn by orbital :( )
-                        if self.weapon == "Orbital Strike Uplink" {
-                            if let Some(image) = ui.ctx().texture_by_name("Orbital") {
-                                ui.add_space(1.0);
-                                ui.image(image.id(), img_size);
-                            };
-                        } else if let Some(vehicle) = self.vehicle {
-                            match ui.ctx().texture_by_name(&vehicle.to_string()) {
-                                Some(image) => {
-                                    ui.add_space(1.0);
-                                    ui.image(image.id(), img_size).on_hover_ui(|ui| {
-                                        ui.horizontal(|ui| {
-                                            //Screenspace is in Points, which aren't 1 to 1 with pixels
-                                            //in my desktop environment the Sunderer icon, which is
-                                            //18x32 pixels content in a 32x32 png, renders at that
-                                            //actual screen resolution when the image size is 21x22
-                                            //points. This MAY NOT HOLD across other user's desktops.
-                                            //
-                                            //In theory we could divide the image dimensions by
-                                            //Context.pixels_per_point() to get 'correct' on screen
-                                            //dimensions, however in testing this stretched icons
-                                            //horizontally by 1 pixel.
-                                            ui.image(image.id(), (21.0, 22.0));
-                                            ui.label(vehicle.to_string());
-                                        });
-                                    });
-                                }
-                                None => {
-                                    ui.add_space(1.5);
-                                    ui.label(egui::RichText::new(vehicle.to_string()).small())
-                                        .on_hover_text(vehicle.to_string());
-                                }
-                            };
-                        }
-                    });
-                });
-            }).clicked() || clicked;
-        }
-        clicked = row.col(|ui| {
-            //Player Name
-            ui.vertical(|ui| {
-                ui.add_space(3.5);
-                ui.label(egui::RichText::new(&self.name).small().color(text_color))
-                    .on_hover_text(&self.name);
-            });
-        }).clicked() || clicked;
-        clicked = row.col(|ui| {
-            //Weapon
-            ui.vertical(|ui| {
-                ui.add_space(3.5);
-                ui.label(egui::RichText::new(&self.weapon).small().color(text_color))
-                    .on_hover_text(&self.weapon);
-            });
-        }).clicked() || clicked;
+            })
+            .clicked()
+            || clicked;
         if minimal {
             clicked = row.col(|_ui| {}).clicked() || clicked;
             clicked = row.col(|_ui| {}).clicked() || clicked;
         } else {
-            clicked = row.col(|ui| {
-                //Headshot
-                ui.horizontal(|ui| {
-                    ui.add_space(2.0);
-                    ui.vertical(|ui| {
-                        ui.add_space(1.5);
-                        if self.headshot {
-                            match ui.ctx().texture_by_name("Headshot") {
-                                Some(image) => {
-                                    ui.image(image.id(), img_size);
-                                }
-                                None => {
-                                    ui.label(egui::RichText::new("HS!").small().color(text_color));
-                                }
-                            };
-                        }
+            clicked = row
+                .col(|ui| {
+                    //Headshot
+                    ui.horizontal(|ui| {
+                        ui.add_space(2.0);
+                        ui.vertical(|ui| {
+                            ui.add_space(1.5);
+                            if self.headshot {
+                                match ui.ctx().texture_by_name("Headshot") {
+                                    Some(image) => {
+                                        ui.image(image.id(), img_size);
+                                    }
+                                    None => {
+                                        ui.label(
+                                            egui::RichText::new("HS!").small().color(text_color),
+                                        );
+                                    }
+                                };
+                            }
+                        });
                     });
-                });
-            }).clicked() || clicked;
-            clicked = row.col(|ui| {
-                //KD ratio
+                })
+                .clicked()
+                || clicked;
+            clicked = row
+                .col(|ui| {
+                    //KD ratio
+                    ui.vertical(|ui| {
+                        ui.add_space(3.5);
+                        ui.label(
+                            egui::RichText::new(format!("{:.2}", self.kdr))
+                                .small()
+                                .color(text_color),
+                        );
+                    });
+                })
+                .clicked()
+                || clicked;
+        }
+        clicked = row
+            .col(|ui| {
+                //Timestamp
                 ui.vertical(|ui| {
                     ui.add_space(3.5);
                     ui.label(
-                        egui::RichText::new(format!("{:.2}", self.kdr))
+                        egui::RichText::new(&self.datetime)
                             .small()
                             .color(text_color),
                     );
                 });
-            }).clicked() || clicked;
-        }
-        clicked = row.col(|ui| {
-            //Timestamp
-            ui.vertical(|ui| {
-                ui.add_space(3.5);
-                ui.label(
-                    egui::RichText::new(&self.datetime)
-                        .small()
-                        .color(text_color),
-                );
-            });
-        }).clicked() || clicked;
+            })
+            .clicked()
+            || clicked;
 
         clicked
     }

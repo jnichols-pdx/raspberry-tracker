@@ -24,9 +24,9 @@ use crate::session_list::*;
 use futures_util::{SinkExt, StreamExt};
 use image::io::Reader as ImageReader;
 use rodio::{OutputStream, Sink};
-use sqlx::sqlite::{SqlitePool,SqliteJournalMode,SqliteConnectOptions};
-use std::str::FromStr;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePool};
 use std::io::Cursor;
+use std::str::FromStr;
 use std::sync::Arc;
 use time::OffsetDateTime;
 use time_tz::OffsetDateTimeExt;
@@ -50,7 +50,7 @@ fn main() {
     let (tx_context_to_ws, rx_context_from_ui) = oneshot::channel::<egui::Context>();
 
     let db_url;
-    let db_options : SqliteConnectOptions;
+    let db_options: SqliteConnectOptions;
     if let Some(dir_gen) =
         directories_next::ProjectDirs::from("com", "JTNBrickWorks", "Raspberry Tracker")
     {
@@ -68,7 +68,7 @@ fn main() {
         } else {
             println!("couldn't find/make db directory, using ram instead.");
             db_url = "sqlite::memory:".to_owned();
-            db_options =  match SqliteConnectOptions::from_str(&db_url) {
+            db_options = match SqliteConnectOptions::from_str(&db_url) {
                 Ok(sql_opts) => sql_opts,
                 Err(err) => {
                     println!("DB PREP ERROR: {:?}", err);
@@ -111,7 +111,8 @@ fn main() {
         shutdown_db.rt.block_on(shutdown_db.dbc.conn.close());
         println!("Goodbye! (SIGINT)");
         std::process::exit(0);
-    }).expect("Error setting Ctrl-C handler");
+    })
+    .expect("Error setting Ctrl-C handler");
 
     let achievements = Arc::new(RwLock::new(AchievementEngine::new(sync_db.clone(), sink)));
 
@@ -534,7 +535,7 @@ async fn parse_messages(
                 let mut class = Class::Unknown;
                 let mut ratio = 0.5;
                 let mut faction = Faction::Unknown;
-                let player_team;// = Team::Unknown;
+                let player_team; // = Team::Unknown;
                 let other_team; //= Team::Unknown;
 
                 //Suicide
@@ -564,20 +565,20 @@ async fn parse_messages(
                     asp = player_char.asp;
                     faction = player_char.faction;
                     let team_num = json["payload"]["team_id"]
-                                    .to_string()
-                                    .unquote()
-                                    .parse::<i64>()
-                                    .unwrap_or(0);
+                        .to_string()
+                        .unquote()
+                        .parse::<i64>()
+                        .unwrap_or(0);
                     player_team = Team::from(team_num);
                     //other_team = player_team;
 
                     if Faction::NSO == faction {
-                       faction = match player_team {
-                           Team::VS => Faction::NSO_VS,
-                           Team::NC => Faction::NSO_NC,
-                           Team::TR => Faction::NSO_TR,
-                           _ => Faction::NSO
-                       }
+                        faction = match player_team {
+                            Team::VS => Faction::NSO_VS,
+                            Team::NC => Faction::NSO_NC,
+                            Team::TR => Faction::NSO_TR,
+                            _ => Faction::NSO,
+                        }
                     }
 
                     let session_list_ro = session_list.read().await;
@@ -614,25 +615,25 @@ async fn parse_messages(
                                     .unwrap_or(0);
                                 faction = Faction::from(faction_num);
                                 let player_team_num = json["payload"]["attacker_team_id"]
-                                                .to_string()
-                                                .unquote()
-                                                .parse::<i64>()
-                                                .unwrap_or(0);
+                                    .to_string()
+                                    .unquote()
+                                    .parse::<i64>()
+                                    .unwrap_or(0);
                                 player_team = Team::from(player_team_num);
                                 let other_team_num = json["payload"]["team_id"]
-                                                .to_string()
-                                                .unquote()
-                                                .parse::<i64>()
-                                                .unwrap_or(0);
+                                    .to_string()
+                                    .unquote()
+                                    .parse::<i64>()
+                                    .unwrap_or(0);
                                 other_team = Team::from(other_team_num);
 
                                 if Faction::NSO == faction {
-                                   faction = match other_team {
-                                       Team::VS => Faction::NSO_VS,
-                                       Team::NC => Faction::NSO_NC,
-                                       Team::TR => Faction::NSO_TR,
-                                       _ => Faction::NSO
-                                   }
+                                    faction = match other_team {
+                                        Team::VS => Faction::NSO_VS,
+                                        Team::NC => Faction::NSO_NC,
+                                        Team::TR => Faction::NSO_TR,
+                                        _ => Faction::NSO,
+                                    }
                                 }
 
                                 //if faction == player_char.faction {
@@ -687,20 +688,20 @@ async fn parse_messages(
                             asp = player_char.asp;
                             faction = player_char.faction;
                             let team_num = json["payload"]["team_id"]
-                                            .to_string()
-                                            .unquote()
-                                            .parse::<i64>()
-                                            .unwrap_or(0);
+                                .to_string()
+                                .unquote()
+                                .parse::<i64>()
+                                .unwrap_or(0);
                             player_team = Team::from(team_num);
                             //other_team = player_team;
 
                             if Faction::NSO == faction {
-                               faction = match player_team {
-                                   Team::VS => Faction::NSO_VS,
-                                   Team::NC => Faction::NSO_NC,
-                                   Team::TR => Faction::NSO_TR,
-                                   _ => Faction::NSO
-                               }
+                                faction = match player_team {
+                                    Team::VS => Faction::NSO_VS,
+                                    Team::NC => Faction::NSO_NC,
+                                    Team::TR => Faction::NSO_TR,
+                                    _ => Faction::NSO,
+                                }
                             }
 
                             let session_list_ro = session_list.read().await;
@@ -737,25 +738,25 @@ async fn parse_messages(
                                         .unwrap_or(0);
                                     faction = Faction::from(faction_num);
                                     let player_team_num = json["payload"]["team_id"]
-                                                    .to_string()
-                                                    .unquote()
-                                                    .parse::<i64>()
-                                                    .unwrap_or(0);
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<i64>()
+                                        .unwrap_or(0);
                                     player_team = Team::from(player_team_num);
                                     let other_team_num = json["payload"]["attacker_team_id"]
-                                                    .to_string()
-                                                    .unquote()
-                                                    .parse::<i64>()
-                                                    .unwrap_or(0);
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<i64>()
+                                        .unwrap_or(0);
                                     other_team = Team::from(other_team_num);
 
                                     if Faction::NSO == faction {
-                                       faction = match other_team {
-                                           Team::VS => Faction::NSO_VS,
-                                           Team::NC => Faction::NSO_NC,
-                                           Team::TR => Faction::NSO_TR,
-                                           _ => Faction::NSO
-                                       }
+                                        faction = match other_team {
+                                            Team::VS => Faction::NSO_VS,
+                                            Team::NC => Faction::NSO_NC,
+                                            Team::TR => Faction::NSO_TR,
+                                            _ => Faction::NSO,
+                                        }
                                     }
 
                                     //if faction == player_char.faction {
@@ -1115,7 +1116,7 @@ async fn parse_messages(
                             let mut kdr = 0.0;
                             let mut faction = Faction::Unknown;
                             //let player_team;// = Team::Unknown;
-                            let other_team;// = Team::Unknown;
+                            let other_team; // = Team::Unknown;
                             let mut class = Class::Unknown;
                             match lookup_new_char_details(
                                 &json["payload"]["character_id"].to_string().unquote(),
@@ -1131,20 +1132,20 @@ async fn parse_messages(
                                         .unwrap_or(0);
                                     faction = Faction::from(faction_num);
                                     let team_num = json["payload"]["team_id"]
-                                                    .to_string()
-                                                    .unquote()
-                                                    .parse::<i64>()
-                                                    .unwrap_or(0);
+                                        .to_string()
+                                        .unquote()
+                                        .parse::<i64>()
+                                        .unwrap_or(0);
                                     other_team = Team::from(team_num);
                                     //player_team = other_team;
 
                                     if Faction::NSO == faction {
-                                       faction = match other_team {
-                                           Team::VS => Faction::NSO_VS,
-                                           Team::NC => Faction::NSO_NC,
-                                           Team::TR => Faction::NSO_TR,
-                                           _ => Faction::NSO
-                                       }
+                                        faction = match other_team {
+                                            Team::VS => Faction::NSO_VS,
+                                            Team::NC => Faction::NSO_NC,
+                                            Team::TR => Faction::NSO_TR,
+                                            _ => Faction::NSO,
+                                        }
                                     }
 
                                     class = Class::from(
