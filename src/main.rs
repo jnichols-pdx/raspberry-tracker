@@ -1189,14 +1189,14 @@ async fn parse_messages(
                     .eq(&player_id)
                 {
                     //Some events we do care about have our player as the target in 'other_id'
-                    //rather than as the reveiver of the XP itself. Check for things like being
+                    //rather than as the receiver of the XP itself. Check for things like being
                     //revived.
                     if json["payload"]["other_id"]
                         .to_string()
                         .unquote()
                         .eq(&player_id)
                     {
-                        if xp_type == ExperienceType::Revive {
+                        if xp_type == ExperienceType::Revive || xp_type == ExperienceType::Squad_Revive {
                             //WE have been revived. Log a Revived event instead.
                             let mut name = format!(
                                 "Unknown ({})",
