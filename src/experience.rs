@@ -358,6 +358,7 @@ pub enum ExperienceType {
     Gunner_Kill_Share_Valkyrie = 516,
     Gunner_Kill_Assist_Share_Valkyrie = 517, //probably a gunner kill assist / kill assist share / kill share XP of some flavor
     Passenger_Kill_Share_Valkyrie = 518,
+    Gunner_Kill_Assit_Share_To_Pilot_Valkyrie = 519,
     Flash_Kill_by_Valkyrie_Gunner = 520,
     Sunderer_Kill_by_Valkyrie_Gunner = 521,
     Lightning_Kill_by_Valkyrie_Gunner = 522,
@@ -2580,6 +2581,10 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Passenger_Kill_Share_Valkyrie => {
                 //518
                 write!(f, "Passenger Kill Share (Valkyrie) XP")
+            }
+            ExperienceType::Gunner_Kill_Assit_Share_To_Pilot_Valkyrie => {
+                //519
+                write!(f, "Gunner Kill Assist To Pilot (Valkyrie) Share XP")
             }
             ExperienceType::Gunner_Kill_Share_Construction_Med => {
                 write!(f, "Gunner Kill Share (Construction - Medium) XP")
