@@ -21,6 +21,8 @@ pub struct Session {
     start_time: i64,
     end_time: Option<i64>,
 
+    pub team: Team,
+
     kill_count: u32,
     death_count: u32,
     headshot_kills: u32,
@@ -287,6 +289,7 @@ impl Session {
             weapons: WeaponSet::new(),
             start_time: start,
             end_time: None,
+            team: Team::Unknown,
 
             kill_count: 0,
             death_count: 0,
@@ -351,6 +354,8 @@ impl Session {
 
             start_time: row.get::<i64, usize>(10),
             end_time: row.get::<Option<i64>, usize>(11),
+            team: row.get::<i64, usize>(36).into(),
+
 
             kill_count: row.get::<u32, usize>(12),
             death_count: row.get::<u32, usize>(13),
@@ -962,7 +967,7 @@ impl Session {
     }
 
     pub async fn save_to_db(&mut self) {
-        match sqlx::query("INSERT INTO sessions VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id;")
+        match sqlx::query("INSERT INTO sessions VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id;")
             .bind(&self.character.full_name)
             .bind(&self.character.lower_name)
             .bind(self.character.server as i64)
@@ -1003,6 +1008,7 @@ impl Session {
             .bind(self.latest_br as i64)
             .bind(self.latest_asp as i64)
             .bind(self.pre_asp_rankups as i64)
+            .bind(self.team as i64)
             .fetch_one(&self.db.dbc.conn)
             .await
         {
@@ -1024,7 +1030,8 @@ impl Session {
         if self.dirty {
             match sqlx::query("UPDATE sessions set end_time = ?, kill_count = ?, death_count = ?, headshot_kills = ?, headshot_deaths = ?,
                                vehicles_destroyed = ?, vehicles_lost = ?, vehicle_kills = ?, vehicle_deaths = ?, la_kills = ?,
-                               la_revived_deaths = ?, la_fired = ?, la_shots = ?, la_headshots = ?, l_br = ?, l_asp = ?, pa_rankups = ?
+                               la_revived_deaths = ?, la_fired = ?, la_shots = ?, la_headshots = ?, l_br = ?, l_asp = ?, pa_rankups = ?,
+                               team = ?
                                WHERE id IS ?;")
                 .bind(self.end_time)
 
@@ -1046,6 +1053,7 @@ impl Session {
                 .bind(self.latest_br as i64)
                 .bind(self.latest_asp as i64)
                 .bind(self.pre_asp_rankups as i64)
+                .bind(self.team as i64)
                 .bind(self.db_id)
                 .execute(&self.db.dbc.conn)
                 .await

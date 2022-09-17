@@ -38,7 +38,7 @@ use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, WebSocket
 //EGUI offers both native and web assembly compilation targets, I don't intend to use WASM.
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    big_print_num("0.4.2");
+    big_print_num("0.4.5");
     let rt = Runtime::new().unwrap();
     let rth = rt.handle();
 
@@ -385,6 +385,25 @@ async fn parse_messages(
         if parsing {
             //Parsing will be false once the MPSC channel closes, don't double parse the last JSON
             //message received.
+
+            let need_update_session_team;
+            let mut do_update_session_team = false;
+            let mut player_team = Team::Unknown;
+            let other_team; //= Team::Unknown;
+
+            {
+                let session_list_ro = session_list.read().await;
+                if let Some(session) = session_list_ro.active_session() {
+                    if session.team == Team::Unknown {
+                        need_update_session_team = true;
+                    } else {
+                        need_update_session_team = false;
+                    }
+                } else {
+                    need_update_session_team = false;
+                }
+            }
+
             if json["type"].eq("heartbeat") {
                 println!(".");
             } else if json["payload"]["event_name"].eq("PlayerLogin") {
@@ -535,8 +554,7 @@ async fn parse_messages(
                 let mut class = Class::Unknown;
                 let mut ratio = 0.5;
                 let mut faction = Faction::Unknown;
-                let player_team; // = Team::Unknown;
-                let other_team; //= Team::Unknown;
+
 
                 //Suicide
                 if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
@@ -570,6 +588,7 @@ async fn parse_messages(
                         .parse::<i64>()
                         .unwrap_or(0);
                     player_team = Team::from(team_num);
+
                     //other_team = player_team;
 
                     if Faction::NSO == faction {
@@ -582,10 +601,40 @@ async fn parse_messages(
                     }
 
                     let session_list_ro = session_list.read().await;
-                    if let Some(session) = session_list_ro.active_session() {
-                        ratio = session.current_true_kdr();
+                    let mut was_abandoned_vehicle = false;
+                    if vehicle_destroyed {
+                        if let Some(session) = session_list_ro.active_session() {
+                            if session.team != Team::Unknown {
+                                if player_team != session.team {
+                                    //Team ID mismatch between player's team previously
+                                    //seen in the session, and what is reported for the
+                                    //lost vehicle. Presumed to be an ABANDONED vehicle,
+                                    //don't discard, but treat it as US killing something!
+                                    was_abandoned_vehicle = true;
+                                    println!("Treating a 'self-kill' of an other-team's abandoned vehicle as OURS!");
+                                    event_type = EventType::Kill;
+                                    other_team = player_team;
+                                    player_team = session.team;
+                                    name = "<Abandoned>".to_owned();
+                                    faction = other_team.into();
+                                    br = 0;
+                                    asp = 0;
+                                    class = Class::Unknown;
+                                }
+                            }
+                        }
                     } else {
-                        ratio = -1.0;
+                        if need_update_session_team {
+                            do_update_session_team = true;
+                        }
+                    }
+
+                    if !was_abandoned_vehicle {
+                        if let Some(session) = session_list_ro.active_session() {
+                            ratio = session.current_true_kdr();
+                        } else {
+                            ratio = -1.0;
+                        }
                     }
                 } else {
                     let mut deets = None;
@@ -634,6 +683,10 @@ async fn parse_messages(
                                         Team::TR => Faction::NSO_TR,
                                         _ => Faction::NSO,
                                     }
+                                }
+
+                                if need_update_session_team && !vehicle_destroyed {
+                                    do_update_session_team = true;
                                 }
 
                                 //if faction == player_char.faction {
@@ -705,6 +758,23 @@ async fn parse_messages(
                             }
 
                             let session_list_ro = session_list.read().await;
+                            if vehicle_destroyed {
+                                if let Some(session) = session_list_ro.active_session() {
+                                    if session.team != Team::Unknown {
+                                        if player_team != session.team {
+                                            //Team ID mismatch between player's team previously
+                                            //seen in the session, and what is reported for the
+                                            //lost vehicle. Presumed to be an ABANDONED vehicle,
+                                            //discard.
+                                            println!("DISCARDING unknown source killing a 'NOT OUR VEHICLE'");
+                                            continue;
+                                        }
+                                    }
+                                }
+                            } else if need_update_session_team {
+                                do_update_session_team = true;
+                            }
+
                             if let Some(session) = session_list_ro.active_session() {
                                 ratio = session.current_true_kdr();
                             } else {
@@ -757,6 +827,24 @@ async fn parse_messages(
                                             Team::TR => Faction::NSO_TR,
                                             _ => Faction::NSO,
                                         }
+                                    }
+
+                                    if vehicle_destroyed {
+                                        let session_list_ro = session_list.read().await;
+                                        if let Some(session) = session_list_ro.active_session() {
+                                            if session.team != Team::Unknown {
+                                                if player_team != session.team {
+                                                    //Team ID mismatch between player's team previously
+                                                    //seen in the session, and what is reported for the
+                                                    //lost vehicle. Presumed to be an ABANDONED vehicle,
+                                                    //discard.
+                                                    println!("DISCARDING OTHER PLAYER killing a 'NOT OUR VEHICLE'");
+                                                    continue;
+                                                }
+                                            }
+                                        }
+                                    } else if need_update_session_team {
+                                        do_update_session_team = true;
                                     }
 
                                     //if faction == player_char.faction {
@@ -840,7 +928,7 @@ async fn parse_messages(
                         };
                     } else {
                         //Not a mobile vehicle (spitty, mana turret, base turret etc.) don't count it as a vehicle destroyed event.
-                        println!("Supressing non-really-a-vehicle destruction.");
+                        println!("Supressing not-really-a-vehicle destruction.");
                         continue;
                     }
                 }
@@ -964,6 +1052,9 @@ async fn parse_messages(
                                         .await;
                                 }
                             }
+                        }
+                        if do_update_session_team {
+                            current_session.team = player_team;
                         }
                     }
                 }
@@ -1116,7 +1207,7 @@ async fn parse_messages(
                             let mut kdr = 0.0;
                             let mut faction = Faction::Unknown;
                             //let player_team;// = Team::Unknown;
-                            let other_team; // = Team::Unknown;
+                            //let other_team; // = Team::Unknown;
                             let mut class = Class::Unknown;
                             match lookup_new_char_details(
                                 &json["payload"]["character_id"].to_string().unquote(),
@@ -1236,6 +1327,16 @@ async fn parse_messages(
                     println!("XP {} - {}", xp_id, xp_type);
                     let xp_amount = json["payload"]["amount"].to_string().unquote();
 
+                    let player_team_num = json["payload"]["attacker_team_id"]
+                        .to_string()
+                        .unquote()
+                        .parse::<i64>()
+                        .unwrap_or(0);
+                    player_team = Team::from(player_team_num);
+                    if need_update_session_team {
+                        do_update_session_team = true;
+                    }
+
                     let other_id = json["payload"]["other_id"].to_string().unquote();
                     let xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
                     {
@@ -1286,6 +1387,9 @@ async fn parse_messages(
                                     .await;
                             }
                         }
+                    }
+                    if do_update_session_team {
+                        current_session.team = player_team;
                     }
                 }
                 if let Some(sess_id) = current_session_id {

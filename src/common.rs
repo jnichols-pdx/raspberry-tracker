@@ -35,6 +35,17 @@ impl std::fmt::Display for Faction {
     }
 }
 
+impl From<Team> for Faction {
+    fn from(t: Team) -> Faction {
+        match t {
+            Team::VS => Faction::VS,
+            Team::NC => Faction::NC,
+            Team::TR => Faction::TR,
+            Team::Unknown => Faction::Unknown,
+        }
+    }
+}
+
 //Distinct from Faction, as this determines what faction an NSO
 //player is currently hired out to, and which team (Alpha, Omega, Observer)
 //a player is on the Nexus continent during outfit wars.
