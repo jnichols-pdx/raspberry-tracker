@@ -555,7 +555,6 @@ async fn parse_messages(
                 let mut ratio = 0.5;
                 let mut faction = Faction::Unknown;
 
-
                 //Suicide
                 if json["payload"]["character_id"] == json["payload"]["attacker_character_id"] {
                     event_type = EventType::Suicide;
@@ -604,29 +603,25 @@ async fn parse_messages(
                     let mut was_abandoned_vehicle = false;
                     if vehicle_destroyed {
                         if let Some(session) = session_list_ro.active_session() {
-                            if session.team != Team::Unknown {
-                                if player_team != session.team {
-                                    //Team ID mismatch between player's team previously
-                                    //seen in the session, and what is reported for the
-                                    //lost vehicle. Presumed to be an ABANDONED vehicle,
-                                    //don't discard, but treat it as US killing something!
-                                    was_abandoned_vehicle = true;
-                                    println!("Treating a 'self-kill' of an other-team's abandoned vehicle as OURS!");
-                                    event_type = EventType::Kill;
-                                    other_team = player_team;
-                                    player_team = session.team;
-                                    name = "<Abandoned>".to_owned();
-                                    faction = other_team.into();
-                                    br = 0;
-                                    asp = 0;
-                                    class = Class::Unknown;
-                                }
+                            if session.team != Team::Unknown && player_team != session.team {
+                                //Team ID mismatch between player's team previously
+                                //seen in the session, and what is reported for the
+                                //lost vehicle. Presumed to be an ABANDONED vehicle,
+                                //don't discard, but treat it as US killing something!
+                                was_abandoned_vehicle = true;
+                                println!("Treating a 'self-kill' of an other-team's abandoned vehicle as OURS!");
+                                event_type = EventType::Kill;
+                                other_team = player_team;
+                                player_team = session.team;
+                                name = "<Abandoned>".to_owned();
+                                faction = other_team.into();
+                                br = 0;
+                                asp = 0;
+                                class = Class::Unknown;
                             }
                         }
-                    } else {
-                        if need_update_session_team {
-                            do_update_session_team = true;
-                        }
+                    } else if need_update_session_team {
+                        do_update_session_team = true;
                     }
 
                     if !was_abandoned_vehicle {
@@ -760,15 +755,16 @@ async fn parse_messages(
                             let session_list_ro = session_list.read().await;
                             if vehicle_destroyed {
                                 if let Some(session) = session_list_ro.active_session() {
-                                    if session.team != Team::Unknown {
-                                        if player_team != session.team {
-                                            //Team ID mismatch between player's team previously
-                                            //seen in the session, and what is reported for the
-                                            //lost vehicle. Presumed to be an ABANDONED vehicle,
-                                            //discard.
-                                            println!("DISCARDING unknown source killing a 'NOT OUR VEHICLE'");
-                                            continue;
-                                        }
+                                    if session.team != Team::Unknown && player_team != session.team
+                                    {
+                                        //Team ID mismatch between player's team previously
+                                        //seen in the session, and what is reported for the
+                                        //lost vehicle. Presumed to be an ABANDONED vehicle,
+                                        //discard.
+                                        println!(
+                                            "DISCARDING unknown source killing a 'NOT OUR VEHICLE'"
+                                        );
+                                        continue;
                                     }
                                 }
                             } else if need_update_session_team {
@@ -832,15 +828,15 @@ async fn parse_messages(
                                     if vehicle_destroyed {
                                         let session_list_ro = session_list.read().await;
                                         if let Some(session) = session_list_ro.active_session() {
-                                            if session.team != Team::Unknown {
-                                                if player_team != session.team {
-                                                    //Team ID mismatch between player's team previously
-                                                    //seen in the session, and what is reported for the
-                                                    //lost vehicle. Presumed to be an ABANDONED vehicle,
-                                                    //discard.
-                                                    println!("DISCARDING OTHER PLAYER killing a 'NOT OUR VEHICLE'");
-                                                    continue;
-                                                }
+                                            if session.team != Team::Unknown
+                                                && player_team != session.team
+                                            {
+                                                //Team ID mismatch between player's team previously
+                                                //seen in the session, and what is reported for the
+                                                //lost vehicle. Presumed to be an ABANDONED vehicle,
+                                                //discard.
+                                                println!("DISCARDING OTHER PLAYER killing a 'NOT OUR VEHICLE'");
+                                                continue;
                                             }
                                         }
                                     } else if need_update_session_team {
@@ -1196,7 +1192,9 @@ async fn parse_messages(
                         .unquote()
                         .eq(&player_id)
                     {
-                        if xp_type == ExperienceType::Revive || xp_type == ExperienceType::Squad_Revive {
+                        if xp_type == ExperienceType::Revive
+                            || xp_type == ExperienceType::Squad_Revive
+                        {
                             //WE have been revived. Log a Revived event instead.
                             let mut name = format!(
                                 "Unknown ({})",

@@ -356,7 +356,6 @@ impl Session {
             end_time: row.get::<Option<i64>, usize>(11),
             team: row.get::<i64, usize>(36).into(),
 
-
             kill_count: row.get::<u32, usize>(12),
             death_count: row.get::<u32, usize>(13),
             headshot_kills: row.get::<u32, usize>(14),

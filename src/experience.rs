@@ -1139,6 +1139,7 @@ pub enum ExperienceType {
     Vehicle_Repair_Hardlight_Barrier = 1375,
     Kill_Assist_Hardlight_Barrier = 1376,
     Squad_Repair_Hardlight_Barrier = 1378,
+    Gunner_Kill_Share_Hardlight_Barrier = 1379,
     /*
     Destroy_Hardlight_Barrier_HIVE_XP_Source = 1383,
     Vehicle_Gunner_Kill_Share_Hardlight_Barrier_HIVE_XP_Source = 1384,
@@ -2256,6 +2257,9 @@ impl std::fmt::Display for ExperienceType {
             }
             ExperienceType::Squad_Repair_Hardlight_Barrier => {
                 write!(f, "Repair Squad Hardlight Barrier XP")
+            }
+            ExperienceType::Gunner_Kill_Share_Hardlight_Barrier => {
+                write!(f, "Gunner Kill Share (Hardlight Barrier) XP") //1379
             }
             ExperienceType::Missing_1380 => write!(f, "Missing (1380) XP"),
             //ExperienceType::Hardlight_Cover_Blocking_Exp_placeholder_until_code_is_done => write!(f, ""),
