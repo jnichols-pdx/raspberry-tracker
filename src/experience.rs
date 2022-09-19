@@ -1,7 +1,7 @@
 use num_enum::FromPrimitive;
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum ExperienceType {
     Kill_Player = 1,

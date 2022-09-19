@@ -5,7 +5,7 @@ use std::ops::Sub;
 use time::{Date, Duration};
 
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum Faction {
     VS = 1,
@@ -50,7 +50,7 @@ impl From<Team> for Faction {
 //player is currently hired out to, and which team (Alpha, Omega, Observer)
 //a player is on the Nexus continent during outfit wars.
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum Team {
     VS = 1, //Nexus Observer
@@ -73,7 +73,7 @@ impl std::fmt::Display for Team {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, FromPrimitive, IntoPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, IntoPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum World {
     CN = 1,
@@ -300,7 +300,7 @@ pub trait TextureLookup {
     fn texture_by_name(&self, name: &str) -> Option<egui::TextureHandle>;
 }
 
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum EventType {
     Death = 1,
@@ -322,7 +322,7 @@ pub enum EventType {
 }
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum Vehicle {
     Flash = 1,
@@ -592,7 +592,7 @@ impl Vehicle {
     }
 }
 
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum Class {
     NCInfiltrator = 1,
@@ -737,7 +737,7 @@ pub fn master_images() -> std::array::IntoIter<(String, u32), 45> {
 }
 
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
-#[derive(Copy, Clone, FromPrimitive, PartialEq, Debug)]
+#[derive(Copy, Clone, FromPrimitive, PartialEq, Eq, Debug)]
 #[repr(i64)]
 pub enum WeaponType {
     Knife = 2,
@@ -1108,7 +1108,7 @@ pub fn big_print_num(number: &str) {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct EventViewMode {
     pub kills_deaths: bool,
     pub experience: bool,
