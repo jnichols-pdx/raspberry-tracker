@@ -1178,6 +1178,7 @@ async fn parse_messages(
                     .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
                 let new_event;
+                let mut xp_numeric = 0;
 
                 if !json["payload"]["character_id"]
                     .to_string()
@@ -1336,7 +1337,7 @@ async fn parse_messages(
                     }
 
                     let other_id = json["payload"]["other_id"].to_string().unquote();
-                    let xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
+                    xp_numeric = xp_amount.parse::<u32>().unwrap_or(0);
                     {
                         let mut achievements_rw = achievements.write().await;
                         new_achievements = achievements_rw.tally_xp_tick(
@@ -1372,6 +1373,9 @@ async fn parse_messages(
                 let mut session_list_rw = session_list.write().await;
                 if let Some(current_session) = session_list_rw.active_session_mut() {
                     event_ordering = current_session.log_event(new_event.clone()).await;
+                    if new_event.kind == EventType::ExperienceTick {
+                        current_session.tally_xp(xp_numeric);
+                    }
                     ui_context.request_repaint();
                     current_session_id = current_session.get_id();
                     if let Some(achievement_list) = new_achievements {

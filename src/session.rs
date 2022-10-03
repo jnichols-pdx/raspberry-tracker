@@ -25,12 +25,14 @@ pub struct Session {
 
     kill_count: u32,
     death_count: u32,
+    revived_count: u32,
     headshot_kills: u32,
     headshot_deaths: u32,
     vehicles_destroyed: u32,
     vehicles_lost: u32,
     vehicle_kills: u32,  //Killed someone using a vehicle
     vehicle_deaths: u32, //killed by someone else in a vehicle
+    session_score: u32,
     time_zone: &'static Tz,
 
     initial_kills_total: u64,
@@ -293,12 +295,14 @@ impl Session {
 
             kill_count: 0,
             death_count: 0,
+            revived_count: 0,
             headshot_kills: 0,
             headshot_deaths: 0,
             vehicles_destroyed: 0,
             vehicles_lost: 0,
             vehicle_kills: 0,
             vehicle_deaths: 0,
+            session_score: 0,
 
             time_zone: local_tz,
 
@@ -358,12 +362,14 @@ impl Session {
 
             kill_count: row.get::<u32, usize>(12),
             death_count: row.get::<u32, usize>(13),
+            revived_count: row.get::<u32, usize>(37),
             headshot_kills: row.get::<u32, usize>(14),
             headshot_deaths: row.get::<u32, usize>(15),
             vehicles_destroyed: row.get::<u32, usize>(16),
             vehicles_lost: row.get::<u32, usize>(17),
             vehicle_kills: row.get::<u32, usize>(18),
             vehicle_deaths: row.get::<u32, usize>(19),
+            session_score: row.get::<u32, usize>(38),
             time_zone: time_tz::timezones::get_by_name(row.get(20)).unwrap(),
 
             initial_kills_total: row.get::<i64, usize>(21) as u64,
@@ -587,11 +593,16 @@ impl Session {
             }
             EventType::LoseVehicle => self.vehicles_lost += 1,
             EventType::LoseVehicleFF => self.vehicles_lost += 1,
+            EventType::Revived => self.revived_count += 1,
             _ => {}
         };
         self.events.push(event);
         self.dirty = true;
         self.events.len()
+    }
+
+    pub fn tally_xp(&mut self, xp_earned: u32) {
+        self.session_score += xp_earned;
     }
 
     pub fn get_id(&self) -> Option<i64> {
@@ -622,6 +633,8 @@ impl Session {
                 .format(&formatter)
                 .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
+            let mut duration_minutes = 0.0;
+
             ui.horizontal(|ui| {
                 match ui
                     .ctx()
@@ -645,6 +658,8 @@ impl Session {
                         "  {} - {}",
                         formatted_start_time, formatted_end_time
                     ));
+
+                    duration_minutes = (end_time - start_time).whole_seconds() as f32/ 60.0;
                 } else {
                     let now_time = OffsetDateTime::now_utc();
                     let session_duration = now_time - start_time;
@@ -656,6 +671,7 @@ impl Session {
                         "  {},  {:02}:{:02}:{:02}.{:02}",
                         formatted_start_time, hours, minutes, seconds, millis
                     ));
+                    duration_minutes  = session_duration.whole_seconds() as f32 / 60.0;
                 }
             });
 
@@ -679,11 +695,11 @@ impl Session {
                     ui.end_row();
                     if self.death_count > 0 {
                         ui.label(format!(
-                            "KDR {:.5}",
+                            "KDR (true) {:.5}",
                             self.kill_count as f32 / self.death_count as f32
                         ));
                     } else {
-                        ui.label("KDR -");
+                        ui.label("KDR (true) -");
                     }
                     if self.kill_count > 0 {
                         ui.label(format!(
@@ -698,6 +714,42 @@ impl Session {
                         "Accuracy {:.3}%",
                         self.weapons.aggregate_accuracy()
                     ));
+                    ui.end_row();
+                    if (self.death_count - self.revived_count) > 0 {
+                        ui.label(format!(
+                            "KDR (rezzed) {:.5}",
+                            self.kill_count as f32 / (self.death_count - self.revived_count) as f32
+                        ));
+                    } else {
+                        ui.label("KDR (rezzed) -");
+                    }
+                    if self.session_score > 0 {
+                        ui.label(format!("Score {}", self.session_score));
+                        if duration_minutes > 0.0 {
+                            ui.label(format!("SPM {:.2}",(self.session_score as f32 / duration_minutes)));
+                        } else {
+                            ui.label("SPM -");
+                        }
+                    } else {
+                        ui.label("Score -");
+                        ui.label("SPM -");
+                    }
+                    ui.end_row();
+                    if self.revived_count > 0 {
+                        ui.label(format!("Times Revived: {}", self.revived_count));
+                    } else {
+                        ui.label("Times Revived: -");
+                    }
+                    if self.death_count > 0 {
+                        ui.label(format!(
+                            "KPM {:.3}",
+                            self.kill_count as f32 / duration_minutes
+                        ));
+                    } else {
+                        ui.label("KPM -");
+                    }
+
+
                 });
 
             ui.separator();
@@ -966,7 +1018,7 @@ impl Session {
     }
 
     pub async fn save_to_db(&mut self) {
-        match sqlx::query("INSERT INTO sessions VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id;")
+        match sqlx::query("INSERT INTO sessions VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id;")
             .bind(&self.character.full_name)
             .bind(&self.character.lower_name)
             .bind(self.character.server as i64)
@@ -1008,6 +1060,8 @@ impl Session {
             .bind(self.latest_asp as i64)
             .bind(self.pre_asp_rankups as i64)
             .bind(self.team as i64)
+            .bind(self.revived_count as i64)
+            .bind(self.session_score as i64)
             .fetch_one(&self.db.dbc.conn)
             .await
         {
@@ -1030,7 +1084,7 @@ impl Session {
             match sqlx::query("UPDATE sessions set end_time = ?, kill_count = ?, death_count = ?, headshot_kills = ?, headshot_deaths = ?,
                                vehicles_destroyed = ?, vehicles_lost = ?, vehicle_kills = ?, vehicle_deaths = ?, la_kills = ?,
                                la_revived_deaths = ?, la_fired = ?, la_shots = ?, la_headshots = ?, l_br = ?, l_asp = ?, pa_rankups = ?,
-                               team = ?
+                               team = ?, revived_count = ?, session_score = ?
                                WHERE id IS ?;")
                 .bind(self.end_time)
 
@@ -1053,6 +1107,8 @@ impl Session {
                 .bind(self.latest_asp as i64)
                 .bind(self.pre_asp_rankups as i64)
                 .bind(self.team as i64)
+                .bind(self.revived_count as i64)
+                .bind(self.session_score as i64)
                 .bind(self.db_id)
                 .execute(&self.db.dbc.conn)
                 .await
