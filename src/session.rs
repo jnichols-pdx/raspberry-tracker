@@ -723,7 +723,7 @@ impl Session {
                     } else {
                         ui.label("KDR (rezzed) -");
                     }
-                    if self.session_score > 0 {
+                    if duration_minutes > 0.0 {
                         ui.label(format!("Score {}", self.session_score));
                         if duration_minutes > 0.0 {
                             ui.label(format!("SPM {:.2}",(self.session_score as f32 / duration_minutes)));
@@ -740,7 +740,7 @@ impl Session {
                     } else {
                         ui.label("Times Revived: -");
                     }
-                    if self.death_count > 0 {
+                    if duration_minutes > 0.0 {
                         ui.label(format!(
                             "KPM {:.3}",
                             self.kill_count as f32 / duration_minutes
