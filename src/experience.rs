@@ -2282,7 +2282,7 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Vehicle Damage (Harasser) XP")
             }
             ExperienceType::Router_Kill => write!(f, "Destroy Router XP"),
-            //ExperienceType::Generic_Npc_Spawn => write!(f, ""),
+            ExperienceType::Generic_Npc_Spawn => write!(f, "Generic Spawn XP"), //1410
             //ExperienceType::Event_Anomaly_Defense_Pulse => write!(f, ""),
             //ExperienceType::EQ20_Collectible => write!(f, ""),
             //ExperienceType::EQ20_Nightshade => write!(f, ""),
