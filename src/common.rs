@@ -803,7 +803,19 @@ pub enum WeaponType {
     Colossus_RR = 214,
     Colossus_RL = 215,
 
-    //Not available in Census: Dervish, Chimera, Javelin specific weapon Category IDs.
+    //Not available in Census: Dervish, specific weapon Category IDs.
+   
+    //VVV Categories from https://census.lithafalcon.cc instead of official census API
+    Javelin_Primary = 216,
+    Chimera_Primary = 217,
+    Chimera_Front = 218,
+    Heavy_Crossbow = 219,
+    Amphibious_Rifle = 220,
+    Corsair_Front = 221,
+    Corsair_Rear = 222,
+    Amphibious_Pistol = 223,
+    //^^^ Categories from https://census.lithafalcon.cc instead of official census API
+
     #[num_enum(default)]
     Unknown = 0,
 }
@@ -818,6 +830,7 @@ impl WeaponType {
                 | WeaponType::Prowler_Primary
                 | WeaponType::Vanguard_Primary
                 | WeaponType::Colossus_Primary
+                | WeaponType::Chimera_Primary
         )
     }
 
@@ -858,6 +871,11 @@ impl WeaponType {
                 | WeaponType::Colossus_FL
                 | WeaponType::Colossus_RR
                 | WeaponType::Colossus_RL
+                | WeaponType::Javelin_Primary
+                | WeaponType::Chimera_Primary
+                | WeaponType::Chimera_Front
+                | WeaponType::Corsair_Front
+                | WeaponType::Corsair_Rear
         )
     }
 }
@@ -924,6 +942,14 @@ impl std::fmt::Display for WeaponType {
             WeaponType::Colossus_FL => write!(f, "Colossue Front Left"),
             WeaponType::Colossus_RR => write!(f, "Colossue Rear Right"),
             WeaponType::Colossus_RL => write!(f, "Colossue Rear Left"),
+            WeaponType::Javelin_Primary => write!(f, "Javelin Primary"),
+            WeaponType::Chimera_Primary => write!(f, "Chimera Primary"),
+            WeaponType::Chimera_Front => write!(f, "Chimera Front"),
+            WeaponType::Heavy_Crossbow => write!(f, "Heavy Crossbow"),
+            WeaponType::Amphibious_Rifle => write!(f, "Amphibious Rifle"),
+            WeaponType::Corsair_Front => write!(f, "Corsair Front"),
+            WeaponType::Corsair_Rear => write!(f, "Corsair Rear"),
+            WeaponType::Amphibious_Pistol => write!(f, "Amphibious Pistol"),
             WeaponType::Unknown => write!(f, "Unknown"),
         }
     }
