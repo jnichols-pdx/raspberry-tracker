@@ -1213,6 +1213,7 @@ pub enum ExperienceType {
     Spot_Kill_Javelin = 1492,
     Squad_Spot_Kill_Javelin = 1493,
     Javelin_Kill_by_Harasser_Gunner = 1494,
+    Gunner_Kill_Assist_Share_Javelin = 1496,
     Chain_Expl_Assist_Javelin = 1499,
     Javelin_Kill_by_Valkyrie_Gunner = 1500,
     Javelin_Kill_by_ANT_Gunner = 1501,
@@ -1259,13 +1260,14 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy = 1547,
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
-    Missing_1553 = 1553, //Destroy Anvil?
+    War_Asset_Destruction_Standard = 1553, //Destroy Anvil? Yes!
     Vehicle_Damage_Chimera = 1557,
     Kill_Assist_Chimera = 1560,
 
+    Tank_Superiority_Bonus = 1564,
     Vehicle_Destruction_Chimera = 1565,
     Gunner_Kill_Assist_Share_Chimera = 1567,
-    Missing_1568 = 1568,
+    Gunner_Kill_Share_Chimera = 1568,
     Missing_1571 = 1571, //Probably chimera gunner / passsenger assist xp?
 
     Vehicle_Destruction_Dervish = 1635,
@@ -1357,8 +1359,6 @@ impl ExperienceType {
         matches!(
             self,
             ExperienceType::Missing_1380
-                | ExperienceType::Missing_1553
-                | ExperienceType::Missing_1568
                 | ExperienceType::Missing_1571
                 | ExperienceType::Missing_1646
         )
@@ -2383,6 +2383,10 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Javelin_Kill_by_Harasser_Gunner => {
                 write!(f, "Harasser Gunner Kill (Javelin) XP")
             }
+            ExperienceType::Gunner_Kill_Assist_Share_Javelin => {
+                //1496
+                write!(f, "Gunner Kill Assist (Javelin) Share XP")
+            }
             ExperienceType::Chain_Expl_Assist_Javelin => {
                 write!(f, "Chain Explosion Assist (Javelin) XP")
             }
@@ -2505,7 +2509,9 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Gunner Kill Share (Infantry) XP")
             }
             ExperienceType::Gunner_Kill_Share_Flash => write!(f, "Gunner Kill Share (Flash) XP"), //374
-            ExperienceType::Gunner_Kill_Share_Phalanx => write!(f, "Gunner Kill Share (Phalanx Turret) XP"), //376
+            ExperienceType::Gunner_Kill_Share_Phalanx => {
+                write!(f, "Gunner Kill Share (Phalanx Turret) XP")
+            } //376
             ExperienceType::Gunner_Kill_Share_Galaxy => write!(f, "Gunner Kill Share (Galaxy) XP"),
             ExperienceType::Gunner_Kill_Share_Mana_Turret => {
                 write!(f, "Gunner Kill Share (Mana Turret) XP")
@@ -2679,12 +2685,22 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Ant => {
                 write!(f, "Gunner Kill Assist (Ant) Share XP") //668
             }
-            ExperienceType::Missing_1553 => write!(f, "Missing (1553) XP"),
+            ExperienceType::War_Asset_Destruction_Standard => {
+                //1553
+                write!(f, "War Asset Destroyed (Standard) XP")
+            }
             ExperienceType::Vehicle_Damage_Chimera => write!(f, "Vehicle Damage (Chimera) XP"),
             ExperienceType::Kill_Assist_Chimera => write!(f, "Kill Assist Chimera XP"),
+            ExperienceType::Tank_Superiority_Bonus => write!(f, "Tank Superiority Bonus XP"), //1564
             ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
-            ExperienceType::Gunner_Kill_Assist_Share_Chimera => write!(f, "Guner Kill Asssit (Chimera) Share XP"), //1567
-            ExperienceType::Missing_1568 => write!(f, "Missing (1568) XP"),
+            ExperienceType::Gunner_Kill_Assist_Share_Chimera => {
+                //1567
+                write!(f, "Guner Kill Asssit (Chimera) Share XP")
+            }
+            ExperienceType::Gunner_Kill_Share_Chimera => {
+                //1568
+                write!(f, "Gunner Kill Share (Chimera) XP")
+            }
             ExperienceType::Missing_1571 => write!(f, "Missing (1571) XP"),
             ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),

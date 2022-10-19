@@ -659,7 +659,7 @@ impl Session {
                         formatted_start_time, formatted_end_time
                     ));
 
-                    duration_minutes = (end_time - start_time).whole_seconds() as f32/ 60.0;
+                    duration_minutes = (end_time - start_time).whole_seconds() as f32 / 60.0;
                 } else {
                     let now_time = OffsetDateTime::now_utc();
                     let session_duration = now_time - start_time;
@@ -671,7 +671,7 @@ impl Session {
                         "  {},  {:02}:{:02}:{:02}.{:02}",
                         formatted_start_time, hours, minutes, seconds, millis
                     ));
-                    duration_minutes  = session_duration.whole_seconds() as f32 / 60.0;
+                    duration_minutes = session_duration.whole_seconds() as f32 / 60.0;
                 }
             });
 
@@ -726,7 +726,10 @@ impl Session {
                     if duration_minutes > 0.0 {
                         ui.label(format!("Score {}", self.session_score));
                         if duration_minutes > 0.0 {
-                            ui.label(format!("SPM {:.2}",(self.session_score as f32 / duration_minutes)));
+                            ui.label(format!(
+                                "SPM {:.2}",
+                                (self.session_score as f32 / duration_minutes)
+                            ));
                         } else {
                             ui.label("SPM -");
                         }
@@ -748,8 +751,6 @@ impl Session {
                     } else {
                         ui.label("KPM -");
                     }
-
-
                 });
 
             ui.separator();

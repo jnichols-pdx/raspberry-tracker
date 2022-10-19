@@ -804,7 +804,7 @@ pub enum WeaponType {
     Colossus_RL = 215,
 
     //Not available in Census: Dervish, specific weapon Category IDs.
-   
+
     //VVV Categories from https://census.lithafalcon.cc instead of official census API
     Javelin_Primary = 216,
     Chimera_Primary = 217,
@@ -815,7 +815,6 @@ pub enum WeaponType {
     Corsair_Rear = 222,
     Amphibious_Pistol = 223,
     //^^^ Categories from https://census.lithafalcon.cc instead of official census API
-
     #[num_enum(default)]
     Unknown = 0,
 }
