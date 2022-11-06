@@ -332,7 +332,8 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Vanguard = 403,
     Gunner_Kill_Assist_Share_Harasser = 404,
     Passenger_Kill_Share_Player = 405,
-    Pass_Kill_Share_MANA_407 = 407,
+    Passenger_Kill_Share_MANA = 407,
+    Passenger_Kill_Share_Galaxy = 410,
     Passenger_Kill_Share_Reaver = 416,
     Passenger_Kill_Share_Scythe = 417,
     Passenger_Kill_Share_Sunderer = 418,
@@ -1263,6 +1264,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
     War_Asset_Destruction_Standard = 1553, //Destroy Anvil? Yes!
     War_Asset_Destruction_Valuable = 1554,
+    War_Asset_Destruction_Epic = 1555,
     Vehicle_Damage_Chimera = 1557,
     Kill_Assist_Chimera = 1560,
 
@@ -2593,8 +2595,13 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Passenger_Kill_Share_Player => {
                 write!(f, "Passenger Kill Share (Infantry) XP")
             }
-            ExperienceType::Pass_Kill_Share_MANA_407 => {
+            ExperienceType::Passenger_Kill_Share_MANA => {
+                //407
                 write!(f, "Passenger Kill Share (Mana Turret) XP")
+            }
+            ExperienceType::Passenger_Kill_Share_Galaxy => {
+                //410
+                write!(f, "Passenger Kill Share (Galaxy) XP")
             }
             ExperienceType::Passenger_Kill_Share_Reaver => {
                 //416
@@ -2699,6 +2706,10 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::War_Asset_Destruction_Valuable => {
                 //1554
                 write!(f, "War Asset Destroyed (Valuable) XP")
+            }
+            ExperienceType::War_Asset_Destruction_Epic => {
+                //1555
+                write!(f, "War Asset Destroyed (Epic) XP")
             }
             ExperienceType::Vehicle_Damage_Chimera => write!(f, "Vehicle Damage (Chimera) XP"),
             ExperienceType::Kill_Assist_Chimera => write!(f, "Kill Assist Chimera XP"),
