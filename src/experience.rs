@@ -310,6 +310,8 @@ pub enum ExperienceType {
     Gunner_Kill_Share_Liberator = 379,
     Gunner_Kill_Share_Lightning = 380,
     Gunner_Kill_Share_Magrider = 381,
+    Gunner_Kill_Share_Mosquito = 382,
+    Gunner_Kill_Share_Prowler = 383,
     Gunner_Kill_Share_Reaver = 384,
     Gunner_Kill_Share_Scythe = 385,
     Gunner_Kill_Share_Sunderer = 386,
@@ -1239,6 +1241,7 @@ pub enum ExperienceType {
     Vanguard_Kill_by_Bastion_Gunner = 1519,
     Vehicle_Component_Destruction_Bastion = 1520,
     Kill_Assist_Bastion_Component = 1521,
+    Gunner_Kill_Assist_Share_Bastion_Component = 1523,
     Bastion_Component_Kill_by_Sunderer_Gunner = 1526,
     Bastion_Component_Kill_by_Vanguard_Gunner = 1527,
     Bastion_Component_Kill_by_Prowler_Gunner = 1528,
@@ -2455,6 +2458,10 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Kill_Assist_Bastion_Component => {
                 write!(f, "Kill Assist Bastion Component XP")
             }
+            ExperienceType::Gunner_Kill_Assist_Share_Bastion_Component => {
+                //1523
+                write!(f, "Gunner Kill Assist (Bastion Component) Share XP")
+            }
             ExperienceType::Bastion_Component_Kill_by_Sunderer_Gunner => {
                 write!(f, "Sunderer Gunner Kill (Bastion Component) XP")
             }
@@ -2530,6 +2537,14 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Share_Magrider => {
                 //381
                 write!(f, "Gunner Kill Share (Magrider) XP")
+            }
+            ExperienceType::Gunner_Kill_Share_Mosquito => {
+                //382
+                write!(f, "Gunner Kill Share (Mosquito) XP")
+            }
+            ExperienceType::Gunner_Kill_Share_Prowler => {
+                //383
+                write!(f, "Gunner Kill Share (Prowler) XP")
             }
             ExperienceType::Gunner_Kill_Share_Reaver => write!(f, "Gunner Kill Share (Reaver) XP"),
             ExperienceType::Gunner_Kill_Share_Scythe => write!(f, "Gunner Kill Share (Scythe) XP"),
