@@ -1294,6 +1294,8 @@ pub enum ExperienceType {
     Gunner_To_Pilot_Kill_Assist_Share_Corsair = 2008,
     Gunner_Kill_Corsair_Bonus = 2055,
     Gunner_Kill_Bonus = 2074,
+    Podium_Defense_Bonus = 2132,
+    Conduit_Repository_Hack = 2135,
 
     #[num_enum(default)]
     Unknown = 0,
@@ -2766,8 +2768,11 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Corsair_Bonus => {
                 write!(f, "Gunner Kill (Corsair) Bonus XP") //2055
             }
-            ExperienceType::Gunner_Kill_Bonus => {
-                write!(f, "Gunner Kill Bonus XP") //2074
+            ExperienceType::Podium_Defense_Bonus => {
+                write!(f, "Podium Defense Bonus XP") //2132
+            }
+            ExperienceType::Conduit_Repository_Hack => {
+                write!(f, "Conduit Repository Hack XP") //2135
             }
             other => write!(f, "unused xp ({})", *other as i64),
         }
