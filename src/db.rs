@@ -471,7 +471,7 @@ impl DatabaseCore {
             .bind(&source.weapon_id)
             .bind(source.headshot)
             .bind(source.kdr)
-            .bind(source.timestamp as i64)
+            .bind(source.timestamp)
             .bind(vehicle)
             .bind(&source.datetime) //text
             .execute(&self.conn)

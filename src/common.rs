@@ -1,3 +1,4 @@
+#![allow(clippy::result_large_err)]
 use crate::db::*;
 use num_enum::{FromPrimitive, IntoPrimitive};
 use std::io::Read;
@@ -245,7 +246,7 @@ pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Er
 }
 
 pub fn is_online(char_id: &str) -> Result<bool, ureq::Error> {
-    let resp = census_request(&*format!(
+    let resp = census_request(&format!(
         "/characters_online_status/?character_id={}",
         char_id
     ))?;

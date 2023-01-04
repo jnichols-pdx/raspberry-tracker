@@ -212,7 +212,7 @@ pub fn import_rtst_vpk(
                     }
                     println!("Embedded file byte length: {}", file_size);
 
-                    let sound_data = data.split_to(file_size as usize);
+                    let sound_data = data.split_to(file_size);
 
                     skip_next_item(&mut data); //dataType header
                     skip_next_item_short(&mut data); //system.runtimetype

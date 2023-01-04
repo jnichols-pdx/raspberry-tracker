@@ -96,27 +96,13 @@ impl SessionList {
     }
 
     pub fn active_session(&self) -> Option<&Session> {
-        if let Some(session) = self.sessions.last() {
-            if session.is_active() {
-                Some(session)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
+        self.sessions.last().filter(|&session| session.is_active())
     }
 
     pub fn active_session_mut(&mut self) -> Option<&mut Session> {
-        if let Some(session) = self.sessions.last_mut() {
-            if session.is_active() {
-                Some(session)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
+        self.sessions
+            .last_mut()
+            .filter(|session| session.is_active())
     }
 
     pub fn len(&self) -> usize {

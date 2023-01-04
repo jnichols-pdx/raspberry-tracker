@@ -57,7 +57,7 @@ impl CharacterList {
         if let Some(mut target) = self
             .characters
             .iter_mut()
-            .find(|chara| (**chara).character_id.eq(&newer_char.character_id))
+            .find(|chara| (chara).character_id.eq(&newer_char.character_id))
         {
             target.full_name = newer_char.full_name.to_owned();
             target.lower_name = newer_char.lower_name.to_owned();

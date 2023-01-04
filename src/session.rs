@@ -1030,7 +1030,7 @@ impl Session {
             .bind(self.character.br as i64)
             .bind(self.character.asp as i64)
 
-            .bind(self.start_time as i64)
+            .bind(self.start_time)
             .bind(self.end_time)
 
             .bind(self.kill_count as i64)
@@ -1041,7 +1041,7 @@ impl Session {
             .bind(self.vehicles_lost as i64)
             .bind(self.vehicle_kills as i64)
             .bind(self.vehicle_deaths as i64)
-            .bind(&self.time_zone.name())
+            .bind(self.time_zone.name())
 
             .bind(self.initial_kills_total as i64)
             .bind(self.initial_actual_deaths_total as i64)
