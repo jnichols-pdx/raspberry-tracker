@@ -334,8 +334,13 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Vanguard = 403,
     Gunner_Kill_Assist_Share_Harasser = 404,
     Passenger_Kill_Share_Player = 405,
+    Passenger_Kill_Share_Flash = 406,
     Passenger_Kill_Share_MANA = 407,
+    Passenger_Kill_Share_Phalanx = 408,
     Passenger_Kill_Share_Galaxy = 410,
+    Passenger_Kill_Share_Liberator = 411,
+    Passenger_Kill_Share_Lightning = 412,
+    Passenger_Kill_Share_Magrider = 413,
     Passenger_Kill_Share_Reaver = 416,
     Passenger_Kill_Share_Scythe = 417,
     Passenger_Kill_Share_Sunderer = 418,
@@ -505,6 +510,7 @@ pub enum ExperienceType {
     ANT_Kill_by_Harasser_Gunner = 666,
     Gunner_Kill_Share_Ant = 667,
     Gunner_Kill_Assist_Share_Ant = 668,
+    Passenger_Kill_Share_Ant = 669,
     ANT_Kill_by_Valkyrie_Gunner = 671,
     Chain_Expl_Assist_ANT = 672,
     Bounty_Kill_Cashed_In_Alt = 673,
@@ -1165,6 +1171,7 @@ pub enum ExperienceType {
     Vehicle_Driver_Kill_Assist_Share_Hardlight_Barrier_HIVE_XP_Target = 1392,
     */
     Missing_1380 = 1380,
+    Passenger_Kill_Share_Hardlight_Barrier = 1381,
     //Hardlight_Cover_Blocking_Exp_placeholder_until_code_is_done = 1393,
     Draw_Fire_Assist = 1393,
     Draw_Fire_Award = 1394,
@@ -1270,6 +1277,7 @@ pub enum ExperienceType {
     War_Asset_Destruction_Epic = 1555,
     Vehicle_Damage_Chimera = 1557,
     Kill_Assist_Chimera = 1560,
+    Squad_Repair_Chimera = 1562,
 
     Missing_1563 = 1563, //Triggered at same time as killing a Chimera from Prowler top gun (swamped out by other xp events?
     Tank_Superiority_Bonus = 1564,
@@ -1281,6 +1289,8 @@ pub enum ExperienceType {
     Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
     Missing_1646 = 1646, //Triggered after dervish kill from galaxy gun turret
+    //And from a sunderer turret, however it was NOT displayed on screen, in
+    //favor of the vehicle destruction dervish XP.
     Surface_To_Air_Dervish = 1647,
     Dervish_Damage = 1657,
     Fighter_Superiority_Bonus = 1649,
@@ -1360,6 +1370,7 @@ impl ExperienceType {
                 | ExperienceType::Squad_Repair_Colossus
                 | ExperienceType::Vehicle_Repair_Javelin
                 | ExperienceType::Squad_Repair_Javelin
+                | ExperienceType::Squad_Repair_Chimera
                 | ExperienceType::Door_Lock_Repair
                 | ExperienceType::Containment_Site_Gate_Shield_Gen_Repair
         )
@@ -2612,13 +2623,33 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Passenger_Kill_Share_Player => {
                 write!(f, "Passenger Kill Share (Infantry) XP")
             }
+            ExperienceType::Passenger_Kill_Share_Flash => {
+                //406
+                write!(f, "Passenger Kill Share (Flash) XP")
+            }
             ExperienceType::Passenger_Kill_Share_MANA => {
                 //407
                 write!(f, "Passenger Kill Share (Mana Turret) XP")
             }
+            ExperienceType::Passenger_Kill_Share_Phalanx => {
+                //408
+                write!(f, "Passenger Kill Share (Phalanx) XP")
+            }
             ExperienceType::Passenger_Kill_Share_Galaxy => {
                 //410
                 write!(f, "Passenger Kill Share (Galaxy) XP")
+            }
+            ExperienceType::Passenger_Kill_Share_Liberator => {
+                //411
+                write!(f, "Passenger Kill Share (Liberator) XP")
+            }
+            ExperienceType::Passenger_Kill_Share_Lightning => {
+                //412
+                write!(f, "Passenger Kill Share (Lightning) XP")
+            }
+            ExperienceType::Passenger_Kill_Share_Magrider => {
+                //413
+                write!(f, "Passenger Kill Share (Magrider) XP")
             }
             ExperienceType::Passenger_Kill_Share_Reaver => {
                 //416
@@ -2716,6 +2747,13 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Gunner_Kill_Assist_Share_Ant => {
                 write!(f, "Gunner Kill Assist (Ant) Share XP") //668
             }
+            ExperienceType::Passenger_Kill_Share_Ant => {
+                write!(f, "Passenger Kill Share (Ant) XP") //669
+            }
+            ExperienceType::Passenger_Kill_Share_Hardlight_Barrier => {
+                //1381
+                write!(f, "Passenger Kill Share (Hardlight Barrier) XP")
+            }
             ExperienceType::War_Asset_Destruction_Standard => {
                 //1553
                 write!(f, "War Asset Destroyed (Standard) XP")
@@ -2730,6 +2768,7 @@ impl std::fmt::Display for ExperienceType {
             }
             ExperienceType::Vehicle_Damage_Chimera => write!(f, "Vehicle Damage (Chimera) XP"),
             ExperienceType::Kill_Assist_Chimera => write!(f, "Kill Assist Chimera XP"),
+            ExperienceType::Squad_Repair_Chimera => write!(f, "Repair Squad Chimera XP"), //1562
             ExperienceType::Missing_1563 => write!(f, "Missing (1563) XP"),
             ExperienceType::Tank_Superiority_Bonus => write!(f, "Tank Superiority Bonus XP"), //1564
             ExperienceType::Vehicle_Destruction_Chimera => write!(f, "Destroy Chimera XP"),
