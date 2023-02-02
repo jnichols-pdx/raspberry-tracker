@@ -1288,7 +1288,8 @@ pub enum ExperienceType {
 
     Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
-    Missing_1646 = 1646, //Triggered after dervish kill from galaxy gun turret
+    Vehicle_Repair_Dervish = 1638, //assumed
+    Missing_1646 = 1646,           //Triggered after dervish kill from galaxy gun turret
     //And from a sunderer turret, however it was NOT displayed on screen, in
     //favor of the vehicle destruction dervish XP.
     Surface_To_Air_Dervish = 1647,
@@ -2783,6 +2784,7 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Repair_Chimera => write!(f, "Repair Chimera XP"), //1571
             ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
+            ExperienceType::Vehicle_Repair_Dervish => write!(f, "Repair Dervish XP"), //1638
             ExperienceType::Missing_1646 => write!(f, "Missing (1646) XP"),
             ExperienceType::Surface_To_Air_Dervish => write!(f, "Anti-air Damage (Dervish) XP"),
             ExperienceType::Dervish_Damage => write!(f, "Vehicle Damage (Dervish) XP"),
