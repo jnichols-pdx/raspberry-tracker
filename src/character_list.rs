@@ -39,7 +39,7 @@ impl CharacterList {
     }
 
     pub fn has_auto_tracked(&self, target_id: String) -> bool {
-        println!("track check for >{}<", target_id);
+        println!("track check for >{target_id}<");
         if let Some(target) = self.find_character_by_id(target_id) {
             target.auto_track
         } else {
@@ -89,15 +89,15 @@ impl ViewWithDB for CharacterList {
                                 Ok(None) => {println!("no results");
                                         self.message = Some(format!("Character \"{}\" Not Found", self.new_char_name));
                                 },
-                                Err(whut) => {println!("{}", whut);
+                                Err(whut) => {println!("{whut}");
                                         self.message = Some("Census Error".to_string());
                                 },
                                 Ok(Some(char_id)) => {
-                                    println!("character_id: {}", char_id);
+                                    println!("character_id: {char_id}");
                                     match  lookup_new_char_details(&char_id) {
-                                        Err(whut) => println!("{}", whut),
+                                        Err(whut) => println!("{whut}"),
                                         Ok(details) => {
-                                            println!("RAW: {:?}", details);
+                                            println!("RAW: {details:?}");
                                             let bob = Character::from_json(&details).unwrap();
 
     let _res = self.websocket_out.blocking_send(
@@ -131,11 +131,11 @@ impl ViewWithDB for CharacterList {
                     if char.to_track {
                         match self.websocket_out
                             .blocking_send( Message::Text(subscribe_session_string(&char.character_id))) {
-                            Err(e) => println!("dah {:?}",e),
+                            Err(e) => println!("dah {e:?}"),
                             Ok(_) => {
 //HERE
                                 match  lookup_new_char_details(&char.character_id) {
-                                    Err(whut) => println!("{}", whut),
+                                    Err(whut) => println!("{whut}"),
                                     Ok(details) => {
 
                                         let active_char = FullCharacter::from_json(&details).unwrap();

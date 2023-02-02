@@ -237,7 +237,7 @@ impl WeaponStats {
                             .color(stat_color),
                     );
                     ui.label(
-                        egui::RichText::new(format!("{:.3}% {:+.3}%", total, delta))
+                        egui::RichText::new(format!("{total:.3}% {delta:+.3}%"))
                             .small()
                             .color(stat_color),
                     );
@@ -261,7 +261,7 @@ impl WeaponStats {
                             .color(stat_color),
                     );
                     ui.label(
-                        egui::RichText::new(format!("{:.3}% {:+.3}%", total, delta))
+                        egui::RichText::new(format!("{total:.3}% {delta:+.3}%"))
                             .small()
                             .color(stat_color),
                     );
@@ -324,7 +324,7 @@ impl WeaponStats {
             Ok(_) => {}
             Err(err) => {
                 println!("Error saving new weaponstats in DB:");
-                println!("{:?}", err);
+                println!("{err:?}");
                 std::process::exit(-30);
             }
         }
@@ -346,7 +346,7 @@ impl WeaponStats {
                 Ok(_) => {}
                 Err(err) => {
                     println!("Error saving new weaponstats in DB:");
-                    println!("{:?}", err);
+                    println!("{err:?}");
                     std::process::exit(-30);
                 }
             }

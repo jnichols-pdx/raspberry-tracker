@@ -46,19 +46,19 @@ pub fn import_rtst_vpk(
             let pack_name_64 = get_next_item(&mut data);
             let name_vec = decode(pack_name_64).unwrap();
             name = String::from_utf8(name_vec).unwrap();
-            println!("Pack Name: {}", name);
+            println!("Pack Name: {name}");
 
             skip_next_item(&mut data); //Description header
             let description_64 = get_next_item(&mut data);
             let description_vec = decode(description_64).unwrap();
             description = String::from_utf8(description_vec).unwrap();
-            println!("Pack Description: {}", description);
+            println!("Pack Description: {description}");
 
             skip_next_item(&mut data); //Author header
             let author_64 = get_next_item(&mut data);
             let author_vec= decode(author_64).unwrap();
             author = String::from_utf8(author_vec).unwrap();
-            println!("Pack Author: {}", author);
+            println!("Pack Author: {author}");
 
             skip_next_item(&mut data); //sample image header
             data.advance(1); //0
@@ -80,17 +80,17 @@ pub fn import_rtst_vpk(
                 println!("{}:", y +1);
                 data.advance(2); //6,0 - unknown significance
                 let achievement_key_64 = get_next_item(&mut data);
-                //println!("raw >{:?}<", achievement_key_64);
+                //println!("raw >{achievement_key_64:?}<");
                 let achievement_key_vec = decode(achievement_key_64).unwrap();
                 let achievement_key = String::from_utf8(achievement_key_vec).unwrap();
-                println!("key: {}", achievement_key);
+                println!("key: {achievement_key}");
 
                 data.advance(5); //2,0,0,1,6 - unknown significance
                 skip_next_item(&mut data); //fileSoundPath header
                 let file_sound_path_64 = get_next_item(&mut data);
                 let file_sound_path_vec = decode(file_sound_path_64).unwrap();
                 let file_sound_path = String::from_utf8(file_sound_path_vec).unwrap();
-                println!("file_sound_path:{}", file_sound_path);
+                println!("file_sound_path:{file_sound_path}");
 
                 skip_next_item(&mut data); //soundEnabled header
                 skip_next_item_short(&mut data); //boolean
@@ -106,7 +106,7 @@ pub fn import_rtst_vpk(
                     let pak_sound_path_64 = get_next_item(&mut data);
                     let pak_sound_path_vec = decode(pak_sound_path_64).unwrap();
                     let pak_sound_path_str = String::from_utf8(pak_sound_path_vec).unwrap();
-                    println!("pak_sound_path:{}", pak_sound_path_str);
+                    println!("pak_sound_path:{pak_sound_path_str}");
                     pak_sound_path = Some(pak_sound_path_str);
                 } else {
                     data.advance(1); //consume trailing 0x00 if there was no pakSoundPath string.
@@ -128,13 +128,13 @@ pub fn import_rtst_vpk(
                         let sound_file_path_64 = get_next_item(&mut data);
                         let sound_file_path_vec = decode(sound_file_path_64).unwrap();
                         let sound_file_path_str = String::from_utf8(sound_file_path_vec).unwrap();
-                        println!("sound_file_path:{}", sound_file_path_str);
+                        println!("sound_file_path:{sound_file_path_str}");
 
                         skip_next_item(&mut data); //pakSoundFile header
                         let sound_pak_path_64 = get_next_item(&mut data);
                         let sound_pak_path_vec = decode(sound_pak_path_64).unwrap();
                         let sound_pak_path_str = String::from_utf8(sound_pak_path_vec).unwrap();
-                        println!("sound_pak_path:{}", sound_pak_path_str);
+                        println!("sound_pak_path:{sound_pak_path_str}");
 
                         let list = paths_to_keys.entry(sound_pak_path_str).or_insert_with(Vec::new);
                         list.push(achievement_key.clone());
@@ -183,18 +183,18 @@ pub fn import_rtst_vpk(
                 let num_embedded = num_embedded_byte.get_u8();
                 let mut keys_to_sounds_names = HashMap::new();
                 for y in 0..num_embedded {
-                    println!("{}:", y);
+                    println!("{y}:");
                     data.advance(2); //6,0
                     let pak_path_64 = get_next_item(&mut data);
                     let pak_path_vec = decode(pak_path_64).unwrap();
                     let pak_path_str = String::from_utf8(pak_path_vec).unwrap();
-                    println!("embedded file path:{}", pak_path_str);
+                    println!("embedded file path:{pak_path_str}");
                     data.advance(5);//2,0,0,1,3 -- unknown purpose
                     skip_next_item(&mut data); //fileName header
                     let embed_file_name_64 = get_next_item(&mut data);
                     let embed_file_name_vec = decode(embed_file_name_64).unwrap();
                     let embed_file_name_str = String::from_utf8(embed_file_name_vec).unwrap();
-                    println!("embedded file name:{}", embed_file_name_str);
+                    println!("embedded file name:{embed_file_name_str}");
                     skip_next_item(&mut data); //data header
 
                     let mut file_size: usize = 0;
@@ -210,7 +210,7 @@ pub fn import_rtst_vpk(
                         let byte_len = data.get_u8();
                         file_size = byte_len as usize;
                     }
-                    println!("Embedded file byte length: {}", file_size);
+                    println!("Embedded file byte length: {file_size}");
 
                     let sound_data = data.split_to(file_size);
 
@@ -274,5 +274,5 @@ fn skip_next_item_short(data: &mut Bytes) {
 
     data.advance(size_byte as usize)
     /*let skipped = data.split_to(size_byte as usize);
-    println!("SKipping: {:?}", skipped);*/
+    println!("SKipping: {skipped:?}");*/
 }

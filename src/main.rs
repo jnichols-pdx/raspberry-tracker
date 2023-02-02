@@ -61,7 +61,7 @@ fn main() {
             db_options = match SqliteConnectOptions::from_str(&db_url) {
                 Ok(sql_opts) => sql_opts.journal_mode(SqliteJournalMode::Wal),
                 Err(err) => {
-                    println!("DB PREP ERROR: {:?}", err);
+                    println!("DB PREP ERROR: {err:?}");
                     std::process::exit(-3);
                 }
             };
@@ -71,7 +71,7 @@ fn main() {
             db_options = match SqliteConnectOptions::from_str(&db_url) {
                 Ok(sql_opts) => sql_opts,
                 Err(err) => {
-                    println!("DB PREP ERROR: {:?}", err);
+                    println!("DB PREP ERROR: {err:?}");
                     std::process::exit(-3);
                 }
             };
@@ -82,7 +82,7 @@ fn main() {
         db_options = match SqliteConnectOptions::from_str(&db_url) {
             Ok(sql_opts) => sql_opts,
             Err(err) => {
-                println!("DB PREP ERROR: {:?}", err);
+                println!("DB PREP ERROR: {err:?}");
                 std::process::exit(-3);
             }
         };
@@ -91,7 +91,7 @@ fn main() {
     let db_pool = match rt.block_on(SqlitePool::connect_with(db_options.read_only(false))) {
         Ok(pool) => pool,
         Err(err) => {
-            println!("DB OPEN ERROR: {:?}", err);
+            println!("DB OPEN ERROR: {err:?}");
             std::process::exit(-2);
         }
     };
@@ -141,15 +141,15 @@ fn main() {
                     }
                     Ok(false) => {}
                     Err(e) => println!(
-                        "Failed to get online status for {}:\n {}",
-                        &achar.character_id, e
+                        "Failed to get online status for {}:\n {e}",
+                        &achar.character_id
                     ),
                 }
             }
         }
         if let Some(active_char_id) = char_to_track {
             match lookup_new_char_details(&active_char_id) {
-                Err(whut) => println!("{}", whut),
+                Err(whut) => println!("{whut}"),
                 Ok(details) => {
                     let active_char = FullCharacter::from_json(&details).unwrap();
 
@@ -243,7 +243,7 @@ async fn websocket_threads(
     )
     .unwrap();
     let (ws_str, _) = connect_async(ws_url.clone()).await.unwrap(); //.expect("failed to connect to streaming api");
-                                                                    //println!("{:?}", ws_str);
+                                                                    //println!("{ws_str:?}");
     let (ws_write, ws_read) = ws_str.split();
     let (report_to_parser, ws_messages) = mpsc::channel::<serde_json::Value>(64);
 
@@ -292,7 +292,7 @@ async fn ws_outgoing(
     while looking {
         match rx_from_app.recv().await {
             Some(msg) => {
-                println!("[{}] Want to send {}", endpoint_name, msg);
+                println!("[{endpoint_name}] Want to send {msg}");
                 let _result = ws_out.send(msg).await;
             }
             None => {
@@ -313,18 +313,18 @@ async fn ws_incoming(
     let print_task = ws_in.for_each(|message| async {
         match message.unwrap().into_text() {
             Ok(msg) => {
-                //println!("{}", msg);
+                //println!("{msg}");
                 let json: serde_json::Value = serde_json::from_str(&msg).expect("parse JSON fail");
                 if json["payload"].is_object() {
                     let _ignore = report_to_parser.send(json).await;
                 } else if json["type"].is_string() {
                     let _ignore = report_to_parser.send(json).await;
                 } else {
-                    println!("-[{}] {}", endpoint_name, json);
+                    println!("-[{endpoint_name}] {json}");
                 }
             }
             Err(e) => {
-                println!("[{}] DIH {:?}", endpoint_name, e);
+                println!("[{endpoint_name}] DIH {e:?}");
             }
         }
     });
@@ -350,7 +350,7 @@ async fn parse_messages(
     let local_tz = match local_tz_q {
         Ok(local) => local,
         Err(e) => {
-            println!("Error finding system timezone: {}", e);
+            println!("Error finding system timezone: {e}");
             std::process::exit(-2);
         }
     };
@@ -421,7 +421,7 @@ async fn parse_messages(
                         )))
                         .await
                     {
-                        println!("dah {:?}", e);
+                        println!("dah {e:?}");
                     };
 
                     if let Err(e) = ws_logouts_out
@@ -430,13 +430,13 @@ async fn parse_messages(
                         )))
                         .await
                     {
-                        println!("deh {:?}", e);
+                        println!("deh {e:?}");
                     };
 
                     match lookup_new_char_details(
                         &json["payload"]["character_id"].to_string().unquote(),
                     ) {
-                        Err(whut) => println!("{}", whut),
+                        Err(whut) => println!("{whut}"),
                         Ok(details) => {
                             let bob = FullCharacter::from_json(&details).unwrap();
                             {
@@ -477,7 +477,7 @@ async fn parse_messages(
                     println!("Found a death");
                     false
                 };
-                println!("{:?}", json);
+                println!("{json:?}");
                 let timestamp = json["payload"]["timestamp"]
                     .to_string()
                     .unquote()
@@ -561,12 +561,12 @@ async fn parse_messages(
                     if let Some(outfit_alias) = player_char.outfit {
                         if outfit_alias.is_empty() {
                             if let Some(outfit_name) = player_char.outfit_full {
-                                name = format!("[{}] {}", outfit_name, player_char.full_name);
+                                name = format!("[{outfit_name}] {}", player_char.full_name);
                             } else {
                                 name = player_char.full_name.to_owned();
                             }
                         } else {
-                            name = format!("[{}] {}", outfit_alias, player_char.full_name);
+                            name = format!("[{outfit_alias}] {}", player_char.full_name);
                         }
                     } else {
                         name = player_char.full_name.to_owned();
@@ -643,7 +643,7 @@ async fn parse_messages(
                                 //Failed to pull details from census, fallback to the most common
                                 //kill type.
                                 event_type = EventType::Kill;
-                                println!("{}", whut);
+                                println!("{whut}");
                             }
                             Ok(details) => {
                                 if !vehicle_destroyed {
@@ -651,7 +651,7 @@ async fn parse_messages(
                                 } else {
                                     println!("YOUR TARGET'S OWNER:");
                                 }
-                                println!("{:?}", details);
+                                println!("{details:?}");
                                 let faction_num = details["character_list"][0]["faction_id"]
                                     .to_string()
                                     .unquote()
@@ -714,13 +714,12 @@ async fn parse_messages(
                             if let Some(outfit_alias) = player_char.outfit {
                                 if outfit_alias.is_empty() {
                                     if let Some(outfit_name) = player_char.outfit_full {
-                                        name =
-                                            format!("[{}] {}", outfit_name, player_char.full_name);
+                                        name = format!("[{outfit_name}] {}", player_char.full_name);
                                     } else {
                                         name = player_char.full_name.to_owned();
                                     }
                                 } else {
-                                    name = format!("[{}] {}", outfit_alias, player_char.full_name);
+                                    name = format!("[{outfit_alias}] {}", player_char.full_name);
                                 }
                             } else {
                                 name = player_char.full_name.to_owned();
@@ -788,7 +787,7 @@ async fn parse_messages(
                                     //Failed to pull details from census, fallback to the most common
                                     //player death type.
                                     event_type = EventType::Death;
-                                    println!("{}", whut);
+                                    println!("{whut}");
                                 }
                                 Ok(details) => {
                                     if !vehicle_destroyed {
@@ -796,7 +795,7 @@ async fn parse_messages(
                                     } else {
                                         println!("YOUR RIDE'S DESTROYER:");
                                     }
-                                    println!("{:?}", details);
+                                    println!("{details:?}");
                                     let faction_num = details["character_list"][0]["faction_id"]
                                         .to_string()
                                         .unquote()
@@ -868,9 +867,9 @@ async fn parse_messages(
                             let outfit_alias = deets["outfit"]["alias"].to_string().unquote();
                             let outfit_name = deets["outfit"]["name"].to_string().unquote();
                             if outfit_alias.is_empty() {
-                                name = format!("[{}] {}", outfit_name, player_name);
+                                name = format!("[{outfit_name}] {player_name}");
                             } else {
-                                name = format!("[{}] {}", outfit_alias, player_name);
+                                name = format!("[{outfit_alias}] {player_name}");
                             }
                         } else {
                             name = player_name;
@@ -911,7 +910,7 @@ async fn parse_messages(
                     let materiel = Vehicle::from(materiel_num);
                     if materiel.is_true_vehicle() {
                         if materiel_num > 0 {
-                            name = format!("{} ({})", Vehicle::from(materiel_num), name);
+                            name = format!("{} ({name})", Vehicle::from(materiel_num));
                         }
 
                         event_type = match event_type {
@@ -1151,7 +1150,7 @@ async fn parse_messages(
                     big_print_num(&json["payload"]["experience_id"].to_string());
                 }
 
-                println!("+{}", json);
+                println!("+{json}");
 
                 let player_id;
                 {
@@ -1211,10 +1210,10 @@ async fn parse_messages(
                             match lookup_new_char_details(
                                 &json["payload"]["character_id"].to_string().unquote(),
                             ) {
-                                Err(whut) => println!("{}", whut),
+                                Err(whut) => println!("{whut}"),
                                 Ok(details) => {
                                     println!("YOUR LIFE SAVER:");
-                                    println!("{:?}", details);
+                                    println!("{details:?}");
                                     let faction_num = details["character_list"][0]["faction_id"]
                                         .to_string()
                                         .unquote()
@@ -1258,9 +1257,9 @@ async fn parse_messages(
                                             .to_string()
                                             .unquote();
                                         if outfit_alias.is_empty() {
-                                            name = format!("[{}] {}", outfit_name, player_name);
+                                            name = format!("[{outfit_name}] {player_name}");
                                         } else {
-                                            name = format!("[{}] {}", outfit_alias, player_name);
+                                            name = format!("[{outfit_alias}] {player_name}");
                                         }
                                     } else {
                                         name = player_name;
@@ -1315,15 +1314,15 @@ async fn parse_messages(
                         } else {
                             //Was someone else's XP pertaining to us, but of a type we don't care
                             //about.
-                            println!("XP {} - {} - OTHER GUYS?? SKIP", xp_id, xp_type);
+                            println!("XP {xp_id} - {xp_type} - OTHER GUYS?? SKIP");
                             continue;
                         }
                     } else {
-                        println!("XP {} - {} - Doesn't concern us, why did the API send us this XP tick??? ", xp_id, xp_type);
+                        println!("XP {xp_id} - {xp_type} - Doesn't concern us, why did the API send us this XP tick??? ");
                         continue;
                     }
                 } else {
-                    println!("XP {} - {}", xp_id, xp_type);
+                    println!("XP {xp_id} - {xp_type}");
                     let xp_amount = json["payload"]["amount"].to_string().unquote();
 
                     let player_team_num = json["payload"]["attacker_team_id"]
@@ -1356,7 +1355,7 @@ async fn parse_messages(
                         asp: 0,
                         class: Class::from(0),
                         name: xp_type.to_string(),
-                        weapon: format!("+{}", xp_amount),
+                        weapon: format!("+{xp_amount}"),
                         weapon_id: "0".to_owned(),
                         weapon_kind: WeaponType::Unknown,
                         headshot: false,
@@ -1400,7 +1399,7 @@ async fn parse_messages(
                         .await;
                 }
             } else {
-                println!("+{}", json);
+                println!("+{json}");
             }
         }
     }

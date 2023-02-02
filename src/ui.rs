@@ -84,7 +84,7 @@ impl TrackerApp {
                         };
                     };
                 }
-                false => println!("Unable to load image {}: {}", census_id, name),
+                false => println!("Unable to load image {census_id}: {name}"),
             };
         }
 
@@ -169,7 +169,7 @@ impl TrackerApp {
                     ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
                     egui::TextureFilter::Linear,
                 ));
-                println!("Readied Custom : {}", image_name);
+                println!("Readied Custom : {image_name}");
             }
         };
     }
@@ -265,7 +265,7 @@ impl eframe::App for TrackerApp {
                                 let option_name;
                                 if let Some(ref active_name) = current_soundset {
                                     if active_name.eq(&soundset_name) {
-                                        option_name = format!("{} ✔", soundset_name);
+                                        option_name = format!("{soundset_name} ✔");
                                     } else {
                                         option_name = soundset_name.clone();
                                     }

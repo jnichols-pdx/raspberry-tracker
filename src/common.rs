@@ -89,7 +89,7 @@ pub enum World {
 impl World {
     pub fn as_id_string(&self) -> String {
         let world_num: i64 = (*self).into();
-        format!("{}", world_num)
+        format!("{world_num}")
     }
 }
 
@@ -107,10 +107,8 @@ impl std::fmt::Display for World {
 }
 
 fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
-    let request_url = format!(
-        "http://census.daybreakgames.com/s:raspberrytracker/get/ps2/{}",
-        request
-    );
+    let request_url =
+        format!("http://census.daybreakgames.com/s:raspberrytracker/get/ps2/{request}");
     let mut tries = 1;
     let mut response = None;
     let mut last_err = None;
@@ -123,14 +121,14 @@ fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
                     last_err = None;
                     break;
                 } else {
-                    println!("Attempt #{}, HTTP code {}", tries, ureq_response.status());
+                    println!("Attempt #{tries}, HTTP code {}", ureq_response.status());
                     last_err = None;
                     response = Some(ureq_response); //return non 200 status as well
                 }
             }
             Err(e) => {
-                println!("Attempt #{}, Ureq Error:", tries);
-                println!("{:?}", e);
+                println!("Attempt #{tries}, Ureq Error:");
+                println!("{e:?}");
                 last_err = Some(e);
             }
         }
@@ -143,7 +141,7 @@ fn census_request(request: &str) -> Result<ureq::Response, ureq::Error> {
     } else {
         if tries > 1 {
             //May not be status 200, so cannot assume this is a "success"
-            println!("Returning census response on attempt #{}", tries);
+            println!("Returning census response on attempt #{tries}");
         }
         Ok(response.unwrap())
     }
@@ -172,8 +170,7 @@ pub fn lookup_character_id(new_char: &str) -> Result<Option<String>, ureq::Error
 }
 
 pub fn lookup_character_asp(char_id: &str) -> Result<u8, ureq::Error> {
-    let resp: serde_json::Value = census_request(&format!("/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon,battle_rank,name,faction_id,head_id",
-        char_id))?
+    let resp: serde_json::Value = census_request(&format!("/character/?character_id={char_id}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon,battle_rank,name,faction_id,head_id"))?
         .into_json()?;
 
     Ok(resp["character_list"][0]["prestige_level"]
@@ -185,8 +182,7 @@ pub fn lookup_character_asp(char_id: &str) -> Result<u8, ureq::Error> {
 
 pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp = census_request(&format!(
-        "/character/?character_id={}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world",
-        new_id))?
+        "/character/?character_id={new_id}&c:hide=battle_rank.percent_to_next,certs,profile_id,times,title_id,daily_ribbon&c:join=outfit_member_extended^show:name'alias^inject_at:outfit,characters_stat^terms:stat_name=weapon_deaths^show:value_forever^inject_at:weapon_deaths,characters_stat_history^terms:stat_name=kills^show:all_time^inject_at:kills&c:resolve=world"))?
     .into_json()?;
 
     Ok(resp)
@@ -194,14 +190,13 @@ pub fn lookup_new_char_details(new_id: &str) -> Result<serde_json::Value, ureq::
 
 pub fn lookup_full_stats(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
     let resp =
-        census_request(&format!("/single_character_by_id?character_id={}", new_id))?.into_json()?;
+        census_request(&format!("/single_character_by_id?character_id={new_id}"))?.into_json()?;
 
     Ok(resp)
 }
 
 pub fn subscribe_session_string(character_id: &str) -> String {
-    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{}],\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\",\"GainExperience\"]}}",
-        character_id)
+    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"characters\":[{character_id}],\"eventNames\":[\"Death\",\"VehicleDestroy\",\"BattleRankUp\",\"GainExperience\"]}}")
 }
 
 pub fn clear_subscribe_session_string() -> String {
@@ -209,23 +204,21 @@ pub fn clear_subscribe_session_string() -> String {
 }
 
 pub fn subscribe_logouts_string(world_id: &str) -> String {
-    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"worlds\":[{}],\"eventNames\":[\"PlayerLogout\"]}}", world_id)
+    format!("{{\"service\":\"event\",\"action\":\"subscribe\",\"worlds\":[{world_id}],\"eventNames\":[\"PlayerLogout\"]}}")
 }
 
 pub fn clear_subscribe_logouts_string(world_id: &str) -> String {
-    format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"worlds\":[{}],\"eventNames\":[\"PlayerLogout\"]}}", world_id)
+    format!("{{\"service\":\"event\",\"action\":\"clearSubscribe\",\"worlds\":[{world_id}],\"eventNames\":[\"PlayerLogout\"]}}")
 }
 
 pub fn lookup_weapon_name(new_id: &str) -> Result<serde_json::Value, ureq::Error> {
-    let resp = census_request(&format!("/item/?item_id={}", new_id))?.into_json()?;
+    let resp = census_request(&format!("/item/?item_id={new_id}"))?.into_json()?;
     Ok(resp)
 }
 
 pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Error> {
-    let image_url = format!(
-        "http://census.daybreakgames.com/files/ps2/images/static/{}.png",
-        census_id
-    );
+    let image_url =
+        format!("http://census.daybreakgames.com/files/ps2/images/static/{census_id}.png");
     let mut resp = ureq::get(&image_url).call()?;
 
     if resp.status() != 200 {
@@ -234,7 +227,7 @@ pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Er
     }
 
     if resp.status() == 200 {
-        println!("{:?}", resp);
+        println!("{resp:?}");
         let mut image_bytes: Vec<u8> = Vec::with_capacity(1024);
         resp.into_reader()
             .take(5242880)
@@ -247,8 +240,7 @@ pub fn download_census_image(census_id: u32) -> Result<Option<Vec<u8>>, ureq::Er
 
 pub fn is_online(char_id: &str) -> Result<bool, ureq::Error> {
     let resp = census_request(&format!(
-        "/characters_online_status/?character_id={}",
-        char_id
+        "/characters_online_status/?character_id={char_id}"
     ))?;
     if resp.status() == 200 {
         let json: serde_json::Value = resp.into_json()?;

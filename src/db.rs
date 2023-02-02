@@ -53,7 +53,7 @@ impl DatabaseSync {
             Ok(c) => c,
             Err(e) => {
                 println!(" Error getting character list:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-5);
             }
         }
@@ -138,7 +138,7 @@ impl DatabaseCore {
                 if let Some(db_err) = err.as_database_error() {
                     if db_err.message() != "UNIQUE constraint failed: characters.id" {
                         println!("Error saving new character in DB:");
-                        println!("{:?}", db_err);
+                        println!("{db_err:?}");
                         std::process::exit(-10);
                     }
                 }
@@ -158,7 +158,7 @@ impl DatabaseCore {
                 Ok(_) => {},
                 Err(err) => {
                     println!("Error updating names for character in DB:");
-                    println!("{:?}", err);
+                    println!("{err:?}");
                     std::process::exit(-9);
                 },
         }
@@ -174,7 +174,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(e) => {
                 println!("Error setting auto track for character in DB:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-9);
             }
         }
@@ -189,7 +189,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(e) => {
                 println!("Error removing character from DB:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-8);
             }
         }
@@ -270,19 +270,19 @@ impl DatabaseCore {
         mut weapons_rw: tokio::sync::RwLockWriteGuard<'_, BTreeMap<String, Weapon>>,
         conn: &SqlitePool,
     ) -> Weapon {
-        println!("Going to Census for {}", weapon_id);
+        println!("Going to Census for {weapon_id}");
         let mut weapon = Weapon {
             name: "".to_owned(),
             category: WeaponType::Unknown,
         };
         match lookup_weapon_name(weapon_id) {
             Err(whut) => {
-                println!("{}", whut);
-                weapon.name = format!("Error finding ({})", weapon_id);
+                println!("{whut}");
+                weapon.name = format!("Error finding ({weapon_id})");
             }
             Ok(weapon_details) => {
                 println!("with:");
-                println!("{:?}", weapon_details);
+                println!("{weapon_details:?}");
                 weapon.name = weapon_details["item_list"][0]["name"]["en"]
                     .to_string()
                     .unquote();
@@ -291,7 +291,7 @@ impl DatabaseCore {
                     //Census didn't actually return anything. Might be a new NSO
                     //weapon that isn't reporting correctly.
                     // Known ids that trigger this: 6011526, 6011563, 6011564.
-                    weapon.name = format!("Missing ({})", weapon_id);
+                    weapon.name = format!("Missing ({weapon_id})");
                 } else {
                     weapon.category = WeaponType::from(
                         weapon_details["item_list"][0]["item_category_id"]
@@ -311,7 +311,7 @@ impl DatabaseCore {
                         Ok(_) => {}
                         Err(err) => {
                             println!("Error saving new weapon in DB:");
-                            println!("{:?}", err);
+                            println!("{err:?}");
                             std::process::exit(-10);
                         }
                     }
@@ -326,7 +326,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(e) => {
                 println!("Error running DB migration:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(10);
             }
         }
@@ -339,7 +339,7 @@ impl DatabaseCore {
             Ok(row) => println!("db ver = {}", row.get::<f64, usize>(0)),
             Err(e) => {
                 println!("Error checking DB version:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-4);
             }
         }
@@ -351,17 +351,15 @@ impl DatabaseCore {
             let mut category_id = row.get::<i64, usize>(2);
 
             println!(
-                "Loading weapon: >{}< - >{}<: >{}<",
-                weapon_id,
+                "Loading weapon: >{weapon_id}< - >{}<: >{category_id}<",
                 row.get::<String, usize>(1),
-                category_id
             );
 
             if category_id == 0 {
-                println!("Going to Census for {} category", weapon_id);
+                println!("Going to Census for {weapon_id} category");
                 match lookup_weapon_name(&weapon_id) {
                     Err(whut) => {
-                        println!("{}", whut);
+                        println!("{whut}");
                     }
                     Ok(weapon_details) => {
                         category_id = weapon_details["item_list"][0]["item_category_id"]
@@ -369,7 +367,7 @@ impl DatabaseCore {
                             .unquote()
                             .parse::<i64>()
                             .unwrap_or(0);
-                        println!("Setting category to {}", category_id);
+                        println!("Setting category to {category_id}");
                         match sqlx::query("UPDATE weapons SET category = ? WHERE id =  ?;")
                             .bind(category_id)
                             .bind(weapon_id)
@@ -379,7 +377,7 @@ impl DatabaseCore {
                             Ok(_) => {}
                             Err(err) => {
                                 println!("Error updating weapon category in DB:");
-                                println!("{:?}", err);
+                                println!("{err:?}");
                                 std::process::exit(-52);
                             }
                         }
@@ -406,7 +404,7 @@ impl DatabaseCore {
             Err(sqlx::Error::RowNotFound) => match download_census_image(census_id) {
                 Ok(response) => match response {
                     Some(image_bytes) => {
-                        println!("Found image for {}", name);
+                        println!("Found image for {name}");
                         match sqlx::query("INSERT INTO images VALUES (?,?,?);")
                             .bind(name)
                             .bind(census_id)
@@ -417,7 +415,7 @@ impl DatabaseCore {
                             Ok(_) => true,
                             Err(err) => {
                                 println!("Error saving new image in DB:");
-                                println!("{:?}", err);
+                                println!("{err:?}");
                                 std::process::exit(-12);
                             }
                         }
@@ -425,13 +423,13 @@ impl DatabaseCore {
                     None => false,
                 },
                 Err(e) => {
-                    println!("{:?}", e);
+                    println!("{e:?}");
                     false
                 }
             },
             Err(e) => {
                 println!("Error pulling image from DB:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-11);
             }
         }
@@ -447,7 +445,7 @@ impl DatabaseCore {
             Err(sqlx::Error::RowNotFound) => None,
             Err(e) => {
                 println!("Error pulling image from DB:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-13);
             }
         }
@@ -480,7 +478,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(err) => {
                 println!("Error saving new event in DB:");
-                println!("{:?}", err);
+                println!("{err:?}");
                 std::process::exit(-21);
             }
         }
@@ -589,7 +587,7 @@ impl DatabaseCore {
             },
             Err(e) => {
                 println!("Error loading Event List View Modes:");
-                println!("{:?}", e);
+                println!("{e:?}");
                 std::process::exit(-55);
             }
         }
@@ -608,7 +606,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(err) => {
                 println!("Error updating Event List View Modes in DB:");
-                println!("{:?}", err);
+                println!("{err:?}");
                 std::process::exit(-56);
             }
         }
@@ -622,7 +620,7 @@ impl DatabaseCore {
             Ok(row) => row.get::<Option<String>, usize>(0),
             Err(err) => {
                 println!("Error setting current soundset in DB:");
-                println!("{:?}", err);
+                println!("{err:?}");
                 std::process::exit(-63);
             }
         }
@@ -637,7 +635,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(err) => {
                 println!("Error setting current soundset in DB:");
-                println!("{:?}", err);
+                println!("{err:?}");
                 std::process::exit(-57);
             }
         }
@@ -651,7 +649,7 @@ impl DatabaseCore {
             Ok(_) => {}
             Err(err) => {
                 println!("Error saving 'no soundset' in DB:");
-                println!("{:?}", err);
+                println!("{err:?}");
                 std::process::exit(-58);
             }
         }
@@ -698,7 +696,7 @@ impl DatabaseCore {
         {
             Ok(row) => {
                 let set_id = row.get::<i64, usize>(0);
-                println!("New soundset has DB ID: {}", set_id);
+                println!("New soundset has DB ID: {set_id}");
 
                 for (key, list) in keys_to_sounds_names {
                     for (sound_data, filename) in list {
@@ -713,7 +711,7 @@ impl DatabaseCore {
                             Ok(_) => {}
                             Err(err) => {
                                 println!("Error saving sound data in DB:");
-                                println!("{:?}", err);
+                                println!("{err:?}");
                                 std::process::exit(-62);
                             }
                         }
@@ -723,7 +721,7 @@ impl DatabaseCore {
             Err(err) => {
                 if let Some(db_err) = err.as_database_error() {
                     println!("Error saving new soundset metadata in DB:");
-                    println!("{:?}", db_err);
+                    println!("{db_err:?}");
                     std::process::exit(-61);
                 }
             }

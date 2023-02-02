@@ -68,7 +68,7 @@ impl Session {
         let local_tz = match local_tz_q {
             Ok(local) => local,
             Err(e) => {
-                println!("Error finding system timezone: {}", e);
+                println!("Error finding system timezone: {e}");
                 std::process::exit(-2);
             }
         };
@@ -85,9 +85,9 @@ impl Session {
         let mut weapons_initial = BTreeMap::new();
 
         match lookup_full_stats(&character.character_id) {
-            Err(whut) => println!("Failed getting lifetime stats data:\n{}", whut),
+            Err(whut) => println!("Failed getting lifetime stats data:\n{whut}"),
             Ok(details) => {
-                //println!("/nFULLSTATS:/n{:?}", details); //FAR too much to dump all to console.
+                //println!("/nFULLSTATS:/n{details:?}"); //FAR too much to dump all to console.
                 let stat_history =
                     &details["single_character_by_id_list"][0]["stats"]["stat_history"];
                 let stat_block = details["single_character_by_id_list"][0]["stats"]["stat"]
@@ -107,14 +107,14 @@ impl Session {
                     .unquote()
                     .parse::<u64>()
                     .unwrap();
-                println!("Found lifetime kills: {}", init_kills);
+                println!("Found lifetime kills: {init_kills}");
 
                 init_revived_deaths = stat_history["deaths"]["all_time"]
                     .to_string()
                     .unquote()
                     .parse::<u64>()
                     .unwrap();
-                println!("Found lifetime deaths - revives: {}", init_revived_deaths);
+                println!("Found lifetime deaths - revives: {init_revived_deaths}");
 
                 for stat in stat_block {
                     match stat["stat_name"].as_str() {
@@ -142,9 +142,9 @@ impl Session {
                         _ => {}
                     }
                 }
-                println!("Found lifetime deaths: {}", init_actual_deaths);
-                println!("Found lifetime fired: {}", init_shot);
-                println!("Found lifetime hit: {}", init_hit);
+                println!("Found lifetime deaths: {init_actual_deaths}");
+                println!("Found lifetime fired: {init_shot}");
+                println!("Found lifetime hit: {init_hit}");
 
                 for stat in weapon_stat {
                     let weapon_id = stat["item_id"].as_str().unwrap().to_owned();
@@ -267,14 +267,10 @@ impl Session {
                 }
 
                 init_headshots = vs_hs + nc_hs + tr_hs;
-                println!(
-                    "headshots: VS {}, NC {}, TR {}, Total: {}",
-                    vs_hs, nc_hs, tr_hs, init_headshots
-                );
+                println!("headshots: VS {vs_hs}, NC {nc_hs}, TR {tr_hs}, Total: {init_headshots}");
                 init_destroyed = vs_veh_destroy + nc_veh_destroy + tr_veh_destroy;
                 println!(
-                    "vehicle destroys : VS {}, NC {}, TR {}, Total: {}",
-                    vs_veh_destroy, nc_veh_destroy, tr_veh_destroy, init_destroyed
+                    "vehicle destroys : VS {vs_veh_destroy}, NC {nc_veh_destroy}, TR {tr_veh_destroy}, Total: {init_destroyed}"
                 );
             }
         }
@@ -428,8 +424,8 @@ impl Session {
     pub fn get_list_name(&self) -> String {
         if let Some(end_time) = self.end_time {
             format!(
-                "{} {}-{}",
-                self.character.full_name, self.start_time, end_time
+                "{} {}-{end_time}",
+                self.character.full_name, self.start_time
             )
         } else {
             format!("{} {}-Active", self.character.full_name, self.start_time)
@@ -449,7 +445,7 @@ impl Session {
             let session_duration = end_time - start_time;
             let hours = session_duration.whole_hours();
             let minutes = session_duration.whole_minutes() % 60;
-            format!("{:02}:{:02}", hours, minutes)
+            format!("{hours:02}:{minutes:02}")
         }
     }
 
@@ -468,7 +464,7 @@ impl Session {
         };
 
         if self.character.br == self.latest_br && self.character.asp == self.latest_asp {
-            format!("{} (+0)", current_rank)
+            format!("{current_rank} (+0)")
         } else {
             //Taking ASP resets your BR to 1, may only happen during BR 100-120 the first time, and
             //then again only at BR 100~1.
@@ -493,18 +489,17 @@ impl Session {
             if self.latest_asp == 1 && self.character.asp == 0 {
                 //First ASP reset happened during this session
                 let total_rankups = self.pre_asp_rankups + (self.latest_br - 1);
-                format!("{} (+{} [~1])", current_rank, total_rankups)
+                format!("{current_rank} (+{total_rankups} [~1])")
             } else if self.latest_asp > self.character.asp {
                 //2nd or later ASP reset happened during this session
                 format!(
-                    "{} (+{} [~{}])",
-                    current_rank,
+                    "{current_rank} (+{} [~{}])",
                     (self.latest_br - 1) + (100 - self.character.br),
                     self.latest_asp - self.character.asp
                 )
             } else {
                 //No ASP reset this session
-                format!("{} (+{})", current_rank, self.latest_br - self.character.br)
+                format!("{current_rank} (+{})", self.latest_br - self.character.br)
             }
         }
     }
@@ -622,7 +617,7 @@ impl Session {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel is the region left after adding TopPanel's and SidePanel's
-            //ui.heading(format!("{} Stats", new_char_name));
+            //ui.heading(format!("{new_char_name} Stats"));
             let formatter =
                 time::format_description::parse("[hour repr:12]:[minute]:[second] [period]")
                     .unwrap();
@@ -655,8 +650,7 @@ impl Session {
                         .unwrap_or_else(|_| "?-?-? ?:?:?".into());
 
                     ui.label(format!(
-                        "  {} - {}",
-                        formatted_start_time, formatted_end_time
+                        "  {formatted_start_time} - {formatted_end_time}"
                     ));
 
                     duration_minutes = (end_time - start_time).whole_seconds() as f32 / 60.0;
@@ -668,8 +662,7 @@ impl Session {
                     let seconds = session_duration.whole_seconds() % 60;
                     let millis = session_duration.subsec_milliseconds() / 10;
                     ui.label(format!(
-                        "  {},  {:02}:{:02}:{:02}.{:02}",
-                        formatted_start_time, hours, minutes, seconds, millis
+                        "  {formatted_start_time},  {hours:02}:{minutes:02}:{seconds:02}.{millis:02}"
                     ));
                     duration_minutes = session_duration.whole_seconds() as f32 / 60.0;
                 }
@@ -764,13 +757,13 @@ impl Session {
                     let headshots_current =
                         self.initial_headshot_kills + self.headshot_kills as u64;
 
-                    ui.label(format!("Kills {}", kills_current));
+                    ui.label(format!("Kills {kills_current}"));
                     ui.label(format!(
                         "Vehicles destroyed {}",
                         self.initial_vehicles_destroyed + self.vehicles_destroyed as u64
                     ));
                     ui.end_row();
-                    ui.label(format!("Deaths (true) {}", deaths_current));
+                    ui.label(format!("Deaths (true) {deaths_current}"));
                     if self.initial_actual_deaths_total > 0 {
                         let current_kdr = kills_current as f64 / deaths_current as f64;
                         let init_kdr = if self.initial_actual_deaths_total > 0 {
@@ -887,7 +880,7 @@ impl Session {
         //println!("At historical update, session end_time is {:?}",self.end_time);
         if self.end_time.is_none() {
             match lookup_full_stats(&self.character.character_id) {
-                Err(whut) => println!("Failed getting lifetime stats data:\n{}", whut),
+                Err(whut) => println!("Failed getting lifetime stats data:\n{whut}"),
                 Ok(details) => {
                     let stat_history =
                         &details["single_character_by_id_list"][0]["stats"]["stat_history"];
@@ -997,8 +990,8 @@ impl Session {
 
                     self.latest_api_headshots = vs_hs + nc_hs + tr_hs;
                     println!(
-                        "Updated headshots: VS {}, NC {}, TR {}, Total: {}",
-                        vs_hs, nc_hs, tr_hs, self.latest_api_headshots
+                        "Updated headshots: VS {vs_hs}, NC {nc_hs}, TR {tr_hs}, Total: {}",
+                        self.latest_api_headshots
                     );
 
                     self.update_db_entry().await;
@@ -1073,7 +1066,7 @@ impl Session {
             Err(err) => {
                 if let Some(db_err) = err.as_database_error() {
                     println!("Error saving new sessionin DB:");
-                    println!("{:?}", db_err);
+                    println!("{db_err:?}");
                     std::process::exit(-20);
                 }
             }
@@ -1119,7 +1112,7 @@ impl Session {
                 Err(err) => {
                     if let Some(db_err) = err.as_database_error() {
                         println!("Error updating new sessionin DB:");
-                        println!("{:?}", db_err);
+                        println!("{db_err:?}");
                         std::process::exit(-21);
                     }
                 }

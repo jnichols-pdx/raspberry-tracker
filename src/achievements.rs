@@ -790,8 +790,8 @@ impl AchievementEngine {
                 }
             }
             println!(
-                "Opponent {} now at {} deaths to player",
-                victim_id, opponent.deaths_to_player
+                "Opponent {victim_id} now at {} deaths to player",
+                opponent.deaths_to_player
             );
         }
 
@@ -1775,18 +1775,18 @@ impl AchievementEngine {
         let mut rage_announcement = "";
         if let Some(opponent) = self.opponents.get(&character_id) {
             println!(
-                "{} had {} deaths_to_player at logout",
-                character_id, opponent.deaths_to_player
+                "{character_id} had {} deaths_to_player at logout",
+                opponent.deaths_to_player
             );
             if opponent.deaths_to_player > 0 {
                 let delta = timestamp - opponent.latest_death_time;
-                println!("{} death to logout delta: {} seconds", character_id, delta);
+                println!("{character_id} death to logout delta: {delta} seconds");
                 if delta <= RAGE_LIMIT {
                     let name: String;
                     match lookup_new_char_details(&character_id) {
                         Err(whut) => {
-                            println!("{}", whut);
-                            name = format!("missing: {}", character_id);
+                            println!("{whut}");
+                            name = format!("missing: {character_id}");
                         }
                         Ok(details) => {
                             let player_name = details["character_list"][0]["name"]["first"]
@@ -1800,9 +1800,9 @@ impl AchievementEngine {
                                     .to_string()
                                     .unquote();
                                 if outfit_alias.is_empty() {
-                                    name = format!("[{}] {}", outfit_name, player_name);
+                                    name = format!("[{outfit_name}] {player_name}");
                                 } else {
-                                    name = format!("[{}] {}", outfit_alias, player_name);
+                                    name = format!("[{outfit_alias}] {player_name}");
                                 }
                             } else {
                                 name = player_name;
@@ -1812,12 +1812,12 @@ impl AchievementEngine {
 
                     let rage_message = if opponent.deaths_to_player >= 3 {
                         rage_announcement = "SUBMISSION";
-                        format!("Submission ({})", name)
+                        format!("Submission ({name})")
                     } else {
                         rage_announcement = "RAGE_QUIT";
-                        format!("Rage Quit ({})", name)
+                        format!("Rage Quit ({name})")
                     };
-                    println!("push here: {}", rage_message);
+                    println!("push here: {rage_message}");
                     rage_event = Some(Event::achieved(
                         &rage_message,
                         timestamp,
@@ -1827,7 +1827,7 @@ impl AchievementEngine {
             }
             self.opponents.remove(&character_id);
         } else {
-            println!("{} not in oppo list at logout", character_id)
+            println!("{character_id} not in oppo list at logout")
         }
         if !rage_announcement.is_empty() {
             self.announce(vec![rage_announcement]);

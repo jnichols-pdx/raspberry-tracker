@@ -20,7 +20,7 @@ pub struct Character {
 impl Character {
     pub fn from_json(json: &serde_json::Value) -> Result<Character, String> {
         let new_char = &json["character_list"][0];
-        println!("deets: {:?}", new_char);
+        println!("deets: {new_char:?}");
         let faction_num = new_char["faction_id"]
             .to_string()
             .unquote()
@@ -58,12 +58,12 @@ impl Character {
         if let Some(outfit_alias) = &self.outfit {
             if outfit_alias.is_empty() {
                 if let Some(outfit_name) = &self.outfit_full {
-                    format!("[{}] {}", outfit_name, self.full_name)
+                    format!("[{outfit_name}] {}", self.full_name)
                 } else {
                     self.full_name.to_owned()
                 }
             } else {
-                format!("[{}] {}", outfit_alias, self.full_name)
+                format!("[{outfit_alias}] {}", self.full_name)
             }
         } else {
             self.full_name.to_owned()
@@ -193,12 +193,12 @@ impl FullCharacter {
         if let Some(outfit_alias) = &self.outfit {
             if outfit_alias.is_empty() {
                 if let Some(outfit_name) = &self.outfit_full {
-                    format!("[{}] {}", outfit_name, self.full_name)
+                    format!("[{outfit_name}] {}", self.full_name)
                 } else {
                     self.full_name.to_owned()
                 }
             } else {
-                format!("[{}] {}", outfit_alias, self.full_name)
+                format!("[{outfit_alias}] {}", self.full_name)
             }
         } else {
             self.full_name.to_owned()
