@@ -57,7 +57,12 @@ impl TrackerApp {
         if let Some(callback) = context_cb.take() {
             let _blah = callback.send(cc.egui_ctx.clone());
         }
+
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
+
+        let mut viz = egui::Visuals::default();
+        viz.override_text_color = Some(Color32::from_rgb(255,255,255));
+        cc.egui_ctx.set_visuals(viz);
 
         app_ui.images = Some(Vec::new());
 
