@@ -4,7 +4,7 @@ use crate::db::*;
 use crate::events::{Event, *};
 use crate::weapons::*;
 use eframe::egui;
-use egui_extras::{Size, TableBuilder};
+use egui_extras::{Column, TableBuilder};
 use sqlx::Row;
 use std::collections::BTreeMap;
 use time::{Date, OffsetDateTime};
@@ -838,13 +838,13 @@ impl Session {
                 });
 
             TableBuilder::new(ui)
-                .column(Size::remainder()) //weapon name //formerly minimum 100
-                .column(Size::exact(25.0)) //kills
-                .column(Size::exact(80.0)) //HS%
-                .column(Size::exact(80.0)) //Acc
-                .column(Size::exact(25.0)) //HS count
-                .column(Size::exact(25.0)) //Fired
-                .column(Size::exact(25.0)) //Hits
+                .column(Column::remainder()) //weapon name //formerly minimum 100
+                .column(Column::exact(25.0)) //kills
+                .column(Column::exact(80.0)) //HS%
+                .column(Column::exact(80.0)) //Acc
+                .column(Column::exact(25.0)) //HS count
+                .column(Column::exact(25.0)) //Fired
+                .column(Column::exact(25.0)) //Hits
                 .header(12.0, |mut header| {
                     header.col(|ui| {
                         ui.label(egui::RichText::new("Name").small());

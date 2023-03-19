@@ -1,6 +1,6 @@
 use crate::common::*;
 use egui::Color32;
-use egui_extras::{Size, TableBuilder};
+use egui_extras::{Column, TableBuilder};
 use std::collections::VecDeque;
 
 #[derive(Clone)]
@@ -110,11 +110,11 @@ impl Event {
             row.set_bg_color(bg_color);
         }
         if minimal {
-            clicked = row.col(|_ui| {}).clicked() || clicked;
+            clicked = row.col(|_ui| {}).1.clicked() || clicked;
             row.set_bg_color(bg_color);
-            clicked = row.col(|_ui| {}).clicked() || clicked;
-            clicked = row.col(|_ui| {}).clicked() || clicked;
-            clicked = row.col(|_ui| {}).clicked() || clicked;
+            clicked = row.col(|_ui| {}).1.clicked() || clicked;
+            clicked = row.col(|_ui| {}).1.clicked() || clicked;
+            clicked = row.col(|_ui| {}).1.clicked() || clicked;
         } else {
             clicked = row
                 .col(|ui| {
@@ -139,6 +139,7 @@ impl Event {
                         };
                     });
                 })
+                .1
                 .clicked()
                 || clicked;
 
@@ -164,6 +165,7 @@ impl Event {
                         }
                     });
                 })
+                .1
                 .clicked()
                 || clicked;
             clicked = row
@@ -180,6 +182,7 @@ impl Event {
                         });
                     });
                 })
+                .1
                 .clicked()
                 || clicked;
             clicked = row
@@ -226,6 +229,7 @@ impl Event {
                         });
                     });
                 })
+                .1
                 .clicked()
                 || clicked;
         }
@@ -238,6 +242,7 @@ impl Event {
                         .on_hover_text(&self.name);
                 });
             })
+            .1
             .clicked()
             || clicked;
         clicked = row
@@ -249,11 +254,12 @@ impl Event {
                         .on_hover_text(&self.weapon);
                 });
             })
+            .1
             .clicked()
             || clicked;
         if minimal {
-            clicked = row.col(|_ui| {}).clicked() || clicked;
-            clicked = row.col(|_ui| {}).clicked() || clicked;
+            clicked = row.col(|_ui| {}).1.clicked() || clicked;
+            clicked = row.col(|_ui| {}).1.clicked() || clicked;
         } else {
             clicked = row
                 .col(|ui| {
@@ -277,6 +283,7 @@ impl Event {
                         });
                     });
                 })
+                .1
                 .clicked()
                 || clicked;
             clicked = row
@@ -291,6 +298,7 @@ impl Event {
                         );
                     });
                 })
+                .1
                 .clicked()
                 || clicked;
         }
@@ -306,6 +314,7 @@ impl Event {
                     );
                 });
             })
+            .1
             .clicked()
             || clicked;
 
@@ -457,16 +466,16 @@ impl EventList {
                 if let Some(offset) = scroll_offset {
                     bob = bob.vertical_scroll_offset(offset);
                 }
-
-                bob.column(Size::exact(20.0)) //Faction
-                    .column(Size::exact(30.0)) //BR
-                    .column(Size::exact(22.0)) //Class
-                    .column(Size::exact(20.0)) //Vehicle
-                    .column(Size::remainder()) //playername //formerly minimum 100
-                    .column(Size::remainder()) //weapon //formerly minimum 80
-                    .column(Size::exact(20.0)) //headshot
-                    .column(Size::exact(25.0)) //KD
-                    .column(Size::exact(70.0)) //Timestamp
+                //bob = bob.auto_shrink([false,true]);
+                bob.column(Column::exact(20.0)) //Faction
+                    .column(Column::exact(30.0)) //BR
+                    .column(Column::exact(22.0)) //Class
+                    .column(Column::exact(20.0)) //Vehicle
+                    .column(Column::remainder()) //playername //formerly minimum 100
+                    .column(Column::remainder()) //weapon //formerly minimum 80
+                    .column(Column::exact(20.0)) //headshot
+                    .column(Column::exact(25.0)) //KD
+                    .column(Column::exact(70.0)) //Timestamp
                     .header(12.0, |mut header| {
                         header.col(|_ui| { //No header for first column
                         });
@@ -511,11 +520,6 @@ impl EventList {
                             }
                         });
                     });
-
-                //Claim the available space left over from the table - prevents the right side panel
-                //from shrinking down toward minimum table width with each redraw.
-                let rect = ui.available_size();
-                ui.allocate_space(rect);
             });
     }
 }

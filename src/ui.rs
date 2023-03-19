@@ -60,8 +60,19 @@ impl TrackerApp {
 
         cc.egui_ctx.set_visuals(egui::Visuals::dark());
 
-        let mut viz = egui::Visuals::default();
-        viz.override_text_color = Some(Color32::from_rgb(255,255,255));
+        let mut viz = egui::Visuals {
+            override_text_color: Some(Color32::from_rgb(255, 255, 255)),
+            panel_fill: Color32::from_rgb(48, 48, 48),
+            ..Default::default()
+        };
+        viz.widgets.noninteractive.bg_stroke = egui::Stroke {
+            width: 1.0,
+            color: Color32::from_rgb(100, 100, 100),
+        };
+        viz.widgets.inactive.bg_fill = Color32::from_rgb(90, 90, 90);
+        viz.widgets.hovered.bg_fill = Color32::from_rgb(110, 110, 110);
+        viz.widgets.active.bg_fill = Color32::from_rgb(160, 160, 160);
+
         cc.egui_ctx.set_visuals(viz);
 
         app_ui.images = Some(Vec::new());
@@ -83,7 +94,7 @@ impl TrackerApp {
                                 list.push(cc.egui_ctx.load_texture(
                                     name,
                                     ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
-                                    egui::TextureFilter::Linear,
+                                    egui::TextureOptions::LINEAR,
                                 ));
                             }
                         };
@@ -172,7 +183,7 @@ impl TrackerApp {
                 list.push(ctx.load_texture(
                     image_name,
                     ColorImage::from_rgba_unmultiplied(size, pixels.as_slice()),
-                    egui::TextureFilter::Linear,
+                    egui::TextureOptions::LINEAR,
                 ));
                 println!("Readied Custom : {image_name}");
             }
@@ -249,11 +260,11 @@ impl eframe::App for TrackerApp {
                             }
 
                             if self.event_list_mode.achievements {
-                                if ui.button("Hide Achievements Events").clicked() {
+                                if ui.button("Hide Achievement Events").clicked() {
                                     self.event_list_mode.achievements = false;
                                     self.db.set_event_modes_sync(self.event_list_mode);
                                 }
-                            } else if ui.button("Show Achievements Events").clicked() {
+                            } else if ui.button("Show Achievement Events").clicked() {
                                 self.event_list_mode.achievements = true;
                                 self.db.set_event_modes_sync(self.event_list_mode);
                             }
@@ -315,7 +326,7 @@ impl eframe::App for TrackerApp {
         egui::TopBottomPanel::bottom("bottom_strip").show(ctx, |ui| {
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
+                    ui.spacing_mut().item_spacing.x = 0.2;
                     ui.label("Version 0.5.0");
                     egui::warn_if_debug_build(ui);
                 });

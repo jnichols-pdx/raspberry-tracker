@@ -207,7 +207,7 @@ fn main() {
 
     let gui_sync_db = sync_db.clone();
 
-    eframe::run_native(
+    let gui_exit = eframe::run_native(
         "Raspberry Tracker",
         native_options,
         Box::new(move |cc| {
@@ -221,6 +221,11 @@ fn main() {
             ))
         }),
     );
+
+    match gui_exit {
+        Ok(_) => {}
+        Err(e) => println!("GUI exited with error: {e:?}"),
+    }
     println!("Closing database");
     sync_db.rt.block_on(sync_db.dbc.conn.close());
     println!("Goodbye!");

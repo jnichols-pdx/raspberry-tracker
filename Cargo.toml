@@ -1,6 +1,6 @@
 [package]
 name = "raspberry-tracker"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["James Nichols <jtylernichols@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -22,18 +22,17 @@ sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls", "sqlite" ] }
 image = "0.24"
 time = { version = "0.3", features = [ "std", "formatting", "parsing", "macros", "local-offset"] }
 time-tz = { version = "0.5", features = [ "system" ] }
-#egui = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
-#egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table" }
-#eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table", features = ["default", "persistence"] }
-#egui_extras = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
-egui = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table-ahash-7"}
-egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table-ahash-7" }
-eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table-ahash-7", features = ["default", "persistence"] }
-egui_extras = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table-ahash-7"}
+
+egui = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
+egui_glow = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table" }
+eframe = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table", features = ["default", "persistence"] }
+egui_extras = { git = "https://github.com/jnichols-pdx/egui/" , branch = "colored-table"}
+
 #egui = { path = "/usr/src/egui/crates/egui" }
 #egui_glow = { path = "/usr/src/egui/crates/egui_glow" }
 #eframe = { path = "/usr/src/egui/crates/eframe", features = ["default", "persistence"] }
 #egui_extras = { path = "/usr/src/egui/crates/egui_extras" }
+
 rodio = "0.15.0"
 bytes = "1.1"
 base64 = "0.13"

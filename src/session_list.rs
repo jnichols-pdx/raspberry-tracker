@@ -118,55 +118,58 @@ impl SessionList {
         ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
             let text_style = TextStyle::Body;
             let row_height = ui.text_style_height(&text_style);
-            ScrollArea::vertical().show_rows(
-                ui,
-                row_height,
-                self.display_sequence.len(),
-                |ui, row_range| {
-                    let visible_length = row_range.end - row_range.start;
-                    let now_date = OffsetDateTime::now_utc().to_timezone(self.time_zone).date();
-                    let selected_index = self.selected.unwrap_or(usize::MAX);
-                    let sequence = self.display_sequence.iter().rev();
-                    let mut shown = 0;
+            ScrollArea::vertical()
+                .drag_to_scroll(false)
+                .auto_shrink([false; 2])
+                .show_rows(
+                    ui,
+                    row_height,
+                    self.display_sequence.len(),
+                    |ui, row_range| {
+                        let visible_length = row_range.end - row_range.start;
+                        let now_date = OffsetDateTime::now_utc().to_timezone(self.time_zone).date();
+                        let selected_index = self.selected.unwrap_or(usize::MAX);
+                        let sequence = self.display_sequence.iter().rev();
+                        let mut shown = 0;
 
-                    for row in sequence.skip(row_range.start) {
-                        match row {
-                            RowType::Date(date) => {
-                                ui.label(relative_date_string(date, &now_date))
-                                    .on_hover_text(small_date_format(date));
-                            }
-                            RowType::Session(index) => {
-                                let session = &self.sessions[*index];
-                                let this_text = if *index == selected_index {
-                                    format!(
-                                        "{} {}▶",
-                                        session.current_character().name_with_outfit(),
-                                        session.duration_string()
-                                    )
-                                } else {
-                                    format!(
-                                        "{} {}     ",
-                                        session.current_character().name_with_outfit(),
-                                        session.duration_string()
-                                    )
-                                };
+                        for row in sequence.skip(row_range.start) {
+                            match row {
+                                RowType::Date(date) => {
+                                    ui.label(relative_date_string(date, &now_date))
+                                        .on_hover_text(small_date_format(date));
+                                }
+                                RowType::Session(index) => {
+                                    let session = &self.sessions[*index];
+                                    let this_text = if *index == selected_index {
+                                        format!(
+                                            "{} {}▶",
+                                            session.current_character().name_with_outfit(),
+                                            session.duration_string()
+                                        )
+                                    } else {
+                                        format!(
+                                            "{} {}     ",
+                                            session.current_character().name_with_outfit(),
+                                            session.duration_string()
+                                        )
+                                    };
 
-                                if ui
-                                    .add(Label::new(this_text).sense(Sense::click()))
-                                    .clicked()
-                                {
-                                    self.selected = Some(*index);
-                                    user_clicked_a_session = true;
+                                    if ui
+                                        .add(Label::new(this_text).sense(Sense::click()))
+                                        .clicked()
+                                    {
+                                        self.selected = Some(*index);
+                                        user_clicked_a_session = true;
+                                    }
                                 }
                             }
+                            shown += 1;
+                            if shown > visible_length {
+                                break;
+                            }
                         }
-                        shown += 1;
-                        if shown > visible_length {
-                            break;
-                        }
-                    }
-                },
-            );
+                    },
+                );
         });
 
         user_clicked_a_session
