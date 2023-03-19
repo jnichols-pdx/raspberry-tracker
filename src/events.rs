@@ -520,6 +520,11 @@ impl EventList {
                             }
                         });
                     });
+
+                //Claim the available space left over from the table - prevents the right side panel
+                //from shrinking down toward minimum table width with each redraw.
+                let rect = ui.available_size();
+                ui.allocate_space(rect);
             });
     }
 }
