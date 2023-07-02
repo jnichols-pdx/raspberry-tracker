@@ -344,6 +344,7 @@ pub enum ExperienceType {
     Passenger_Kill_Share_Reaver = 416,
     Passenger_Kill_Share_Scythe = 417,
     Passenger_Kill_Share_Sunderer = 418,
+    Passenger_Kill_Share_Harasser = 420,
     Gunner_Kill_Assist_Share_Infantry_To_Pilot = 421,
     Gunner_Kill_Assist_Share_Phalanx_To_Pilot = 424,
     Passenger_Kill_Assist_Share_Galaxy = 426,
@@ -351,6 +352,7 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Reaver_To_Pilot = 432,
     Gunner_Kill_Assist_Share_Scythe_To_Pilot = 433,
     Gunner_Kill_Assist_Share_Sunderer_To_Pilot = 434,
+    Gunner_Kill_Assist_Share_Harasser_To_Pilot = 436,
     Shield_Regen_Tool_Kill = 437,
     Shield_Repair = 438,
     Squad_Shield_Repair = 439,
@@ -1272,6 +1274,7 @@ pub enum ExperienceType {
     Containment_Site_Gate_Shield_Gen_Destroy = 1547,
     Containment_Site_Gate_Shield_Gen_Destroy_Assist = 1548,
     Containment_Site_Gate_Shield_Gen_Repair = 1549,
+    War_Asset_Destruction_Basic = 1552,
     War_Asset_Destruction_Standard = 1553, //Destroy Anvil? Yes!
     War_Asset_Destruction_Valuable = 1554,
     War_Asset_Destruction_Epic = 1555,
@@ -1279,7 +1282,7 @@ pub enum ExperienceType {
     Kill_Assist_Chimera = 1560,
     Squad_Repair_Chimera = 1562,
 
-    Missing_1563 = 1563, //Triggered at same time as killing a Chimera from Prowler top gun (swamped out by other xp events?
+    Missing_1563 = 1563, //Triggered at same time as killing a Chimera from Prowler top gun (swamped out by other xp events? Repeated by killing a Chimera as light assault as part of squad... +30 XP makes it seem like maybe this is SPot Squad Kill (Chimera) XP? but that shows up AFTER the kill, while this was before in other examples?
     Tank_Superiority_Bonus = 1564,
     Vehicle_Destruction_Chimera = 1565,
     Gunner_Kill_Assist_Share_Chimera = 1567,
@@ -1288,10 +1291,11 @@ pub enum ExperienceType {
 
     Vehicle_Destruction_Dervish = 1635,
     Kill_Assist_Dervish = 1636,
+    Vehicle_Ram_Dervish = 1637,
     Vehicle_Repair_Dervish = 1638, //assumed
     Missing_1646 = 1646,           //Triggered after dervish kill from galaxy gun turret
     //And from a sunderer turret, however it was NOT displayed on screen, in
-    //favor of the vehicle destruction dervish XP.
+    //favor of the vehicle destruction dervish XP. And from on foot with MSW-R.
     Surface_To_Air_Dervish = 1647,
     Dervish_Damage = 1657,
     Fighter_Superiority_Bonus = 1649,
@@ -1306,7 +1310,13 @@ pub enum ExperienceType {
     Gunner_Kill_Corsair_Bonus = 2055,
     Gunner_Kill_Bonus = 2074,
     Podium_Defense_Bonus = 2132,
+    Conduit_Capture = 2133,
+    Conduit_Return = 2134,
     Conduit_Repository_Hack = 2135,
+    Conduit_Hack_Overload = 2139,
+    Module_Installed = 2144,
+    Module_Overloaded = 2147,
+    Module_Stabilized = 2148,
 
     #[num_enum(default)]
     Unknown = 0,
@@ -2654,15 +2664,19 @@ impl std::fmt::Display for ExperienceType {
             }
             ExperienceType::Passenger_Kill_Share_Reaver => {
                 //416
-                write!(f, "Passenger Kill Share (Reaver XP)")
+                write!(f, "Passenger Kill Share (Reaver) XP")
             }
             ExperienceType::Passenger_Kill_Share_Scythe => {
                 //417
-                write!(f, "Passenger Kill Share (Scythe XP)")
+                write!(f, "Passenger Kill Share (Scythe) XP")
             }
             ExperienceType::Passenger_Kill_Share_Sunderer => {
                 //418
-                write!(f, "Passenger Kill Share (Sunderer XP)")
+                write!(f, "Passenger Kill Share (Sunderer) XP")
+            }
+            ExperienceType::Passenger_Kill_Share_Harasser => {
+                //420
+                write!(f, "Passenger Kill Share (Harasser) XP")
             }
             ExperienceType::Gunner_Kill_Assist_Share_Infantry_To_Pilot => {
                 write!(f, "Gunner Kill Assist To Pilot(Infantry) Share XP") //421
@@ -2685,6 +2699,9 @@ impl std::fmt::Display for ExperienceType {
             }
             ExperienceType::Gunner_Kill_Assist_Share_Sunderer_To_Pilot => {
                 write!(f, "Kill Assist To Pilot (Sunderer) Share XP") //434
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_Harasser_To_Pilot => {
+                write!(f, "Kill Assist To Pilot (Harasser) Share XP") //436
             }
             ExperienceType::Gunner_Kill_Share_Valkyrie => {
                 write!(f, "Gunner Kill Share (Valkyrie) XP")
@@ -2755,6 +2772,10 @@ impl std::fmt::Display for ExperienceType {
                 //1381
                 write!(f, "Passenger Kill Share (Hardlight Barrier) XP")
             }
+            ExperienceType::War_Asset_Destruction_Basic => {
+                //1552
+                write!(f, "War Asset Destroyed (Basic) XP")
+            }
             ExperienceType::War_Asset_Destruction_Standard => {
                 //1553
                 write!(f, "War Asset Destroyed (Standard) XP")
@@ -2784,7 +2805,8 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Vehicle_Repair_Chimera => write!(f, "Repair Chimera XP"), //1571
             ExperienceType::Vehicle_Destruction_Dervish => write!(f, "Destroy Dervish XP"),
             ExperienceType::Kill_Assist_Dervish => write!(f, "Kill Assist Dervish XP"),
-            ExperienceType::Vehicle_Repair_Dervish => write!(f, "Repair Dervish XP"), //1638
+            ExperienceType::Vehicle_Ram_Dervish => write!(f, "Ram Bonus (Dervish) XP"), //1637
+            ExperienceType::Vehicle_Repair_Dervish => write!(f, "Repair Dervish XP"),   //1638
             ExperienceType::Missing_1646 => write!(f, "Missing (1646) XP"),
             ExperienceType::Surface_To_Air_Dervish => write!(f, "Anti-air Damage (Dervish) XP"),
             ExperienceType::Dervish_Damage => write!(f, "Vehicle Damage (Dervish) XP"),
@@ -2812,8 +2834,26 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Podium_Defense_Bonus => {
                 write!(f, "Podium Defense Bonus XP") //2132
             }
+            ExperienceType::Conduit_Capture => {
+                write!(f, "Conduit Capture XP") //2133
+            }
+            ExperienceType::Conduit_Return => {
+                write!(f, "Conduit Return XP") //2134
+            }
             ExperienceType::Conduit_Repository_Hack => {
                 write!(f, "Conduit Repository Hack XP") //2135
+            }
+            ExperienceType::Conduit_Hack_Overload => {
+                write!(f, "Conduit Repository Overload XP") //2139
+            }
+            ExperienceType::Module_Installed => {
+                write!(f, "Module Installed XP") //2144
+            }
+            ExperienceType::Module_Overloaded => {
+                write!(f, "Module Overloaded XP") //2147
+            }
+            ExperienceType::Module_Stabilized => {
+                write!(f, "Module Stabilized XP") //2148
             }
             other => write!(f, "unused xp ({})", *other as i64),
         }
