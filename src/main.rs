@@ -399,11 +399,7 @@ async fn parse_messages(
             {
                 let session_list_ro = session_list.read().await;
                 if let Some(session) = session_list_ro.active_session() {
-                    if session.team == Team::Unknown {
-                        need_update_session_team = true;
-                    } else {
-                        need_update_session_team = false;
-                    }
+                    need_update_session_team = session.team == Team::Unknown;
                 } else {
                     need_update_session_team = false;
                 }

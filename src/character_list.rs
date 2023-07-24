@@ -54,7 +54,7 @@ impl CharacterList {
     }
 
     pub fn update_entry_from_full(&mut self, newer_char: &FullCharacter) {
-        if let Some(mut target) = self
+        if let Some(target) = self
             .characters
             .iter_mut()
             .find(|chara| (chara).character_id.eq(&newer_char.character_id))
