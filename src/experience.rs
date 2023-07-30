@@ -348,7 +348,10 @@ pub enum ExperienceType {
     Gunner_Kill_Assist_Share_Infantry_To_Pilot = 421,
     Gunner_Kill_Assist_Share_Phalanx_To_Pilot = 424,
     Passenger_Kill_Assist_Share_Galaxy = 426,
+    Gunner_Kill_Assist_Share_To_Pilot_Liberator = 427,
     Gunner_Kill_Assist_Share_Lightning_To_Pilot = 428,
+    Gunner_Kill_Assist_Share_Mosquito_To_Pilot = 430,
+    Gunner_Kill_Assist_Share_To_Pilot_Prowler = 431,
     Gunner_Kill_Assist_Share_Reaver_To_Pilot = 432,
     Gunner_Kill_Assist_Share_Scythe_To_Pilot = 433,
     Gunner_Kill_Assist_Share_Sunderer_To_Pilot = 434,
@@ -513,6 +516,7 @@ pub enum ExperienceType {
     Gunner_Kill_Share_Ant = 667,
     Gunner_Kill_Assist_Share_Ant = 668,
     Passenger_Kill_Share_Ant = 669,
+    Gunner_Kill_Assist_Share_To_Pilot_Ant = 670,
     ANT_Kill_by_Valkyrie_Gunner = 671,
     Chain_Expl_Assist_ANT = 672,
     Bounty_Kill_Cashed_In_Alt = 673,
@@ -1251,6 +1255,7 @@ pub enum ExperienceType {
     Vehicle_Component_Destruction_Bastion = 1520,
     Kill_Assist_Bastion_Component = 1521,
     Gunner_Kill_Assist_Share_Bastion_Component = 1523,
+    Gunner_Kill_Assist_Share_To_Pilot_Bastion_Component = 1525,
     Bastion_Component_Kill_by_Sunderer_Gunner = 1526,
     Bastion_Component_Kill_by_Vanguard_Gunner = 1527,
     Bastion_Component_Kill_by_Prowler_Gunner = 1528,
@@ -1301,7 +1306,7 @@ pub enum ExperienceType {
     Fighter_Superiority_Bonus = 1649,
     Gunner_Kill_Share_Dervish = 1650,
     Gunner_Kill_Assist_Share_Dervish = 1651,
-
+    Gunner_Kill_Assist_Share_To_Pilot_Dervish = 1653,
     Vehicle_Destruction_Corsair = 1989,
     Kill_Assist_Corsair = 1992,
     Gunner_Kill_Assist_Share_Corsair_Alt = 2005,
@@ -2486,6 +2491,13 @@ impl std::fmt::Display for ExperienceType {
                 //1523
                 write!(f, "Gunner Kill Assist (Bastion Component) Share XP")
             }
+            ExperienceType::Gunner_Kill_Assist_Share_To_Pilot_Bastion_Component => {
+                //1525
+                write!(
+                    f,
+                    "Gunner Kill Assist To Pilot (Bastion Component) Share XP"
+                )
+            }
             ExperienceType::Bastion_Component_Kill_by_Sunderer_Gunner => {
                 write!(f, "Sunderer Gunner Kill (Bastion Component) XP")
             }
@@ -2679,7 +2691,7 @@ impl std::fmt::Display for ExperienceType {
                 write!(f, "Passenger Kill Share (Harasser) XP")
             }
             ExperienceType::Gunner_Kill_Assist_Share_Infantry_To_Pilot => {
-                write!(f, "Gunner Kill Assist To Pilot(Infantry) Share XP") //421
+                write!(f, "Gunner Kill Assist To Pilot (Infantry) Share XP") //421
             }
             ExperienceType::Gunner_Kill_Assist_Share_Phalanx_To_Pilot => {
                 write!(f, "Gunner Kill Assist To Pilot (Phalanx Turret) Share XP")
@@ -2688,8 +2700,17 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Passenger_Kill_Assist_Share_Galaxy => {
                 write!(f, "Gunner Kill Assist To Pilot (Galaxy) Share XP")
             }
+            ExperienceType::Gunner_Kill_Assist_Share_To_Pilot_Liberator => {
+                write!(f, "Gunner Kill Assist To Pilot (Liberator) Share XP") //427
+            }
             ExperienceType::Gunner_Kill_Assist_Share_Lightning_To_Pilot => {
                 write!(f, "Gunner Kill Assist To Pilot (Lightning) Share XP") //428
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_Mosquito_To_Pilot => {
+                write!(f, "Gunner Kill Assist To Pilot (Mosquito) Share XP") //430
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_To_Pilot_Prowler => {
+                write!(f, "Gunner Kill Assist To Pilot (Prowler) Share XP") //431
             }
             ExperienceType::Gunner_Kill_Assist_Share_Reaver_To_Pilot => {
                 write!(f, "Gunner Kill Assist To Pilot (Reaver) Share XP") //432
@@ -2768,6 +2789,9 @@ impl std::fmt::Display for ExperienceType {
             ExperienceType::Passenger_Kill_Share_Ant => {
                 write!(f, "Passenger Kill Share (Ant) XP") //669
             }
+            ExperienceType::Gunner_Kill_Assist_Share_To_Pilot_Ant => {
+                write!(f, "Gunner Kill Assist To Pilot (Ant) Share XP") //670
+            }
             ExperienceType::Passenger_Kill_Share_Hardlight_Barrier => {
                 //1381
                 write!(f, "Passenger Kill Share (Hardlight Barrier) XP")
@@ -2816,6 +2840,9 @@ impl std::fmt::Display for ExperienceType {
             }
             ExperienceType::Gunner_Kill_Assist_Share_Dervish => {
                 write!(f, "Gunner Kill Assist (Dervish) Share XP")
+            }
+            ExperienceType::Gunner_Kill_Assist_Share_To_Pilot_Dervish => {
+                write!(f, "Gunner Kill Assist To Pilot (Dervish) Share XP")
             }
             ExperienceType::Vehicle_Destruction_Corsair => write!(f, "Destroy Corsair XP"),
             ExperienceType::Kill_Assist_Corsair => write!(f, "Kill Assist Corsair XP"),
